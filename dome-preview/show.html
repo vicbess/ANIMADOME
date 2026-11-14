@@ -1132,8 +1132,8 @@ const D3 = {
   RING_H: 1.4,       // hauteur du bord inférieur de la 1re rangée de LEDs au-dessus du sol (m) : ~1,5 m annoncé ; 1,4 = bon compromis avec les longueurs de barres
   EYE_H: 1.75,       // hauteur des yeux du public au-dessus du sol (m)
   EYE_X: 0, EYE_Z: 0,// position de la caméra Centre dans le plan (en R, 0 = centre exact)
-  ASPECT: 16/9,      // format de la vue 3D (largeur / hauteur), centré dans la zone du dôme
-  FOV_CENTRE: 60, FOV_FIXED: 40,   // champs de vision verticaux (°) ; à 16/9, 60° vertical = environ 91° horizontal
+  ASPECT: 874/836,   // format de la vue 3D (largeur / hauteur) : le même format (presque carré) que la vue 2D
+  FOV_CENTRE: 60, FOV_FIXED: 40,   // champs de vision verticaux (°) ; en format carré, 60° vertical = 60° horizontal environ
   TOP_DIST: 3.05, SIDE_DIST: 3.1, LED_SCALE: 1.7, HALO: 0.5, STARS: 1400,   // HALO : halo autour des LEDs allumées (0 = aucun, 1 = marqué) ; caméras fixes (en R) et taille d'affichage des LEDs
 };
 let oy3=.5, op3=.3, dist3=D3.SIDE_DIST, view3d=false, cam3='centre', yaw3=0, pitch3=.6, fov3=D3.FOV_CENTRE, G3=null;
