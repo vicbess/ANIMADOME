@@ -127,9 +127,6 @@ LineAPulse : de 5:04,9 à 5:06,4 (1,55 s), toutes les lignes de la liste LinesA 
 *05:27*
 GerbeEtincelles : à 5:27,4 (1,7 s), des étincelles blanches aléatoires (environ 60) s'ajoutent par-dessus les autres animations : elles partent du haut du dôme et descendent vers le bas en lignes droites, chacune avec une traînée qui grésille (scintillement rapide) ; elles accélèrent en tombant, puis s'éteignent rapidement (fondu de sortie de 0,35 s).
 
-*06:09*
-FillAnneau : à 6:09,5 (3 s), l'anneau 2 de la liste Anneaux (la bande entre les deux cercles concentriques correspondants) se remplit de lumière en un instant (0,35 s), en balayant du bord du dôme vers le centre avec un front plus lumineux ; il reste ensuite allumé, puis s'éteint en fondu pendant la dernière seconde.
-
 *07:46*
 Rien : à 7:46,3, extinction totale du dôme une seconde avant le SlowLava de 7:47,3 ; aucune autre animation que SlowLava n'est visible tant que ce SlowLava n'est pas terminé (retombée comprise), puis les animations de la phase reviennent.
 

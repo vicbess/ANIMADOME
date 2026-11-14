@@ -523,10 +523,6 @@
                        "text":  "GerbeEtincelles : à 5:27,4 (1,7 s), des étincelles blanches aléatoires (environ 60) s\u0027ajoutent par-dessus les autres animations : elles partent du haut du dôme et descendent vers le bas en lignes droites, chacune avec une traînée qui grésille (scintillement rapide) ; elles accélèrent en tombant, puis s\u0027éteignent rapidement (fondu de sortie de 0,35 s)."
                    },
                    {
-                       "t":  369,
-                       "text":  "FillAnneau : à 6:09,5 (3 s), l\u0027anneau 2 de la liste Anneaux (la bande entre les deux cercles concentriques correspondants) se remplit de lumière en un instant (0,35 s), en balayant du bord du dôme vers le centre avec un front plus lumineux ; il reste ensuite allumé, puis s\u0027éteint en fondu pendant la dernière seconde."
-                   },
-                   {
                        "t":  466,
                        "text":  "Rien : à 7:46,3, extinction totale du dôme une seconde avant le SlowLava de 7:47,3 ; aucune autre animation que SlowLava n\u0027est visible tant que ce SlowLava n\u0027est pas terminé (retombée comprise), puis les animations de la phase reviennent."
                    },
