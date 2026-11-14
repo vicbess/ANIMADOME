@@ -1324,14 +1324,14 @@ sync3UI();
   const ID=s=>'p'+String(Math.round(s)).padStart(5,'0');
   const meLocal=()=>{ try{ return localStorage.getItem('animadome.user')||''; }catch(e){ return ''; } };
   async function whoami(){ let u=meLocal(); if(!u){ const w=(await api('/api/whoami')).trim(); u=/^KO/.test(w)?'':w; } return u; }
-  async function listFiles(pull){ try{ return JSON.parse(await api('/api/publish-list?mix='+encodeURIComponent(MIX.slug)+(pull?'&pull=1':''))); }catch(e){ return { error:'serveur injoignable' }; } }
+  async function listFiles(pull){ try{ return JSON.parse(await api('/api/publish-list?mix='+encodeURIComponent(MIX.slug)+(pull?'&pull='+pull:''))); }catch(e){ return { error:'serveur injoignable' }; } }
   async function loadPubs(files){ const out=[]; for(const f of files){ try{ const r=await fetch(mixPath('publish/'+f)+'?'+Date.now()); if(!r.ok) continue; const j=await r.json(); out.push({ file:f, user:j.user||f.replace(/_phases\.json$/,''), data:j }); }catch(e){} } return out; }
   let localPh={}; async function refreshLocal(){ const b=await window.aniBuildPhases(''); localPh={}; b.pack.phases.forEach(p=>{ localPh[p.id]=p; }); return localPh; }
   /* marqueurs : une phase est marquée quand la publication d'un AUTRE utilisateur diffère de ta version */
   window.PHMARKED=new Set();
-  async function refreshMarks(){ try{ const lf=await listFiles(false); if(lf.error||!lf.files) return; const u=await whoami(); await refreshLocal(); const s=new Set();
+  async function refreshMarks(pull){ try{ const lf=await listFiles(pull||false); if(lf.error||!lf.files) return; const u=await whoami(); await refreshLocal(); const s=new Set();
       (await loadPubs(lf.files)).filter(x=>x.user!==u).forEach(pb=>(pb.data.phases||[]).forEach(p=>{ const l=localPh[p.id]; if(l&&l.hash!==p.hash) s.add(p.id); })); window.PHMARKED=s; }catch(e){} }
-  window.aniRefreshMarks=refreshMarks; setTimeout(refreshMarks,3000); setInterval(refreshMarks,60000);
+  window.aniRefreshMarks=refreshMarks; setTimeout(()=>refreshMarks(2),3000); setInterval(()=>refreshMarks(2),180000); setInterval(()=>refreshMarks(),30000);   /* toutes les 3 min : récupération discrète des publications des autres sur GitHub ; toutes les 30 s : relecture locale des marqueurs */
   function modal(title,html){ const old=document.getElementById('verModal'); if(old) old.remove(); const m=document.createElement('div'); m.id='verModal';
     m.innerHTML='<div class="vm-box"><div class="vm-h"><b>'+title+'</b><button class="chip vm-x">×</button></div><div class="vm-b">'+html+'</div></div>'; document.body.appendChild(m);
     m.querySelector('.vm-x').onclick=()=>m.remove(); m.addEventListener('pointerdown',ev=>{ if(ev.target===m) m.remove(); }); return m; }
@@ -1372,7 +1372,7 @@ sync3UI();
     return JSON.stringify(o); }
   async function openPull(i){
     const P=PH[i], id=ID(P.start), m=modal('Mettre à jour la phase '+(i+1),'<div class="vm-t">Récupération des publications sur GitHub…</div>'), body=m.querySelector('.vm-b');
-    const lf=await listFiles(true); if(lf.error||!lf.files){ body.innerHTML='<div class="vm-t vm-w">'+esc(lf.error||'réponse inattendue')+'</div><pre class="vm-log">'+esc(lf.log||'')+'</pre>'; return; }
+    const lf=await listFiles(1); if(lf.error||!lf.files){ body.innerHTML='<div class="vm-t vm-w">'+esc(lf.error||'réponse inattendue')+'</div><pre class="vm-log">'+esc(lf.log||'')+'</pre>'; return; }
     const pubs=await loadPubs(lf.files); await refreshLocal(); const L=localPh[id], cands=[];
     pubs.forEach(pb=>{ const p=(pb.data.phases||[]).find(x=>x.id===id); if(p) cands.push({ user:pb.user, p, at:pb.data.publishedAt||'', same:!!L&&L.hash===p.hash, bornes:Math.abs(p.start-P.start)>.5||Math.abs(p.end-P.end)>.5 }); });
     cands.sort((a,b)=>String(b.at).localeCompare(String(a.at)));

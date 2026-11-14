@@ -232,11 +232,15 @@ public static class Srv {
   }
   static string WhoAmI(string root) { int c; string n = Git(RepoRoot(root), "config user.name", out c); return c == 0 ? n : ""; }
   // ---------- Récupération d'une phase : liste des publications (avec pull optionnel) et enregistrement de fichiers de mix autorisés ----------
-  static string PublishList(string root, string mix, bool pull) {
+  static string PublishList(string root, string mix, string pull) {
     if (!Regex.IsMatch(mix ?? "", @"^[A-Za-z0-9_-]{1,40}$")) return "{\"error\":\"mix invalide\"}";
     lock (Lock) {
       string mixes = Path.Combine(root, "mixes"), dir = Path.Combine(mixes, mix, "publish"); int c; string log = "";
-      if (pull) {
+      if (pull == "2") {   // synchronisation discrète : récupère les publications des autres SANS toucher à tes fichiers en cours d'édition (avance rapide seulement ; sans effet s'il y a un conflit)
+        string rem2 = Git(mixes, "remote get-url origin", out c);
+        if (c == 0 && Regex.IsMatch(rem2, @"vicbess/MIX_Animadome(\.git)?$")) { Git(mixes, "fetch origin main --quiet", out c); if (c == 0) Git(mixes, "merge --ff-only origin/main --quiet", out c); }
+      }
+      if (pull == "1") {
         string rem = Git(mixes, "remote get-url origin", out c); if (c != 0 || !Regex.IsMatch(rem, @"vicbess/MIX_Animadome(\.git)?$")) return "{\"error\":\"dépôt des mix inattendu\"}";
         log = Git(mixes, "pull --rebase --autostash origin main", out c); if (c != 0) return "{\"error\":\"git pull impossible\",\"log\":" + Json(log) + "}";
       }
@@ -269,7 +273,7 @@ public static class Srv {
         if (c.Request.Headers["X-Animadome"] != "1") rs = "KO requête refusée";
         else {
           string bd = ""; if (c.Request.HttpMethod == "POST") using (var sr0 = new StreamReader(c.Request.InputStream, Encoding.UTF8)) bd = sr0.ReadToEnd();
-          try { rs = ap == "/api/versions" ? Versions(root) : ap == "/api/publish" ? Publish(bd, root) : ap == "/api/whoami" ? WhoAmI(root) : ap == "/api/publish-phases" ? PublishPhases(bd, root, c.Request.QueryString["mix"]) : ap == "/api/publish-list" ? PublishList(root, c.Request.QueryString["mix"], c.Request.QueryString["pull"] == "1") : ap == "/api/save-mixfile" ? SaveMixFile(bd, root, c.Request.QueryString["mix"], c.Request.QueryString["name"], c.Request.QueryString["backup"]) : Update(bd, root); } catch (Exception ex0) { rs = "KO erreur : " + ex0.Message; }
+          try { rs = ap == "/api/versions" ? Versions(root) : ap == "/api/publish" ? Publish(bd, root) : ap == "/api/whoami" ? WhoAmI(root) : ap == "/api/publish-phases" ? PublishPhases(bd, root, c.Request.QueryString["mix"]) : ap == "/api/publish-list" ? PublishList(root, c.Request.QueryString["mix"], c.Request.QueryString["pull"]) : ap == "/api/save-mixfile" ? SaveMixFile(bd, root, c.Request.QueryString["mix"], c.Request.QueryString["name"], c.Request.QueryString["backup"]) : Update(bd, root); } catch (Exception ex0) { rs = "KO erreur : " + ex0.Message; }
         }
         byte[] rb0 = Encoding.UTF8.GetBytes(rs); c.Response.ContentType = (ap == "/api/versions" ? "application/json" : "text/plain") + "; charset=utf-8"; c.Response.ContentLength64 = rb0.Length;
         c.Response.OutputStream.Write(rb0, 0, rb0.Length); c.Response.Close(); return;
