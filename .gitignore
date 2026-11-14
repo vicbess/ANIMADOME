@@ -1,0 +1,17 @@
+# --- Non versionné : gros fichiers, audio, état local ---
+audio-analysis/
+*.mp3
+*.wav
+*.flac
+*.m4a
+*.ogg
+# Historique des prompts (local à chaque utilisateur)
+dome-preview/prompts.jsonl
+dome-preview/prompts-done.json
+# Divers
+__pycache__/
+*.pyc
+venv/
+.venv/
+*.log
+Thumbs.db

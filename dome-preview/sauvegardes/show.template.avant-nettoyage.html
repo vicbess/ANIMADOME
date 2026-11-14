@@ -1,0 +1,1252 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ANIMADÔME</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&display=swap" rel="stylesheet">
+<style>
+  :root { --domeH:calc(100vh - 10vh - var(--hdr) - 96px - 2*clamp(14px,2.6vh,36px) - clamp(8px,3vh,36px)); --hdr:clamp(24px,3.1vw,56px); --bg:#0b0b10; --fg:#dcdce4; --mut:#8a8a9a; --panel:#15151d; --line:#2a2a38; --acc:#ff7a2f; --ev:#7fd4ff; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.45 system-ui,sans-serif; display:flex; flex-direction:column; align-items:center; padding:10px 16px 24px; }
+  .wrap { width:100%; max-width:2400px; }
+  header { margin:clamp(14px,2.6vh,36px) 0; position:relative; display:flex; justify-content:center; align-items:center; gap:12px; flex-wrap:wrap; }
+  h1 { display:flex; justify-content:space-between; width:42vw; max-width:42vw; margin:0 auto; font-family:"Orbitron","Eurostile","Bank Gothic","Trebuchet MS",Impact,sans-serif; font-weight:900; font-size:var(--hdr); line-height:1; white-space:nowrap;
+       background:var(--tg,linear-gradient(90deg,#b9a8d6,#e8e8f0)); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 0 12px #ffffff14); }
+  .info { color:var(--mut); font-size:12px; position:absolute; right:0; top:50%; transform:translateY(-50%); }
+  .stage { display:flex; gap:16px; margin-top:8px; align-items:stretch; }
+  @media (max-width:820px){ .rightcol { height:auto; } .side { overflow:visible; } .side > #textBlock { overflow:visible; } .stage { flex-direction:column; } #dome { height:auto !important; width:100% !important; max-width:none !important; } }
+  canvas { display:block; width:100%; height:auto; border-radius:8px; background:#000; }
+  #dome { aspect-ratio:874/916; flex:none; width:auto; height:var(--domeH); min-height:320px; max-width:82vw; }
+  .domewrap > #dome { max-width:none; }
+  .rightcol { flex:1; min-width:230px; height:var(--domeH); min-height:320px; display:flex; flex-direction:column; justify-content:space-between; gap:12px; }
+  .row { display:flex; align-items:center; gap:18px; margin-top:8px; flex-wrap:wrap; }
+  .row .fx { flex:1; min-width:260px; margin-top:0; }
+  #bigtime { font-size:clamp(34px,4.6vw,96px); align-self:flex-start; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:.5px; line-height:1.1; }
+  #bigtime span { color:var(--mut); font-weight:400; font-size:.6em; }
+  .side { font-size:clamp(14px,1.05vw,20px); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px; min-height:0; flex:1; overflow:hidden; display:flex; flex-direction:column; }
+  .side > * { flex:none; } .side > #textBlock { flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; scrollbar-color:#4a4a62 transparent; padding-right:6px; font-size:clamp(11px,.78vw,14.5px); }   /* texte long : barre de défilement, la police ne rétrécit plus */
+  .ph-time { display:flex; justify-content:center; align-items:baseline; gap:.9em; flex-wrap:wrap; } .ph-time .rangeRow { display:block; margin:0; } .ph-time .rangeRow > span { display:none; }   /* minuteur de phase et nom de phase sur une seule ligne */
+  #liveLines { flex:none; } #liveLines p { margin:4px 0 0; }
+  /* texte technique : vue lisible (titres ▸ en gras, le reste en normal) ; un clic bascule en édition du texte brut */
+  .ph-techview { white-space:pre-wrap; line-height:1.55; cursor:text; padding:3px 5px; margin:0 0 1.15em -5px; border:1px dashed transparent; border-radius:5px; } .ph-techview:hover { border-color:#3a3a50; }
+  .ph-techview .th { font-weight:700; margin-top:.6em; } .ph-techview > div:first-child { margin-top:0; } .ph-techview .tb { font-weight:400; padding-left:1.1em; text-indent:-1.1em; } .ph-techview .tp { font-weight:400; }
+  #phTech { display:none; font-weight:500; } #phTech.editing { display:block; }
+  #phTitleRow { display:flex; align-items:flex-start; gap:10px; } #phTitleRow #phText { flex:1; } #cleanBtn { flex:none; --c:#ffd84d; font-size:11px; padding:4px 10px; margin-top:1px; }
+  #cleanBox { border:1px solid #6a5a2a; background:#1a1710; border-radius:8px; padding:8px 10px; margin:0 0 .8em; font-size:12.5px; line-height:1.4; max-height:34vh; overflow:auto; scrollbar-width:thin; scrollbar-color:#4a4a62 transparent; } #cleanBox[hidden] { display:none; }
+  #cleanBox h4 { margin:0 0 5px; font-size:12px; color:#ffd84d; letter-spacing:.3px; } #cleanBox ul { margin:0 0 8px; padding-left:16px; } #cleanBox li { margin:0 0 5px; color:#d8d8e4; } #cleanBox li i { color:#aab0c4; } #cleanBox li b { color:#ffb86b; font-weight:600; } #cleanBox .row { display:flex; gap:8px; flex-wrap:wrap; } #cleanBox .row .chip { --c:#ffd84d; } #cleanBox .mut { color:var(--mut); }
+  .ph-son { display:none; } #phText { margin:0 0 .75em; font-size:1.02em; font-weight:600; line-height:1.3; text-align:center; }
+  .rangeRow { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; margin-bottom:.2em; } #phRange { margin:0; }
+  .mixsel { justify-self:start; display:flex; gap:6px; align-items:center; font-size:12px; font-weight:400; color:var(--mut); letter-spacing:0; } .mixsel select { font-weight:600; }
+  .domewrap { position:relative; flex:none; display:block; line-height:0; }
+  .geoOv { position:absolute; top:7%; right:1.5%; width:20%; bottom:2%; display:flex; flex-direction:column; gap:10px; align-items:stretch; pointer-events:none; line-height:1.4; }
+  .geoOv > * { pointer-events:auto; }
+  .geoMain { display:flex; flex-direction:column; gap:7px; align-items:flex-end; } .geoMain .gt-row { justify-content:flex-end; } .geoMain .gt-l { width:100%; text-align:right; margin:0; }
+  .geoOv:not(.on) #geoBar, .geoOv:not(.on) .gt-row, .geoOv:not(.on) .par { display:none; } .geotop { display:flex; gap:6px; align-items:center; white-space:nowrap; justify-content:flex-end; }
+  .geo { display:flex; flex-direction:column; flex-wrap:wrap-reverse; align-items:flex-end; align-content:flex-start; gap:4px 6px; margin:0; max-height:calc(var(--domeH) - 190px); } .geo .chip { padding:2px 8px; font-size:10.5px; }
+  .chip.vue { min-width:92px; text-align:center; }
+  .ovL { position:absolute; top:11%; left:1.5%; display:flex; flex-direction:column; align-items:flex-start; gap:7px; line-height:1.4; z-index:2; }
+  .ledsel { color:var(--mut); font-size:12px; display:flex; gap:6px; align-items:center; } .ledsel select { font-weight:600; }
+  .mixTop { position:absolute; left:0; top:50%; transform:translateY(-50%); font-size:18px; color:var(--fg); } .mixTop select { font-size:19px; font-weight:700; padding:6px 12px; }
+  .chip { font:600 11px system-ui; padding:3px 9px; border-radius:12px; border:1px solid var(--line); background:#14141c; color:var(--mut); cursor:pointer; letter-spacing:.2px; }
+  .chip:hover { border-color:#5a5a80; } .chip.on { color:#0b0b10; background:var(--c,#e8e8f0); border-color:var(--c,#e8e8f0); } .chip.par { --c:#ffffff; } .chip.vue { --c:#ffffff; font-size:14px; padding:6px 14px; border-color:#6a6a86; color:var(--fg); }
+  .side.geomode #phTitleRow, .side.geomode #cleanBox, .side.geomode #liveLines, .side.geomode #phText, .side.geomode #textBlock, .side.geomode .promptbox, .side.geomode .ph-time, .side.geomode .mixrow { display:none; }
+  #geoTools { flex:1 1 auto; min-height:0; overflow:auto; font-size:13px; display:flex; flex-direction:column; gap:7px; }
+  .tabs { display:flex; gap:6px; margin:-4px 0 10px; border-bottom:1px solid var(--line); } .tabs .tab { border:0; border-bottom:2px solid transparent; border-radius:0; background:none; color:var(--mut); font:700 12px system-ui; letter-spacing:.6px; padding:6px 14px; cursor:pointer; } .tabs .tab.on { color:var(--fg); border-bottom-color:var(--acc); } .side.geomode .tabs { display:none; }
+  .side.bankmode > :not(.tabs):not(#bankTools) { display:none !important; }
+  .side.eventmode > :not(.tabs):not(#eventTools) { display:none !important; }
+  #eventTools { flex:1 1 auto; min-height:0; overflow:auto; font-size:13px; display:flex; flex-direction:column; gap:9px; scrollbar-width:thin; scrollbar-color:#4a4a62 transparent; } #eventTools[hidden] { display:none; }
+  .evc { position:relative; border:1px solid var(--line); border-radius:8px; padding:8px 10px; background:#14141c; } .evh { display:flex; justify-content:space-between; gap:10px; align-items:baseline; } .evh b { color:#7fd4ff; font-size:1.05em; } .evh span { color:var(--mut); font-size:11.5px; text-align:right; }
+  .evc.act { border-color:#7fd4ff; } .evx { position:absolute; top:3px; right:5px; width:22px; height:22px; padding:0; line-height:20px; text-align:center; border-radius:11px; background:none; border:1px solid transparent; color:var(--mut); font-size:15px; cursor:pointer; } .evx:hover { color:#fff; border-color:#5a5a80; } .evm { color:var(--mut); font-size:11.5px; margin-top:2px; }
+  .evd { color:#aab0c4; font-size:12.5px; line-height:1.4; margin:5px 0; } .evo { display:flex; flex-wrap:wrap; gap:5px; margin:6px 0 8px; } .evo .chip, .evadd { --c:#7fd4ff; }
+  #bankTools { flex:1 1 auto; min-height:0; overflow:auto; font-size:13px; display:flex; flex-direction:column; gap:9px; } #bankTools[hidden] { display:none; }
+  #bankTools .bk-l { color:var(--mut); font-size:12px; margin-bottom:-4px; } #bankTools select { width:100%; } #bankTools .bk-d { color:#aab0c4; font-size:12.5px; line-height:1.4; margin:0; min-height:2.8em; }
+  #bankTools .bk-row { display:flex; align-items:center; gap:10px; } #bankTools .bk-row input[type=range] { flex:1; accent-color:#ff9f45; } #bankTools .bk-val { min-width:3.2em; text-align:right; font-variant-numeric:tabular-nums; color:var(--fg); }
+  #bkPrev { height:14px; border-radius:6px; border:1px solid var(--line); } #bkStops { display:flex; flex-direction:column; gap:5px; } .bk-stop { display:flex; align-items:center; gap:8px; } .bk-stop input[type=color] { width:40px; height:26px; padding:0; background:none; border:1px solid var(--line); border-radius:4px; cursor:pointer; } .bk-stop input[type=range] { flex:1; accent-color:#ff9f45; } .bk-stop .chip { padding:1px 8px; font-size:13px; }
+  #bkCode, #bkLoad { width:100%; background:#0f0f16; color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:6px 8px; font:12px ui-monospace,Consolas,monospace; } #bkCode { resize:none; }
+  #geoTools[hidden] { display:none; } .gt-row { display:flex; flex-wrap:wrap; align-items:center; gap:6px; } .gt-l { color:var(--mut); font-size:12px; margin-right:4px; }
+  .gt-hint { color:var(--mut); font-size:12px; line-height:1.35; } .gt-words { color:var(--mut); font-size:12px; }
+  #gtFormula, #gtInput { width:100%; background:#0f0f16; color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:6px 8px; font:12px ui-monospace,Consolas,monospace; }
+  #gtFormula { resize:none; } #geoTools .chip { --c:#e8e8f0; }
+  .mixrow { margin-bottom:10px; display:flex; align-items:center; flex-wrap:wrap; gap:8px 18px; } .mixrow select { font-weight:600; letter-spacing:.3px; }
+  .ph-time { color:var(--acc); font-variant-numeric:tabular-nums; font-size:1.35em; font-weight:700; letter-spacing:.2px; text-align:center; margin-bottom:.2em; }
+  #phRange { margin-bottom:.2em; }
+  .ph-title { font-size:1.2em; font-weight:600; margin:0 0 1.1em; text-align:center; }
+  .prov { font-size:11px; color:var(--mut); border:1px solid var(--line); border-radius:4px; padding:0 5px; margin-left:6px; vertical-align:middle; font-weight:400; }
+  .ph-tech { font-weight:700; white-space:pre-wrap; line-height:1.55; }   /* le texte technique garde ses retours à la ligne : sections ▸ et puces • */
+  .ph-son { font-style:italic; color:#aab0c4; font-size:.92em; }
+  .ph-edit:empty:before { content:attr(data-ph); color:#4a4a5a; font-weight:400; font-style:italic; }
+  .ph-edit { color:var(--fg); margin:0 0 1.15em; padding:3px 5px; margin-left:-5px; border-radius:5px; outline:none; cursor:text; border:1px dashed transparent; min-height:1.4em; }
+  .ph-edit:hover { border-color:#3a3a50; } .ph-edit:focus { border-color:var(--acc); background:#1b1b26; }
+  .promptbox { margin-top:10px; border-top:1px solid var(--line); padding-top:10px; }
+  #promptIn { width:100%; resize:vertical; background:#262638; color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:6px 8px; font:inherit; font-size:.9em; }
+  #promptIn:placeholder-shown { text-align:center; }
+  #promptIn:focus { outline:none; border-color:var(--ev); }
+  .save { font-size:11px; color:var(--mut); min-height:14px; margin-bottom:4px; } .save.ok { color:#6fe28a; } .save.err { color:#ff6b6b; }
+  .ph-sub { color:var(--mut); font-size:.9em; border-left:2px solid var(--acc); padding-left:8px; margin:6px 0 0; }
+  .ph-ev { color:var(--ev); font-size:.9em; border-left:2px solid var(--ev); padding-left:8px; margin:6px 0 0; }
+  .ph-audio { color:#6a6a7a; font-size:12px; margin:8px 0 0; }
+  .fx { margin-top:8px; padding:8px 12px; background:var(--panel); border:1px solid var(--line); border-radius:8px; font-weight:600; }
+  .fx small { color:var(--mut); font-weight:400; margin-right:8px; }
+  .fx .prop { font-weight:400; font-style:italic; color:#c8c8d4; }
+  .fx .ok { color:#6fe28a; }
+  .fx .evn { color:var(--ev); }
+  .bar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:center; margin-top:8px; }
+  button, select { background:var(--panel); color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:6px 12px; font:inherit; cursor:pointer; }
+  button:hover { border-color:#5a5a80; }
+  .bar button { font-size:1.2em; padding:10px 22px; }
+  .timerow .bar button { font-size:15px; padding:8px 16px; }
+  .timerow .ctl .chip.on { background:#2a1a10; border-color:var(--acc); color:var(--acc); }
+  #play { min-width:120px; background:#2a1a10; border-color:#6a3a1a; }
+  label { color:var(--mut); font-size:12px; display:flex; gap:6px; align-items:center; }
+  #time { font-variant-numeric:tabular-nums; color:var(--fg); }
+  #tl.ph { height:calc(clamp(80px,10vh,130px) + 34px); margin-top:max(4px,calc(clamp(16px,3vh,44px) - 30px)); }   /* Vue Phase : la timeline est plus haute de 34 px (poignées et noms sous l'onde) */
+  #tl { margin-top:8px; cursor:pointer; touch-action:none; width:100%; height:clamp(80px,10vh,130px); margin-top:clamp(16px,3vh,44px); }
+  .hint { color:var(--mut); font-size:12px; margin-top:6px; text-align:center; }
+  .keys { color:#6a6a7a; font-size:clamp(9px,.72vw,12px); margin-top:6px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .keys b { color:#aab0c4; font-weight:600; }
+  .stemChk { display:flex; gap:14px; align-items:center; font-size:12px; color:var(--mut); } .stemChk label { cursor:pointer; gap:5px; color:#aab0c4; } .stemChk input { accent-color:var(--c); margin:0; } .stemChk i { width:9px; height:9px; border-radius:2px; display:inline-block; }
+  .pkeys { color:#6a6a7a; font-size:11px; margin-top:4px; line-height:1.5; } .pkeys b { color:#aab0c4; font-weight:600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1 aria-label="ANIMADÔME"><span>A</span><span>N</span><span>I</span><span>M</span><span>A</span><span>D</span><span>Ô</span><span>M</span><span>E</span></h1><label class="mixsel mixTop">Mix <select id="mixSel"></select></label><div class="info" id="info"></div></header>
+
+  <div class="stage">
+    <div class="domewrap"><canvas id="dome" width="874" height="916"></canvas>
+      <div class="ovL" id="ovL"><label class="ledsel">LEDs / barre <select id="nled" autocomplete="off"><option>4</option><option>24</option><option>42</option><option>60</option></select></label><button class="chip" id="showNumBtn">N° Barres</button></div>
+      <div class="geoOv" id="geoOv"><div class="geoMain" id="geoMain"><div class="geotop" id="geoTop"></div><div class="geotop" id="geoPar"></div></div><div class="geo" id="geoBar"></div></div></div>
+    <div class="rightcol">
+    <div class="side">
+      <div class="ph-time" id="phTime"><div class="rangeRow"><span></span><div id="phRange"></div><span></span></div><div id="phMix"><span id="phMixTxt"></span><span class="prov" id="phProv" hidden>proposition</span></div></div>
+      <div id="phTitleRow"><p class="ph-title" id="phText" title="Titre de la phase (résumé, non modifiable ; il est défini dans le descriptif)"></p><button class="chip" id="cleanBtn" title="Vérifie cette phase (contradictions du descriptif, couleurs, effets qui se gênent), liste les problèmes trouvés et te demande confirmation avant de corriger. Annulable.">Nettoyer l'anim de la phase</button></div>
+      <div id="cleanBox" hidden></div>
+      <div id="textBlock">
+      <div id="phTechView" class="ph-techview" title="Partie technique – cliquer pour modifier (Entrée = valider, Maj+Entrée = nouvelle ligne, Échap = annuler)"></div>
+      <p class="ph-edit ph-tech" id="phTech" contenteditable="plaintext-only" spellcheck="false" data-ph="Technique : LEDs, barres, directions, intensité…" title="Partie technique (gras) – cliquer pour modifier"></p>
+      <p class="ph-edit ph-son" id="phSon" contenteditable="plaintext-only" spellcheck="false" data-ph="Son : analyse audio…" title="Partie son (italique) – cliquer pour modifier"></p>
+      <div class="save" id="saveState"></div>
+      </div>
+      <div id="liveLines"><p class="ph-sub" id="phSub" hidden></p><p class="ph-ev" id="phEv" hidden></p></div>   <!-- sous-étapes et events : toujours visibles, juste au-dessus du prompteur (hors de la zone qui défile) -->
+      
+      <div class="promptbox">
+        <textarea id="promptIn" rows="2" placeholder="prompt modificateur de phase"></textarea>
+        <div id="promptState" class="save"></div>
+        <div class="pkeys"><b>Entrée</b> écrire dans le prompt <span style="color:#3a3a50">&nbsp;|&nbsp;</span> <b>Échap</b> quitter le champ <span style="color:#3a3a50">&nbsp;|&nbsp;</span> <b>Ctrl+Espace</b> insérer le temps de lecture</div>
+        
+      </div>
+    </div>
+    <div class="timerow" style="display:flex;align-items:center;gap:22px;align-self:stretch"><div id="bigtime">0:00 <span>/ 0:00</span></div><div class="tsep" style="align-self:stretch;width:2px;margin:6px 10px;background:#4a4a62;border-radius:1px"></div><div class="ctl" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">
+    <div style="display:flex;gap:8px;align-items:center"><button id="phaseBtn" class="chip" title="Basculer la timeline : piste entière / phase en cours (P)" aria-pressed="false" style="padding:8px 18px;font-size:14px">Vue Phase</button>
+    
+    <button id="loopBtn" class="chip" title="Boucler la phase en cours (L)" aria-pressed="false" style="padding:8px 18px;font-size:14px">⟲ Loop da Phase</button></div>
+    <div class="bar" style="display:flex;align-items:center;justify-content:center;gap:8px;margin:0">
+    <button id="prev" title="Phase précédente ([ ou ↓)">⏮</button>
+    <button id="play">▶ Lecture</button>
+    <button id="next" title="Phase suivante (] ou ↑)">⏭</button>
+    <label class="vol" title="Volume" style="display:flex;align-items:center;gap:8px;color:var(--mut);font-size:18px;margin-left:14px">🔊<input type="range" id="vol" min="0" max="1" step="0.01" value="1" style="width:130px;accent-color:#ff9f45"></label><label class="vol" title="Synchro son/image : si les effets calés sur le son (kicks, basses) te semblent en avance ou en retard, décale-les ici (le système audio ajoute une latence que la page ne peut pas mesurer)" style="display:flex;align-items:center;gap:6px;color:var(--mut);font-size:12px;margin-left:10px">Synchro<input type="range" id="avl" min="-300" max="300" step="10" value="0" style="width:110px;accent-color:#ff9f45"><span id="avlV" style="min-width:4.2em;text-align:right;font-variant-numeric:tabular-nums">0 ms</span></label>
+  </div><div class="stemChk"><span>Pistes sur la timeline :</span><label style="--c:#f3e2bd"><input type="checkbox" id="stK">Kick</label><label style="--c:#ff9a4a"><input type="checkbox" id="stD">Batterie</label><label style="--c:#b86bff"><input type="checkbox" id="stB">Basse</label><label style="--c:#4aa3ff"><input type="checkbox" id="stO">Médiums</label><label style="--c:#e86fc0"><input type="checkbox" id="stH">Aigus</label><label style="--c:#6fe28a"><input type="checkbox" id="stV">Voix</label></div></div></div>
+    </div>
+  </div>
+
+  <canvas id="tl" width="1800" height="115"></canvas>
+  <div class="keys" id="keys"><b>Espace</b> lecture <span style="color:#3a3a50">&nbsp;|&nbsp;</span> <b>←/→</b> ±5 s (<b>Ctrl</b> + flèches droite ou gauche : 0,5 s <span style="color:#3a3a50">&nbsp;|&nbsp;</span> <b>Shift</b> + flèches droite ou gauche : 0,1 s) <span style="color:#3a3a50">&nbsp;|&nbsp;</span> <b>↑/↓</b> phase suiv./préc. <span style="color:#3a3a50">&nbsp;|&nbsp;</span> <b>L</b> boucle <span style="color:#3a3a50">&nbsp;|&nbsp;</span> <b>P</b> vue phase/piste <span style="color:#3a3a50">&nbsp;|&nbsp;</span> <b>Molette</b> zoom timeline (zoom max = vue phase) <span style="color:#3a3a50">&nbsp;|&nbsp;</span> <b>S</b> pistes (tout cocher/décocher) <span style="color:#3a3a50">&nbsp;|&nbsp;</span> events (vue phase) : <b>glisser</b> déplacer <span style="color:#3a3a50">&nbsp;|&nbsp;</span> <b>Maj+clic</b> dupliquer event <span style="color:#3a3a50">&nbsp;|&nbsp;</span> <b>Alt+clic</b> suppr. event</div>
+
+  <audio id="au" preload="auto"></audio>
+</div>
+
+<script src="mixes.js"></script>
+<script>
+// Choix du mix : ?mix=slug (mémorisé). Charge les scripts propres au mix (analyse, rythme, partition d'effets).
+(function(){ let slug=new URLSearchParams(location.search).get('mix'); try{ slug=slug||localStorage.getItem('animadomeMix'); }catch(e){}
+  const m=window.MIXES.find(x=>x.slug===slug)||window.MIXES[0]; window.MIX=m; try{ localStorage.setItem('animadomeMix',m.slug); }catch(e){}
+  window.mixPath=n=>(m.dir==='.'?'':m.dir+'/')+n;
+  for(const f of ['features.js','beats.js','gut.js','stems.js','fxmap.js']) document.write('<script src="'+window.mixPath(f)+'"><\/script>'); })();
+</script>
+<script>
+const DOME = /*DOME_JSON*/;
+let LEDS_PER_BAR = 4;
+// Point mort au centre des « étoiles » (moyeux où se rejoignent les barres) : aucune LED sur la fraction DEAD_END de chaque extrémité de barre.
+const DEAD_END = 0.10;
+const ledU = k => DEAD_END + (1-2*DEAD_END)*(k+.5)/LEDS_PER_BAR;
+const CENTER = { x:438, y:412 }, R = 412, GZ=1, GDX=-18;   // Vue Géo : même taille que la vue animation (léger décalage à gauche)
+const W = DOME.width, H = DOME.height, OFF = 80;   // OFF = bandeau noir au-dessus du dôme pour le titre des effets
+const cv = document.getElementById('dome'), ctx = cv.getContext('2d');
+const tl = document.getElementById('tl'), tctx = tl.getContext('2d');
+const au = document.getElementById('au'); au.src = mixPath(MIX.audio);
+{ const vs=document.getElementById('vol'); let v=1; try{ const s=localStorage.getItem('animadome.vol'); if(s!==null) v=Math.min(1,Math.max(0,+s)); }catch(e){} vs.value=v; au.volume=v; vs.oninput=()=>{ au.volume=+vs.value; try{ localStorage.setItem('animadome.vol',vs.value); }catch(e){} }; }
+const FE = window.FEATURES, FXMAP = window.FXMAP;
+
+/* ---------- Géométrie ---------- */
+// Lignes extérieures non adressables (contour) : ramenées vers l'intérieur pour que la partie lumineuse occupe plus de place, puis zoom d'ensemble.
+const V = (function(){ const vs=DOME.vertices.map(v=>[v[0],v[1]]), cv=new Set(), used=new Set();
+  DOME.edges.forEach(e=>{ if(e[3]){ cv.add(e[0]); cv.add(e[1]); } });
+  DOME.edges.forEach(e=>{ if(!e[3] && !cv.has(e[0]) && !cv.has(e[1])){ used.add(e[0]); used.add(e[1]); } });
+  const rad=v=>Math.hypot(v[0]-438,v[1]-412); let rI=0; used.forEach(i=>{ rI=Math.max(rI,rad(vs[i])); });
+  const K=0.3; let rm=rI; cv.forEach(i=>{ const r=rad(vs[i]); if(r>rI){ const r2=rI+(r-rI)*K, f=r2/r; vs[i][0]=438+(vs[i][0]-438)*f; vs[i][1]=412+(vs[i][1]-412)*f; } rm=Math.max(rm,rad(vs[i])); });
+  // Perspective « vue du dessous » : le centre (sommet) est comprimé, l'extérieur (bas du dôme) reste grand. P=1 : aucun effet.
+  const P=1.25; vs.forEach(v=>{ const r=rad(v); if(r<1e-6) return; const f=rm*Math.pow(r/rm,P)/r; v[0]=438+(v[0]-438)*f; v[1]=412+(v[1]-412)*f; });
+  window.VIEW_SCALE=Math.min(1.35,412*0.985/rm); return vs; })();
+const bars = DOME.edges.map((e,i) => ({ id:i, a:e[0], b:e[1], contour:!!e[3], pa:V[e[0]], pb:V[e[1]] }));
+const contourVerts = new Set(); bars.forEach(b => { if (b.contour) { contourVerts.add(b.a); contourVerts.add(b.b); } });
+bars.forEach(b => b.outer = !b.contour && (contourVerts.has(b.a) || contourVerts.has(b.b)));
+const addr = bars.filter(b => !b.contour && !b.outer);
+// Les effets sont écrits en position CONTINUE (x, y, r = distance au centre 0..1, h = hauteur 0..1, u = position le long
+// de la barre). Les LEDs ne sont que des points d'échantillonnage : on peut en changer le nombre sans changer les animations.
+let LED = [], buf = new Float32Array(0);
+function buildLEDs(n){
+  LEDS_PER_BAR = n; LED = [];
+  addr.forEach(b => { b.led0 = LED.length;
+    for (let k=0;k<n;k++){ const u=DEAD_END+(1-2*DEAD_END)*(k+.5)/n, x=b.pa[0]+(b.pb[0]-b.pa[0])*u, y=b.pa[1]+(b.pb[1]-b.pa[1])*u, r=Math.hypot(x-CENTER.x,y-CENTER.y)/R;
+      LED.push({ id:LED.length, bar:b, k, u, x, y, r:Math.min(r,1), h:Math.sqrt(Math.max(0,1-r*r)), theta:Math.atan2(y-CENTER.y,x-CENTER.x) }); } });
+  buf = new Float32Array(LED.length*3);
+  document.getElementById('info').textContent = `${addr.length} barres adressables · ${LED.length} LEDs`;
+}
+
+/* ---------- Utilitaires ---------- */
+const clamp = (x,a=0,b=1) => Math.min(b, Math.max(a, x));
+const lerp = (a,b,t) => a+(b-a)*t;
+function h32(n){ n=Math.imul(n^(n>>>16),0x85ebca6b); n=Math.imul(n^(n>>>13),0xc2b2ae35); return ((n^(n>>>16))>>>0)/4294967296; }
+function rng(seed){ let s=seed>>>0; return () => { s=(Math.imul(s,1664525)+1013904223)>>>0; return s/4294967296; }; }
+function hsv(h,s,v){ h=((h%360)+360)%360; const c=v*s, x=c*(1-Math.abs((h/60)%2-1)), m=v-c; let r=0,g=0,b=0;
+  if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;b=x}else if(h<240){g=x;b=c}else if(h<300){r=x;b=c}else{r=c;b=x} return [r+m,g+m,b+m]; }
+const mmss = s => String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s)%60).padStart(2,'0');
+const fmt = s => { s=Math.max(0,Math.floor(s)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); };
+const add = (id,c) => { buf[3*id]+=c[0]; buf[3*id+1]+=c[1]; buf[3*id+2]+=c[2]; };
+
+/* ---------- Audio : enveloppes 0..1 à 10 images/s ---------- */
+const NF = FE.frames;
+function env(arr, norm, att=.6, rel=.12){ const o=new Float32Array(NF); let y=0;
+  for(let i=0;i<NF;i++){ const x=clamp(norm(arr[i])); y += (x>y?att:rel)*(x-y); o[i]=y; } return o; }
+const E = {
+  bass: env(FE.bass.map((v,i)=>Math.max(v, FE.sub[i]*0.9)), v=>(v-30)/20),
+  mid:  env(FE.mid,  v=>(v-25)/18),
+  high: env(FE.high, v=>(v-20)/22),
+  flux: env(FE.flux, v=>v/2800, .7, .2),
+  rms:  env(FE.rms,  v=>(v+28)/18, .5, .08),
+};
+/* Enveloppes issues des pistes séparées (stems.js) : batterie, synthés/autres, basse seule. Sans stems.js : retombent sur la basse du mix. */
+const SD=window.STEMS||null, mkS=(a,lo,hi)=>a?env(a,v=>(v-lo)/(hi-lo)):E.bass;
+const pctOf=(a,q)=>{ const c=Float32Array.from(a).sort(); return c[Math.floor(q*(c.length-1))]; }, mkP=a=>{ if(!a) return new Float32Array(NF); const lo=pctOf(a,.08), hi=Math.max(lo+1,pctOf(a,.985)); return env(a,v=>(v-lo)/(hi-lo)); };
+/* bassN : la BASSE (stem) normalisée sur son propre niveau récent (moyenne mobile ~20 s) : 0 = creux de basse, 1 = pic de basse, lissée (monte vite, retombe plus lentement). Sert aux pulsations LENTES (braises) quand p.bassPulse > 0. */
+E.bassN=new Float32Array(NF); (function(){ const a=SD&&SD.bass&&SD.bass.v; if(!a){ E.bassN.set(E.bass); return; } let m=Math.max(a[0],-60), s2=25, y=.5; for(let i=0;i<NF;i++){ const v=Math.max(a[i]===undefined?-60:a[i],-60); m+=(v-m)*.005; s2+=((v-m)*(v-m)-s2)*.005; const x=Math.min(1,Math.max(0,.5+.5*(v-m)/(2.2*Math.sqrt(s2)+1))); y+=(x>y?.5:.15)*(x-y); E.bassN[i]=y; } })();E.vocals=mkP(SD&&SD.vocals&&SD.vocals.v); E.high=mkP(SD&&SD.high&&SD.high.v);   /* voix (stem) et aigus (> 3 kHz, bande de fréquences) : stems.js, voir tools/analyze-extra.py */
+E.drums=mkS(SD&&SD.drums&&SD.drums.v,-40,-12); E.other=mkS(SD&&SD.other&&SD.other.v,-45,-15); E.bassS=mkS(SD&&SD.bass&&SD.bass.v,-45,-15);
+function feat(t){ const i=Math.min(NF-1,Math.max(0,Math.floor((t-AVL)*10))); return { bass:E.bass[i], mid:E.mid[i], high:E.high[i], flux:E.flux[i], rms:E.rms[i], drums:E.drums[i], other:E.other[i], bassS:E.bassS[i] }; }
+/* p.src d'un effet : quelle source mène la pulsation (par défaut la basse du mix) */
+const srcOf=(p,f)=>p.src==='drums'?f.drums:p.src==='other'?f.other:p.src==='drums+other'?Math.max(f.drums,f.other*.85):f.bass;
+
+// Features lissées (fenêtre ~1,6 s) : un effet marqué slow:true ne réagit plus aux coups de grosse caisse / hits un par un (pas de flashs au rythme du beat)
+const ES={}; ['bass','mid','high','flux','rms','drums','other','bassS'].forEach(k=>{ const a=E[k], P=new Float64Array(NF+1), o=new Float32Array(NF), W=8; for(let i=0;i<NF;i++) P[i+1]=P[i]+a[i];
+  for(let i=0;i<NF;i++){ const lo=Math.max(0,i-W), hi=Math.min(NF,i+W+1); o[i]=(P[hi]-P[lo])/(hi-lo); } ES[k]=o; });
+/* intensité lente (niveau global moyenné sur ~12 s) : sert à pousser les teintes vers le rouge pendant les montées en intensité de la phase 3 */
+ES.rmsSlow=(function(){ const a=E.rms, P=new Float64Array(NF+1), o=new Float32Array(NF), W=60; for(let i=0;i<NF;i++) P[i+1]=P[i]+a[i]; for(let i=0;i<NF;i++){ const lo=Math.max(0,i-W), hi=Math.min(NF,i+W+1); o[i]=(P[hi]-P[lo])/(hi-lo); } return o; })();
+/* redRise : 0..1 pendant une MONTÉE d'intensité = niveau moyen sur ~6 s au-dessus de sa moyenne sur ~40 s (plein rouge à +0,10) ; retombe à 0 dès que l'intensité cesse de monter ou redescend : le rouge ajouté repart alors et laisse la place aux couleurs de base. */
+ES.redRise=(function(){ const a=E.rms, P=new Float64Array(NF+1), o=new Float32Array(NF); for(let i=0;i<NF;i++) P[i+1]=P[i]+a[i]; const bx=(i,W)=>{ const lo=Math.max(0,i-W), hi=Math.min(NF,i+W+1); return (P[hi]-P[lo])/(hi-lo); }; for(let i=0;i<NF;i++) o[i]=clamp((bx(i,30)-bx(i,200))/.10); return o; })();
+function featSlow(t){ const i=Math.min(NF-1,Math.max(0,Math.floor((t-AVL)*10))); return { bass:ES.bass[i], mid:ES.mid[i], high:ES.high[i], flux:ES.flux[i], rms:ES.rms[i], drums:ES.drums[i], other:ES.other[i], bassS:ES.bassS[i] }; }/* ---------- Graphe des barres, braises, tunnels ---------- */
+const V0 = V;
+const adj = new Map();
+addr.forEach(b => { for (const [u,w] of [[b.a,b.b],[b.b,b.a]]) { if(!adj.has(u)) adj.set(u,[]); adj.get(u).push({to:w,bar:b}); } });
+function dijkstra(src, dst){ const dist=new Map([[src,0]]), prev=new Map(), done=new Set();
+  while(true){ let u=null,best=1e9; for(const [k,d] of dist) if(!done.has(k)&&d<best){best=d;u=k;} if(u===null||u===dst) break; done.add(u);
+    for(const e of adj.get(u)||[]){ const len=Math.hypot(V0[u][0]-V0[e.to][0],V0[u][1]-V0[e.to][1]); const nd=best+len;
+      if(!dist.has(e.to)||nd<dist.get(e.to)){ dist.set(e.to,nd); prev.set(e.to,{u,bar:e.bar}); } } }
+  if(!dist.has(dst)) return null; const path=[]; let c=dst; while(c!==src){ const p=prev.get(c); path.push({bar:p.bar,from:p.u,to:c}); c=p.u; } return path.reverse(); }
+const interior = []; V0.forEach((v,i)=>{ if(!contourVerts.has(i) && adj.has(i)) interior.push(i); });
+const NEMB = 20; const embers = [];
+(function(){ const r=rng(7); embers.push(interior[Math.floor(r()*interior.length)]);
+  while(embers.length<NEMB){ let bestV=-1,bestD=-1; for(const v of interior){ if(embers.includes(v)) continue;
+    let d=1e9; for(const e of embers) d=Math.min(d,Math.hypot(V0[v][0]-V0[e][0],V0[v][1]-V0[e][1])); if(d>bestD){bestD=d;bestV=v;} } embers.push(bestV); } })();
+const emberInfo = embers.map((v,i)=>({ v, x:V0[v][0], y:V0[v][1], period:3+h32(i*17+3)*2.8, ph:h32(i*31+5)*6.283 }));
+emberInfo.map((e,i)=>({i,k:h32(i*97+11)})).sort((a,b)=>a.k-b.k).forEach((o,rank)=>{ emberInfo[o.i].rank=rank; });
+// Petits foyers de braises (plus petits, répartis le long des barres) qui s'ajoutent progressivement
+const NSM=48, smallInfo=(function(){ const out=[]; for(let i=0;i<NSM;i++){ const b=addr[Math.floor(h32(i*131+9)*addr.length)], u=.15+.7*h32(i*71+2);
+  out.push({ x:b.pa[0]+(b.pb[0]-b.pa[0])*u, y:b.pa[1]+(b.pb[1]-b.pa[1])*u, period:3.5+3.5*h32(i*19+4), ph:h32(i*43+8)*6.283, k:h32(i*59+6) }); }
+  out.map((s,i)=>({i,k:s.k})).sort((a,b)=>a.k-b.k).forEach((o,rank)=>{ out[o.i].rank=rank; }); return out; })();// Un tunnel = suite de segments {bar, fwd}. fwd = on parcourt la barre de a vers b.
+const tunnels = (function(){ const pairs=new Set(), out=[];
+  embers.forEach((v,i)=>{ const ds=embers.map((w,j)=>({j,d:j===i?1e9:Math.hypot(V0[v][0]-V0[w][0],V0[v][1]-V0[w][1])})).sort((a,b)=>a.d-b.d);
+    for(let n=0;n<3;n++){ const j=ds[n].j; const key=Math.min(i,j)+'-'+Math.max(i,j); if(pairs.has(key)) continue; pairs.add(key);
+      const path=dijkstra(v,embers[j]); if(!path) continue;
+      const rd=q=>Math.hypot(V0[q][0]-CENTER.x,V0[q][1]-CENTER.y); out.push({ segs:path.map(sg=>({bar:sg.bar, fwd:sg.from===sg.bar.a})), outward: rd(v) < rd(embers[j]), key:h32(i*1009+j*31+17) }); } });
+  out.sort((p,q)=>p.key-q.key); return out; })();
+/* Chemins de lave SUPPLÉMENTAIRES (p.more:true sur 'Tunnels de lave') : on relie aussi chaque braise à sa 4e voisine la plus proche (en plus des 3 plus proches déjà utilisées) quand le lien n'existe pas encore. Les tunnels d'origine ne changent pas ; les nouveaux sont ajoutés à la suite. */
+const tunnelsExtra=(function(){ const have=new Set(), out=[], rd=q=>Math.hypot(V0[q][0]-CENTER.x,V0[q][1]-CENTER.y);
+  const near=i=>embers.map((w,j)=>({j,d:j===i?1e9:Math.hypot(V0[embers[i]][0]-V0[w][0],V0[embers[i]][1]-V0[w][1])})).sort((a,b)=>a.d-b.d);
+  embers.forEach((v,i)=>{ const ds=near(i); for(let n=0;n<3;n++) have.add(Math.min(i,ds[n].j)+'-'+Math.max(i,ds[n].j)); });
+  embers.forEach((v,i)=>{ const j=near(i)[3].j, key=Math.min(i,j)+'-'+Math.max(i,j); if(have.has(key)) return; have.add(key); const path=dijkstra(v,embers[j]); if(!path) return;
+    out.push({ segs:path.map(sg=>({bar:sg.bar, fwd:sg.from===sg.bar.a})), outward: rd(v)<rd(embers[j]), key:h32(i*1009+j*31+23), extra:true }); });
+  out.sort((a,b)=>a.key-b.key); return out; })();
+const tunnelsMore=tunnels.concat(tunnelsExtra);/* Coulées montantes : on enchaîne les tunnels orientés vers le sommet (bord -> centre) l'un derrière l'autre, puis on prolonge par le plus court chemin jusqu'au moyeu du sommet.
+   Un front de lave qui parcourt une coulée ne s'arrête donc plus au bout d'un tunnel : il serpente jusqu'en haut du dôme. */
+let _flows=null, _flowsM=null;
+function getFlows(more){ if(more?_flowsM:_flows) return more?_flowsM:_flows; const src=more?tunnelsMore:tunnels, rd=q=>Math.hypot(V0[q][0]-CENTER.x,V0[q][1]-CENTER.y);
+  let pole=-1,pb=1e9; adj.forEach((_,v)=>{ const d=rd(v); if(d<pb){ pb=d; pole=v; } });
+  const ups=[]; src.forEach(tn=>{ const sg=tn.segs.map(s=>({bar:s.bar,from:s.fwd?s.bar.a:s.bar.b,to:s.fwd?s.bar.b:s.bar.a}));
+    const up=tn.outward?sg.slice().reverse().map(s=>({bar:s.bar,from:s.to,to:s.from})):sg, a=up[0].from, b=up[up.length-1].to; if(rd(b)<rd(a)-8) ups.push({segs:up,a,b}); });
+  const byStart=new Map(); ups.forEach(u=>{ if(!byStart.has(u.a)) byStart.set(u.a,[]); byStart.get(u.a).push(u); });
+  const flows=[]; ups.filter(u=>!ups.some(o=>o!==u&&o.b===u.a)).forEach(u=>{ let segs=u.segs.slice(), end=u.b; const used=new Set([u]);
+    for(let g=0;g<10;g++){ const cand=(byStart.get(end)||[]).filter(c=>!used.has(c)); if(!cand.length) break; cand.sort((x,y)=>rd(x.b)-rd(y.b)); const c=cand[0]; used.add(c); segs=segs.concat(c.segs); end=c.b; }
+    if(end!==pole&&rd(pole)<rd(end)){ const pth=dijkstra(end,pole); if(pth&&pth.length<=9) segs=segs.concat(pth.map(s=>({bar:s.bar,from:s.from,to:s.to}))); }
+    flows.push({ segs:segs.map(s=>({bar:s.bar,fwd:s.from===s.bar.a})), top:end===pole||segs.length>0 }); });
+  if(more) _flowsM=flows; else _flows=flows; return flows; }
+
+/* Chemins bord -> sommet pour LavaSpeed : les coulées continues + le plus court chemin depuis chaque moyeu du bord jusqu'au moyeu du sommet (sans doublon), dans un ordre pseudo-aléatoire fixe. */
+let _lsPaths=null;
+function lsPaths(){ if(_lsPaths) return _lsPaths; const rd=q=>Math.hypot(V0[q][0]-CENTER.x,V0[q][1]-CENTER.y); let pole=-1,pb=1e9,mx=0; adj.forEach((_,v)=>{ const d=rd(v); if(d<pb){ pb=d; pole=v; } mx=Math.max(mx,d); });
+  const seen=new Set(), out=[], push=segs=>{ if(!segs.length) return; const key=segs.map(s=>s.bar.id+(s.fwd?'+':'-')).join(','); if(seen.has(key)) return; seen.add(key); out.push(segs); };
+  getFlows().forEach(f=>push(f.segs));
+  adj.forEach((_,v)=>{ if(v===pole||rd(v)<mx*.8) return; const pth=dijkstra(v,pole); if(pth&&pth.length) push(pth.map(s=>({bar:s.bar,fwd:s.from===s.bar.a}))); });
+  out.sort((a,b)=>h32(a.length*131+a[0].bar.id*7)-h32(b.length*131+b[0].bar.id*7)); return _lsPaths=out; }
+/* Fronts qui SERPENTENT (p.snake:true sur 'Tunnels de lave' dir:'up') : à chaque passage, un front prend un chemin DIFFÉRENT (départ différent sur le bord) parmi une réserve de marches aléatoires qui montent en serpentant
+   (chaque pas se rapproche du centre, choix au hasard parmi les barres voisines) + les coulées continues. Il finit toujours par atteindre le moyeu du sommet et disparaît là-haut. */
+let _snk=null;
+function snakePool(more){ if(_snk) return _snk; const rd=q=>Math.hypot(V0[q][0]-CENTER.x,V0[q][1]-CENTER.y); let pole=-1,pb=1e9,mx=0; adj.forEach((_,v)=>{ const d=rd(v); if(d<pb){ pb=d; pole=v; } mx=Math.max(mx,d); });
+  const outer=[]; adj.forEach((_,v)=>{ if(v!==pole&&rd(v)>=mx*.8) outer.push(v); }); const pool=[];
+  for(let s=0;s<64;s++){ let cur=outer[Math.floor(h32(s*13+1)*outer.length)]; const segs=[]; let guard=0;
+    while(cur!==pole&&guard++<40){ const cand=(adj.get(cur)||[]).filter(e=>rd(e.to)<rd(cur)-1); if(!cand.length) break; const e=cand[Math.floor(h32(s*131+guard*17+5)*cand.length)]; segs.push({bar:e.bar,fwd:e.bar.a===cur}); cur=e.to; }
+    if(cur!==pole){ const pth=dijkstra(cur,pole); if(pth) pth.forEach(sg=>segs.push({bar:sg.bar,fwd:sg.from===sg.bar.a})); }
+    if(segs.length) pool.push(segs); }
+  getFlows(more).forEach(f=>pool.push(f.segs)); pool.maxL=Math.max(...pool.map(s=>s.length));
+  /* 8 secteurs autour du dôme (d'après le départ de chaque chemin) : chaque front est affecté à un secteur, pour que tout le pourtour soit couvert et qu'il n'y ait pas de zone vide */
+  const NSEC=8; pool.sec=Array.from({length:NSEC},()=>[]); pool.forEach(s=>{ const f=s[0], v=f.fwd?f.bar.a:f.bar.b, a=(Math.atan2(V0[v][1]-CENTER.y,V0[v][0]-CENTER.x)+Math.PI)/(2*Math.PI); pool.sec[Math.min(NSEC-1,Math.floor(a*NSEC))].push(s); }); return _snk=pool; }
+function snakeFronts(t,w,p,T,TX,jw){ const FL=.85, pool=snakePool(p.more), NSB=p.fronts??24, NSX=Math.round(NSB*(p.glitchBoost??0)), NS=NSB+NSX, CL=pool.maxL+1.5, u0=TX*FL, gy=(GUTTY&&GUTTY[Math.floor(t*10)])||0;
+  /* fronts supplémentaires (p.glitchBoost) : plus le raclement guttural est marqué (rugosité gutturale du timbre), plus il y a de serpents en plus de ceux de base */
+  for(let j=0;j<NS;j++){ const vis=(j<NSB)?1:ssG(clamp((gy-(.2+.5*(j-NSB)/NSX))/.15)); if(vis<.01) continue; const ts=p.t0+(p.t1-p.t0)*Math.pow(j/NS,.85); if(T<ts) continue; const u=u0+j*CL*.41, c=Math.floor(u/CL), hp=u-c*CL, sec=pool.sec[j%pool.sec.length], arr=sec.length?sec:pool, path=arr[Math.floor(h32(j*7919+c*104729+11)*arr.length)], L_=path.length; if(hp>L_+1.5) continue;
+    path.forEach((sg,i)=>{ for(let k=0;k<LEDS_PER_BAR;k++){ const uu=ledU(k), s=i+(sg.fwd?uu:1-uu), dd=hp-s; if(dd<-.05||dd>1.6) continue; const q=dd<0?0:Math.exp(-dd/.55);
+      add(sg.bar.led0+k, hsv(lerp(46,10,clamp(dd/1.6)), lerp(.35,1,clamp(dd/.5)), clamp(1.1*q)*jw*w*vis)); } }); } }
+/* Trou de lave : barres du flocon central (nGonesA, anneau 1) : rayons (touchent le moyeu du sommet) et contour ; masque des LEDs concernées. Recalculé si le nombre de LEDs par barre change. */
+let _hole=null, _holeN=null;
+function holeInfo(){ if(_hole&&_hole.lpb===LEDS_PER_BAR) return _hole; const el=GEO.lists.nGonesA.find(e=>e.ring===1); if(!el) return null; const hub=el.cv, isSp=id=>bars[id].a===hub||bars[id].b===hub, spokes=el.bars.filter(isSp), contour=el.bars.filter(id=>!isSp(id)), mask=new Uint8Array(LED.length+8);
+  [...spokes,...contour].forEach(id=>{ for(let k=0;k<LEDS_PER_BAR;k++) mask[bars[id].led0+k]=1; }); return _hole={spokes,contour,mask,lpb:LEDS_PER_BAR}; }
+function holeNotes(z0){ if(_holeN&&_holeN.z0===z0) return _holeN; const T=[],Z=[]; const nt=SD.notes.t, nz=SD.notes.z; for(let i=0;i<nt.length;i++) if(nz[i]>=z0){ T.push(nt[i]); Z.push(nz[i]); } return _holeN={z0,T,Z}; }
+/* ---------- Palettes (teinte selon rayon : 0 = sommet, 1 = bord) ---------- */
+const PAL = {
+  fire:  (r,i)=>[lerp(52,4,clamp(r*1.1)),1],
+  ember: (r,i)=>[lerp(18,2,clamp(r)),1],
+  lava:  (r,i)=>[lerp(34,3,clamp(r)),1],
+  violet:(r,i)=>[lerp(285,262,clamp(r)),.9],
+  ocean: (r,i)=>h32(i*13+1)<.28 ? [lerp(30,14,r),1] : [lerp(188,222,clamp(r)),.95],
+};
+
+/* ---------- Effets : chacun ajoute des RGB dans buf ---------- */
+const FX = {
+  'Terre violette': (t,w,p) => {
+    const fo=p.fadeEnd?1-smooth(clamp((t-p.fadeStart)/(p.fadeEnd-p.fadeStart))):1, ww=w*fo*(p.level??1); if(ww<=.002) return;
+    for(const L of LED){ const n=.5+.5*Math.sin(L.x*.021+t*.35)*Math.cos(L.y*.017-t*.28);
+      add(L.id, hsv(lerp(268,292,n),.9,(.07+.12*n)*(1-.3*L.r)*ww)); } },
+  'Braises': (t,w,p,f) => {
+    const prog=clamp((t-14)/(250-14)), amp=.45+.55*prog, depth=lerp(.35,.9,prog), dieAt=rank=>p.t0+(p.t1-p.t0)*(1-rank/NEMB)*.9;
+    const bpl=p.bassPulse??0, bn=Math.pow(E.bassN[Math.min(NF-1,Math.floor(t*10))],1.3), pulseOf=(per,ph,tt)=>lerp(Math.pow(.5+.5*Math.sin(6.283*tt/per+ph),1.6), bn, bpl);   /* bassPulse : part de la pulsation lente qui suit les basses (le reste garde la période propre à chaque braise) */
+    // Les braises réagissent de plus en plus aux graves : montée PROGRESSIVE (120 s -> 150 s), puis atténuation douce vers 4:40 (pas de saut à 2:15)
+    const bassGain=.35*smooth(clamp((t-120)/30))*lerp(1,.5,smooth(clamp((t-268)/24)));
+    for(const e of emberInfo){
+      let alive=1;
+      if(p.mode==='wake'){ const t0=p.t0+(p.t1-p.t0)*e.rank/NEMB; alive=clamp((t-t0)/3); }
+      if(p.mode==='sleep') alive=1-clamp((t-dieAt(e.rank))/4);
+      if(alive<=0) continue;
+      let v=alive*amp*((1-depth)+depth*pulseOf(e.period,e.ph,thetaAt(t)))*.9; v=clamp(v+bassGain*f.bass*alive);
+      if(v<.02) continue;
+      const col=hsv(lerp(2,26,clamp(v)),1,clamp(v)*w);
+      // cœur lumineux : de plus en plus présent pendant la phase 2 (plus clair, jaune-blanc, au centre de la braise)
+      const ca=p.core?clamp((t-14)/(135-14)):0, cv=clamp(v)*ca, colc=hsv(lerp(28,48,ca),lerp(.9,.35,ca),cv*w);
+      for(const L of LED){ const dx=L.x-e.x, dy=L.y-e.y, d2=dx*dx+dy*dy; if(d2>9000) continue; const g=Math.exp(-d2/(2*38*38)); add(L.id,[col[0]*g,col[1]*g,col[2]*g]);
+        if(cv>.03 && d2<2800){ const g2=Math.exp(-d2/(2*13*13)); add(L.id,[colc[0]*g2,colc[1]*g2,colc[2]*g2]); } } }
+    if(p.small){ smallInfo.forEach(s=>{
+      let alive=clamp((t-(45+80*s.rank/NSM))/4); if(p.mode==='sleep') alive*=1-clamp((t-dieAt(s.rank*NEMB/NSM))/4); if(alive<=0) return;
+      let v=alive*(.4+.3*prog)*((1-depth)+depth*pulseOf(s.period,s.ph,thetaAt(t))); v=clamp(v+bassGain*.43*f.bass*alive); if(v<.02) return;
+      const col=hsv(lerp(2,26,clamp(v)),1,clamp(v)*w);
+      for(const L of LED){ const dx=L.x-s.x, dy=L.y-s.y, d2=dx*dx+dy*dy; if(d2>2400) continue; const g=Math.exp(-d2/(2*15*15)); add(L.id,[col[0]*g,col[1]*g,col[2]*g]); } }); } },
+  // s = position le long du tunnel, en "barres" (indépendant du nombre de LEDs)
+  'Tunnels de lave': (t,w,p,f) => {
+    /* en mode dir:'up' (la lave monte), un tunnel qui ne monte pas nettement (quasi tangentiel) n'a ni onde ni front qui avance : jamais de mouvement vers le bas */
+    const tunRise=tn=>{ if(tn._rise!==undefined) return tn._rise; const L_=tn.segs.length, rev=tn.outward, P=[]; tn.segs.forEach((sg,i)=>{ for(let k=0;k<LEDS_PER_BAR;k++){ const u=ledU(k), s0=i+(sg.fwd?u:1-u); P.push([rev?L_-s0:s0, LED[sg.bar.led0+k].r]); } }); P.sort((a,b)=>a[0]-b[0]); const h=Math.floor(P.length/2), r1=P.slice(0,h).reduce((a,x)=>a+x[1],0)/h, r2=P.slice(h).reduce((a,x)=>a+x[1],0)/(P.length-h); return tn._rise=(r2-r1)<-0.03; };
+    const TL=p.more?tunnelsMore:tunnels, n=tunnels.length, prog=clamp((t-135)/(250-135)), speed=(3+7*prog)/4, T=jerkTime(t,p.jerk), XR=rushAdv(t), TX=jerkTimeX(t,p.jerk)+XR, jw=Math.max(jerkWeightX(t,p.jerk),rushAt(t));
+    TL.forEach((tn,j)=>{
+      const ts=(j<n)?p.t0+(p.t1-p.t0)*Math.pow(j/n,.85):p.t0+(p.t1-p.t0)*(.1+.6*((j-n)/Math.max(1,TL.length-n))); if(T<ts) return;   /* tunnels ajoutés (more) : départs étalés de 10 % à 70 % de la phase */
+      const rz=(p.dir!=='up')||tunRise(tn), L_=tn.segs.length, D=lerp(7,2.5,prog), x=clamp((T-ts)/D), head=x*L_;
+      // sens du cheminement : par défaut du HAUT (centre) vers le BAS (bord) ; dir:'up' = la lave remonte (bord -> centre)
+      const rev=(p.dir==='up')?tn.outward:!tn.outward; tn.segs.forEach((sg,i)=>{
+        for(let k=0;k<LEDS_PER_BAR;k++){ const u=ledU(k), s0=i+(sg.fwd?u:1-u), s=rev?L_-s0:s0; if(s>head) continue;
+          const trav=rz?Math.max(0,Math.sin(6.283*(s-speed*(T+XR))/1.75)):0;
+          let v=.30+.35*trav*prog+.2*f.bass; if(x<1) v+=.9*Math.exp(-(head-s)*4/1.8);
+          v=clamp(v)*w; add(sg.bar.led0+k, hsv(lerp(6,38,clamp(v*1.1)),lerp(1,.75,clamp(v-.8)*4),v)); } }); });
+
+    // pendant les passages gutturaux : un front de lave (jaune-blanc -> orange) court le long de CHAQUE coulée ; son avancée suit le temps « à-coups » T
+    if(jw>.01){ const FL=.85; if(p.dir==='up'&&p.snake) snakeFronts(t,w,p,T,TX,jw); else { const FI=(p.dir==='up')?getFlows(p.more):tunnels; /* dir:'up' : le front parcourt des coulées continues bord -> sommet */ FI.forEach((tn,j)=>{ const ts=p.t0+(p.t1-p.t0)*Math.pow(j/FI.length,.85); if(T<ts) return; const L_=tn.segs.length, per=L_+1.5, hp=(((TX*FL+j*.9)%per)+per)%per, rev=(p.dir==='up')?false:!tn.outward;
+        tn.segs.forEach((sg,i)=>{ for(let k=0;k<LEDS_PER_BAR;k++){ const u=ledU(k), s0=i+(sg.fwd?u:1-u), s=rev?L_-s0:s0, dd=hp-s; if(dd<-.05||dd>1.6) continue; const q=dd<0?0:Math.exp(-dd/.55);
+            add(sg.bar.led0+k, hsv(lerp(46,10,clamp(dd/1.6)), lerp(.35,1,clamp(dd/.5)), clamp(1.1*q)*jw*w)); } }); }); } }
+  },
+
+  'Pulsation audio': (t,w,p,f) => {
+    const lvl=p.level??1, pal=PAL[p.pal||'fire'], bm=p.beat??0, sb=srcOf(p,f), base=Math.pow(lerp(sb,Math.max(sb*.5,kickEnv(t,.13,3)),bm),1.15)*(.35+.65*f.rms);
+    for(const L of LED){ const wave=.55+.45*Math.sin(L.r*5.5+(p.dir==='up'?1:-1)*t*2.6+L.bar.id*.02);
+      const v=clamp(.03+lvl*(base*wave+.35*f.mid*f.flux))*w; const [h,s]=pal(L.r,L.id); add(L.id,hsv(h,s,v)); } },
+
+  /* LavaSpeed (événement à durée, p.span = durée en s, p.out = fondu de sortie) : la lave rush, accélère et EMPLIT PLUS DE CHEMINS en montant vers le centre.
+     Des chemins bord -> sommet (les coulées + le plus court chemin depuis chaque moyeu du bord) démarrent l'un après l'autre sur la première moitié de la durée ; chaque front accélère
+     (progression en puissance 1,6) et laisse derrière lui un remplissage orange qui reste allumé. Entrée en fondu LENT (toute la durée), sortie en fondu assez RAPIDE.
+     S'AJOUTE aux autres effets (add), sans toucher aux pulsations ni au reste. */
+  'LavaSpeed': (t,w,p) => { const sp=p.span??5, age=t-p.t0; if(age<0) return;
+    const aIn=Math.pow(ssG(clamp(age/(sp*(p.inFrac??.9)))),p.inPow??1.3), aOut=age<sp?1:1-ssG(clamp((age-sp)/(p.out??.7))), A=aIn*aOut*w*(p.level??1); if(A<.004) return;
+    const P=lsPaths(), N=P.length;
+    P.forEach((segs,j)=>{ const L=segs.length, dly=sp*(p.startFrac??.5)*Math.pow(j/N,.8), h=(L+1.2)*Math.pow(clamp((age-dly)/(sp*(p.runFrac??.45))),1.6); if(h<=0) return;
+      segs.forEach((sg,i)=>{ for(let k=0;k<LEDS_PER_BAR;k++){ const u=ledU(k), s=i+(sg.fwd?u:1-u); if(s>h) continue; const dd=h-s, v=A*((p.fill??.45)+(1-(p.fill??.45))*Math.exp(-dd/1.6)); add(sg.bar.led0+k, hsv(lerp(p.h0??46,p.h1??8,clamp(dd/3)), lerp(.4,1,clamp(dd/.7)), clamp(v))); } }); }); },
+  /* Trou de lave : l'élément nGonesA « anneau 1 » (le flocon central autour du moyeu du sommet) représente le trou par lequel sort la lave.
+     Toute la phase : le CENTRE (les rayons autour du moyeu) est très lumineux, jaune ; le CONTOUR garde la couleur qu'il avait avant, en plus lumineux (+ un plancher orangé très doux pour ne jamais être noir).
+     De p.noteFrom à p.noteTo : à chaque NOTE DE SYNTHÉ (stems.js : attaques du stem « other » en 1,5-8 kHz, force >= p.noteZ) il devient encore plus lumineux que tout le reste (le reste s'atténue légèrement pendant la note).
+     Pendant les events Vibration et Ruée : aussi plus lumineux, calé sur les kicks. À placer en DERNIER dans la liste des effets de la phase. */
+  'Trou de lave': (t,w,p,f) => { const H=holeInfo(); if(!H) return; const z0=p.noteZ??1.8; let ne=0;
+    if(SD&&SD.notes&&p.noteFrom!==undefined&&t>=p.noteFrom&&t<=p.noteTo+1.2){ const N=holeNotes(z0), k=lastIdx(N.T,t-AVL); if(k>=0&&N.T[k]>=p.noteFrom&&N.T[k]<=p.noteTo){ const age=t-N.T[k]; if(age<1.2) ne=Math.exp(-age/.26)*Math.min(1,.55+.2*(N.Z[k]-z0+1)); } }
+    const vib=EV.some(e=>e.fx.some(x=>x.n==='Vibration')&&t>=e.on&&t<e.on+e.dur), act=Math.max(vib?1:0,rushAt(t)), ke=act>0?kickEnv(t,.1,2)*act:0, em=Math.max(ne,ke);
+    if(ne>.02){ const g=1-.3*ne*w; for(let id=0;id<LED.length;id++){ if(H.mask[id]) continue; buf[3*id]*=g; buf[3*id+1]*=g; buf[3*id+2]*=g; } }
+    const cg=1+(.7+1.5*em)*w;
+    H.contour.forEach(id=>{ for(let k=0;k<LEDS_PER_BAR;k++){ const L=bars[id].led0+k; buf[3*L]*=cg; buf[3*L+1]*=cg; buf[3*L+2]*=cg; add(L,hsv(14,1,(.1+.1*em)*w)); } });
+    H.spokes.forEach(id=>{ for(let k=0;k<LEDS_PER_BAR;k++){ const L=bars[id].led0+k; const c=hsv(lerp(64,60,em),lerp(.6,.25,em),clamp(.9+.1*em)*w); if(p.keepHue&&gradeSkip.length>L){ gradeSkip[L]=1; buf[3*L]=c[0]; buf[3*L+1]=c[1]; buf[3*L+2]=c[2]; } else add(L,c); } }); },   /* keepHue : le centre REMPLACE ce qu'il y avait dessous (sinon le rouge de la lave le rend orange) et échappe à l'étalonnage : jaune franc */
+  /* Halo violet léger AUTOUR de la lave : les barres voisines des coulées déjà parties (mêmes départs que « Tunnels de lave » : p.tun0..p.tun1) prennent un violet très doux.
+     Actif de p.t0 à p.t1 ; fondu d'entrée lent (p.fadeIn s) et fondu de sortie encore plus lent (p.fadeOut s, il se prolonge après p.t1). p.level = intensité (0..1). */
+  'Halo violet': (t,w,p) => { const fi=ssG(clamp((t-p.t0)/(p.fadeIn??7))), fo=1-ssG(clamp((t-p.t1)/(p.fadeOut??14))), k=(t<p.t1?fi:Math.min(fi,fo))*w; if(k<.004) return;
+    if(!tunnels._halo){ tunnels._halo=tunnels.map(tn=>{ const inT=new Set(tn.segs.map(s=>s.bar.id)), out=new Set(); tn.segs.forEach(s=>{ for(const v of [s.bar.a,s.bar.b]) for(const e of (adj.get(v)||[])) if(!inT.has(e.bar.id)) out.add(e.bar.id); }); return [...out]; }); }
+    const n=tunnels.length, m=new Map(); tunnels.forEach((tn,j)=>{ const ts=(p.tun0??135)+((p.tun1??250)-(p.tun0??135))*Math.pow(j/n,.85); if(t<ts) return; const g=ssG(clamp((t-ts)/6)); tunnels._halo[j].forEach(id=>{ if((m.get(id)||0)<g) m.set(id,g); }); });
+    for(const L of LED){ const g=m.get(L.bar.id); if(!g) continue; const v=clamp((p.level??.6)*.3*k*g*(.75+.25*Math.sin(t*.7+L.bar.id*.37))); add(L.id,hsv(275,.75,v)); } },
+  /* Flash : éclair de couleur sur TOUT le dôme à l'instant p.t0 (montée 40 ms puis décroissance exponentielle). p.hue, p.level (0..1), p.tau (s) */
+  'Flash': (t,w,p) => { const age=t-p.t0; if(age<0) return; const a=Math.min(1,age/.04), e=a*Math.exp(-Math.max(0,age-.04)/(p.tau??.3)), v=clamp((p.level??.3)*e)*w; if(v<.002) return; const c=hsv(p.hue??280,p.sat??.9,v); for(const L of LED) add(L.id,c); },
+
+  /* Vibration : petits flashs très très rapides (p.hz, défaut 18 Hz) sur la luminosité de tout le dôme, d'autant plus marqués que la basse (stem) est présente ; p.amp = profondeur */
+  'Vibration': (t,w,p,f) => { const q=Math.floor(t*(p.hz??18)*2)%2; GAIN*=1-w*(p.amp??.4)*(.35+.65*f.bassS)*(q?1:0); },
+
+  /* Noir : extinction TOTALE du dôme (tout est multiplié par 0, y compris les effets d'events) puis rallumage. Chute en 40 ms, noir complet p.hold s (0,25), retour en p.back s (0,2) ; démarre à p.t0. */
+  'Noir': (t,w,p) => { const age=t-p.t0; if(age<0) return; const off=ssG(clamp(age/.04)), on=ssG(clamp((age-(p.hold??.25))/(p.back??.2))); GAIN*=1-off*(1-on)*w; },
+
+  'Étincelles': (t,w,p,f) => {
+    const amt=p.amount??1, pal=p.pal||'fire', tick=Math.floor(t*12), src=p.band==='mid'?f.mid:f.flux, thr=amt*(.01+.22*src*src+.1*f.high)*4/LEDS_PER_BAR, tr=p.trail??3;
+    for(const L of LED){ for(let k=0;k<tr;k++){ if(h32(L.id*131+(tick-k)*7919)<thr){
+      const a=Math.pow(1-k/tr,1.5)*w; add(L.id, pal==='ocean'?hsv(195,.35,a): pal==='violet'?hsv(285,.5,a): hsv(48,.35,a)); break; } } } },
+
+  // ÉVÈNEMENT – la lave jaillit du bord (bas) vers le sommet (centre) : front blanc-jaune qui monte, traîne orange-rouge.
+  // Jaillissement : un front de lave jaune-blanc monte du BORD (bas) vers le CENTRE (sommet), puis laisse une traînée orange-rouge.
+  // p.t0 = instant unique ; p.gut = {from,to,thr,gap} : un jaillissement par « raclement » détecté dans le son guttural (GUT, 150-1500 Hz, indépendant du beat).
+  'Jaillissement de lave': (t,w,p) => {
+    const D=p.rise??1.5, T=p.tail??3, span=D+T*1.2;
+    const one=(t0,amp)=>{ const dt=t-t0; if(dt<-.1||dt>span) return;
+      for(const L of LED){ const tp=D*Math.pow(1-L.r,.85), age=dt-tp; if(age<-.15) continue;
+        const head=Math.exp(-(age*age)/(2*.13*.13)), trail=age<0?0:Math.exp(-age/(T/3)), fl=.7+.3*h32(L.id*7+Math.floor(t*30));
+        const v=clamp((trail*.85+head*1.25)*fl)*w*amp; if(v<.01) continue;
+        add(L.id, hsv(lerp(5,50,clamp(head+trail*.25)), lerp(1,.3,clamp(head)), v)); } };
+    if(p.gut){ for(const o of gutOnsets(p.gut.from,p.gut.to,p.gut.thr??4.5,p.gut.gap??.5)){ if(o>t+.1) break; if(o>=t-span) one(o,p.amp??.85); } } else one(p.t0,1); },};
+
+// Raclements du son guttural (dubstep) : maxima locaux du flux relatif GUT au-dessus de `thr`, espacés d'au moins `gap` secondes (le beat est ignoré)
+const _go=new Map();
+function gutOnsets(a,b,thr,gap){ const key=[a,b,thr,gap].join('/'); if(_go.has(key)) return _go.get(key); const out=[], v=i=>(((window.GUT&&window.GUT.v)||[])[i]||0)/10; let last=-9;
+  for(let i=Math.floor(a*50)+2;i<Math.floor(b*50)-2;i++){ const x=v(i); if(x>=thr&&x>=v(i-1)&&x>=v(i+1)&&x>=v(i-2)&&x>=v(i+2)){ const tt=i/50; if(tt-last>=gap){ out.push(tt); last=tt; } } } _go.set(key,out); return out; }
+/* ---------- Rythme : kicks / hits détectés (beats.js) – permet de caler les LEDs EXACTEMENT sur le beat ---------- */
+/* Décalage son/image (AVL, en s) : les effets calés sur le son (kicks, basses, notes...) lisent le son à l'instant (t - AVL). Réglable avec le curseur « Synchro » (la latence audio du système n'est pas mesurable par la page). */
+let AVL=0; try{ AVL=(+localStorage.getItem('animadome.avl')||0)/1000; }catch(e){}
+const BT = window.BEATS || { kick:[], kickS:[], hit:[], hitS:[] };
+function lastIdx(arr,t){ let lo=0,hi=arr.length-1,r=-1; while(lo<=hi){ const m=(lo+hi)>>1; if(arr[m]<=t){ r=m; lo=m+1; } else hi=m-1; } return r; }
+function envOf(arr,S,t,tau,minS){ t-=AVL; let i=lastIdx(arr,t); while(i>=0 && S[i]<minS && arr[i]>t-.8) i--; if(i<0) return 0; const dt=t-arr[i]; if(dt>1.2) return 0; return Math.exp(-dt/tau)*Math.min(1,.45+.07*S[i]); }
+const kickEnv=(t,tau=.14,minS=1)=>envOf(BT.kick,BT.kickS,t,tau,minS);
+const hitEnv=(t,tau=.09,minS=1)=>envOf(BT.hit,BT.hitS,t,tau,minS);
+function recent(arr,S,t,win,minS){ t-=AVL; const out=[]; for(let i=lastIdx(arr,t); i>=0 && arr[i]>t-win; i--) if(S[i]>=minS) out.push(i); return out; }
+// Gros beats : kicks de force >= minS, en gardant seulement le plus fort quand plusieurs tombent à moins de `gap` secondes (ignore les petits beats).
+const _mk={}; function majorKicks(minS,gap){ const key=minS+'/'+gap; if(_mk[key]) return _mk[key]; const T=[],S=[];
+  for(let i=0;i<BT.kick.length;i++){ if(BT.kickS[i]<minS) continue; const x=BT.kick[i]; if(T.length&&x-T[T.length-1]<gap){ if(BT.kickS[i]>S[S.length-1]){ T[T.length-1]=x; S[S.length-1]=BT.kickS[i]; } continue; } T.push(x); S.push(BT.kickS[i]); }
+  return _mk[key]={T,S}; }
+// Horloge « à-coups » : dans les fenêtres [début, fin], le temps n'avance qu'aux attaques du son (kicks/hits forts) au lieu de s'écouler en continu.
+// Durée totale identique => raccord continu aux bords de la fenêtre.
+// Horloge « à-coups » guidée par la PROGRESSION du son guttural (GUT : flux spectral relatif 150–1500 Hz, hors grosse caisse, 50 images/s) et non par le beat.
+// Dans une fenêtre [début, fin, rampe?], le temps avance proportionnellement à l'activité cumulée de ce son : les coulées bondissent quand il éclate et s'arrêtent quand il se tait.
+// Durée totale identique => raccord continu aux bords. À partir de `rampe`, les éclats sont encore plus marqués.
+const GUTV=(window.GUT&&window.GUT.v)||[], _jc=new Map(), ssG=x=>x<=0?0:x>=1?1:x*x*(3-2*x);
+/* Rugosité gutturale (stems.js : timbre brillant/rugueux du stem « other », relatif au niveau local, 10 img/s) : les à-coups ne comptent presque plus quand le son n'est pas guttural (précision 0,8-0,9 sur les passages de la phase 3). Sans stems.js : porte ouverte. */
+const GUTTY=(window.STEMS&&window.STEMS.gutty&&window.STEMS.gutty.v)||null, GATE=tt=>{ if(!GUTTY) return 1; const g=GUTTY[Math.floor(tt*10)]||0; return .3+.7*ssG((g-.2)/.35); };
+function jerkCum(g0,g1,r0){ const key=g0+'/'+g1+'/'+r0; let c=_jc.get(key); if(c) return c; const i0=Math.floor(g0*50), n=Math.ceil(g1*50)-i0, wa=new Float64Array(n);
+  for(let i=0;i<n;i++){ const tt=(i0+i)/50, ramp=ssG((tt-r0)/Math.max(1e-6,g1-r0)), v=(GUTV[i0+i]||0)/10; wa[i]=Math.pow(Math.max(0,v-1.5),1.8)*(1+2*ramp)*GATE(tt); }
+  // plus un raclement est LONG, plus il pousse la lave loin : chaque passage continu (poids > seuil) est multiplié selon sa durée (jusqu'à x5 pour >= 1 s)
+  const thr=.15, act=new Uint8Array(n); for(let i=0;i<n;i++) if(wa[i]>thr) for(let k=Math.max(0,i-5);k<=Math.min(n-1,i+5);k++) act[k]=1;   /* lacunes < 0,2 s fusionnées */
+  for(let i=0;i<n;){ if(!act[i]){ i++; continue; } let j=i; while(j<n&&act[j]) j++; const dur=(j-i)/50, boost=1+4*Math.min(1,dur/1.0); for(let k=i;k<j;k++) wa[k]*=boost; i=j; }
+  const cum=new Float64Array(n+1); for(let i=0;i<n;i++) cum[i+1]=cum[i]+wa[i];
+  c={i0,cum,tot:cum[n]}; _jc.set(key,c); return c; }
+function jerkTime(t,wins){ if(!wins||!GUTV.length) return t;
+  for(const w of wins){ const g0=w[0], g1=w[1], r0=(w[2]===undefined?g1:w[2]); if(t>g0&&t<g1){ const c=jerkCum(g0,g1,r0); if(c.tot<=0) return t;
+      const x=t*50-c.i0, i=Math.min(c.cum.length-2,Math.max(0,Math.floor(x))), C=c.cum[i]+(c.cum[i+1]-c.cum[i])*(x-i); return g0+(g1-g0)*(C/c.tot); } } return t; }
+function jerkWeight(t,wins){ if(!wins||!GUTV.length) return 0; for(const w of wins){ if(t>w[0]-1&&t<w[1]+1) return ssG(Math.min(t-(w[0]-1),(w[1]+1)-t)); } return 0; }/* Front de lave des passages gutturaux : avance AMPLIFIÉE (x(1+JE)) par rapport à la progression normale ; visible seulement à l'intérieur de la fenêtre (fondu 0,8 s à chaque bord) pour que le surplus d'avance ne crée pas de saut. */
+const JE=3;
+function jerkTimeX(t,wins){ const T=jerkTime(t,wins); if(wins) for(const w of wins){ if(t>w[0]&&t<w[1]) return T+JE*(T-w[0]); } return T; }
+function jerkWeightX(t,wins){ if(wins&&GUTV.length) for(const w of wins){ if(t>w[0]&&t<w[1]) return ssG(Math.min(t-w[0],w[1]-t)/.8); } return 0; }
+/* RUÉES : événements à durée (rush:1, span = durée) pendant lesquels pulsations et avancées de lave deviennent très rapides et très saccadées.
+   rushAt(t) = 0..1 (fondu 0,12 s) ; rushAdv(t) = avance supplémentaire du « temps de lave » : par bonds successifs (RUSH_N paliers) totalisant RUSH_K x durée. */
+const RUSH_K=9, RUSH_N=9;
+const rushAt=t=>{ let m=0; for(const e of EV){ if(e.rush&&e.span&&t>=e.on&&t<e.on+e.span) m=Math.max(m,ssG(Math.min(t-e.on,e.on+e.span-t)/.12)); } return m; };
+const rushAdv=t=>{ let s=0; for(const e of EV){ if(!e.rush||!e.span||t<=e.on) continue; const u=Math.min(1,(t-e.on)/e.span), x=u*RUSH_N, i=Math.floor(x), fr=x-i; s+=RUSH_K*e.span*Math.min(1,(i+ssG(Math.min(1,fr*2.2)))/RUSH_N); } return s; };function adiff(a,b){ let d=a-b; while(d>Math.PI) d-=6.2832; while(d<-Math.PI) d+=6.2832; return d; }
+function vnoise(x,y){ const xi=Math.floor(x), yi=Math.floor(y), xf=x-xi, yf=y-yi, s=q=>q*q*(3-2*q);
+  const a=h32(xi*73856093^yi*19349663), b=h32((xi+1)*73856093^yi*19349663), c=h32(xi*73856093^(yi+1)*19349663), d=h32((xi+1)*73856093^(yi+1)*19349663);
+  const u=s(xf), v=s(yf); return lerp(lerp(a,b,u),lerp(c,d,u),v); }
+// angle de rotation intégré (vitesse liée à l'énergie du son) : déterministe, donc compatible avec les sauts dans la timeline
+const ROT=new Float32Array(NF); { let a=0; for(let i=0;i<NF;i++){ a+=(.35+1.9*E.flux[i]*E.rms[i])*.1; ROT[i]=a; } }
+// Temps « accéléré » des pulsations de braises : le rythme est inchangé au début (avant 1:00), accélère légèrement entre la phase 2 et la phase 3
+// (jusqu'à ×1,45 vers 3:40), puis revient doucement au rythme lent après 4:40. Phase intégrée => aucun saut, compatible avec les sauts dans la timeline.
+const THETA=new Float32Array(NF); { const ss=x=>{ x=Math.min(1,Math.max(0,x)); return x*x*(3-2*x); }; let a=0, prev=1;
+  for(let i=0;i<NF;i++){ const t=i*.1, s=1+.45*ss((t-60)/160)*(1-ss((t-280)/60)); a+=.5*(prev+s)*.1; prev=s; THETA[i]=a; } }
+function thetaAt(t){ const x=t*10, i=Math.min(NF-2,Math.max(0,Math.floor(x))); return lerp(THETA[i],THETA[i+1],x-i); }function rotAt(t){ const x=t*10, i=Math.min(NF-2,Math.max(0,Math.floor(x))); return lerp(ROT[i],ROT[i+1],x-i); }
+
+// Chemins le long des barres : failles (du bord vers le centre) et éclairs (du centre vers le bord)
+const radV = v => Math.hypot(V0[v][0]-CENTER.x, V0[v][1]-CENTER.y)/R;
+function walkPath(startV, dir, minLen, maxLen, seed){ const r=rng(seed), segs=[]; let cur=startV, prevBar=null; const len=minLen+Math.floor(r()*(maxLen-minLen+1));
+  for(let s=0;s<len;s++){ const opts=(adj.get(cur)||[]).filter(e=>e.bar!==prevBar); if(!opts.length) break;
+    opts.forEach(e=>{ e.sc = dir<0 ? radV(cur)-radV(e.to) : radV(e.to)-radV(cur); }); opts.sort((a,b)=>b.sc-a.sc);
+    const good=opts.filter(e=>e.sc>-0.02), pool=good.length?good:[opts[0]]; const e=pool[Math.floor(Math.pow(r(),1.6)*pool.length)];
+    segs.push({ bar:e.bar, fwd:cur===e.bar.a }); prevBar=e.bar; cur=e.to; }
+  return { v0:startV, segs }; }
+const cracks = (function(){ const st=interior.filter(v=>radV(v)>.55), out=[]; for(let i=0;i<70;i++) out.push(walkPath(st[Math.floor(h32(i*11+1)*st.length)],-1,4,8,100+i)); return out; })();
+const bolts  = (function(){ const st=interior.filter(v=>radV(v)<.35), out=[]; for(let i=0;i<40;i++) out.push(walkPath(st[Math.floor(h32(i*17+3)*st.length)],+1,6,10,500+i)); return out; })();
+const seeps = (function(){ const st=interior.filter(v=>radV(v)<.35), out=[]; for(let i=0;i<14;i++) out.push(walkPath(st[Math.floor(h32(i*23+5)*st.length)],+1,8,12,900+i)); return out; })();
+// Obstacles que la lave contourne dans l'eau : 7 par coulée, positions aléatoires (graine fixe)
+const R_PLAN=412;
+const waterObstacles=(function(){ const out=[]; for(let c=0;c<6;c++){ const a=[]; for(let i=0;i<7;i++){ const r=.14+.5*h32(c*131+i*17+3), th=(h32(c*977+i*29+5)*2-1)*Math.PI; a.push({ r, th, rho:.06+.06*h32(c*53+i*11+7), x:CENTER.x+r*R_PLAN*Math.cos(th), y:CENTER.y+r*R_PLAN*Math.sin(th) }); } out.push(a); } return out; })();function eachPathLED(path, head, fn){ path.segs.forEach((sg,i)=>{ if(i>head) return; for(let k=0;k<LEDS_PER_BAR;k++){ const u=ledU(k), s=i+(sg.fwd?u:1-u); if(s>head) continue; fn(sg.bar.led0+k, s); } }); }
+const lavaHSV=(x,v)=>hsv(lerp(4,50,clamp(x*1.05)), lerp(1,.45,clamp(x-.85)*6), v);
+
+let GAIN=1;   // gain global de luminance (multiplicatif, appliqué après tous les effets) : teinte et saturation inchangées
+Object.assign(FX, {
+  // Battement général (« heartbeat ») : toutes les LEDs pulsent ensemble en luminance, calées sur les kicks du mix. Amplitude a0 -> a1 entre t0 et t1.
+  'Battement': (t,w,p) => { /* p.onset = instant où le battement démarre dans le son : avant, très discret (a0 -> 6 %) ; après, franc (p.aOn) puis montée jusqu'à a1 en fin de phase ; fondu de 2,5 s autour de l'attaque */
+    const a=(p.onset!==undefined)?lerp(lerp(p.a0??.03,.06,clamp((t-p.t0)/Math.max(1,p.onset-p.t0))), lerp(p.aOn??.35,p.a1??.4,clamp((t-p.onset)/Math.max(1,p.t1-p.onset))), ssG(clamp((t-p.onset)/2.5))):lerp(p.a0??.03,p.a1??.4,Math.pow(clamp((t-p.t0)/Math.max(1,p.t1-p.t0)),1.5)), env=p.gap?(()=>{ const m=majorKicks(p.minS??1,p.gap); return envOf(m.T,m.S,t,p.tau??.16,1); })():kickEnv(t,p.tau??.16,p.minS??1);   /* p.tau = durée de retombée du flash de chaque kick (s) : courte = chaque kick d'une série se sent */ const rs=rushAt(t), a2=a+(.5-a)*rs   /* profondeur max des pulsations pendant une ruée : 50 % (le dôme ne s'éteint jamais complètement) */, env2=env+((Math.floor(t*14)%2?1:.12)-env)*rs*.85; /* plus une série de kicks est serrée, moins chaque pulsation est profonde (p.minW = fraction minimale, atteinte pour un écart nul ; pleine profondeur à partir de p.spread secondes d'écart) ; jamais nulle : ça flashe toujours un peu. Pas d'atténuation pendant une ruée. */
+    const wk0=p.gap?(()=>{ const m=majorKicks(p.minS??1,p.gap), mw=p.minW??.35, sp=p.spread??.5, key='W'+mw+'/'+sp; if(!m[key]) m[key]=m.T.map((x,i)=>i?Math.min(1,Math.max(mw,(x-m.T[i-1])/sp)):1); const k=lastIdx(m.T,t-AVL); return k<0?1:m[key][k]; })():1, wk=wk0+(1-wk0)*rs; GAIN*=1-w*a2*wk*(1-env2); },
+  // Coulées de lave qui déferlent du HAUT (sommet = centre) vers le BAS (bord) : vagues uniformes et/ou coulées serpentantes
+  'Coulées': (t,w,p,f) => {
+    const lvl=p.level??1, mode=p.mode||'both', kb=kickEnv(t,.15,3), wu=mode==='snake'?0:(mode==='uniform'?1:.7), ws=mode==='uniform'?0:1, NS=8, per=3;
+    for(const L of LED){ let v=0, hot=0;
+      if(wu>0){ const wv=Math.pow(.5+.5*Math.sin(6.2832*(L.r*2.0 - t*(.35+.8*f.flux))),2.4); v+=wu*wv*(.55+.45*Math.max(f.bass,kb)); hot=Math.max(hot,wv); }
+      if(ws>0){ for(let i=0;i<NS;i++){ const ph=t/per+i/NS, cyc=Math.floor(ph), head=(ph-cyc)*1.3-.05; if(L.r>head||L.r<head-.55) continue;
+          const th=h32(i*977+cyc*131)*6.2832+.9*Math.sin(L.r*7+i*1.7), arc=Math.abs(adiff(L.theta,th))*Math.max(L.r,.12), wd=.11+.06*L.r; if(arc>wd*2.4) continue;
+          const tr=1-(head-L.r)/.55, q=Math.pow(tr,1.4)*Math.exp(-(arc*arc)/(wd*wd)); v+=ws*q; hot=Math.max(hot,q*tr); } }
+      v=clamp(v)*lvl*w; if(v<.01) continue; add(L.id, lavaHSV(hot,v)); } },
+
+  // Tourbillon de lave autour du dôme (vitesse = son) ; quand le son est moins saturé : « brûlure » qui se consume du bord vers le centre
+  'Tourbillon': (t,w,p,f) => {
+    const lvl=p.level??1, ang=rotAt(t)*(p.speed??1), kb=kickEnv(t,.14,3), wT=clamp((f.flux-.28)/.35), wB=1-wT, prog=(t/7)%1, cyc=Math.floor(t/7);
+    for(const L of LED){ let v=0, hot=0;
+      if(wT>.01){ const b=Math.pow(Math.max(0,Math.cos(3*(L.theta-ang)-5*L.r)),2.2); v+=wT*b*(.45+.55*L.r)*(.6+.5*Math.max(f.bass,kb)); hot=Math.max(hot,b*(.4+.6*L.r)); }
+      if(wB>.01){ const rf=1.12-prog*1.25+.14*vnoise(L.theta*3+cyc*7,L.r*4), d=L.r-rf;
+        if(Math.abs(d)<.045){ const q=1-Math.abs(d)/.045; v+=wB*q; hot=Math.max(hot,q); }
+        else if(d>0){ const q=Math.exp(-(d-.045)/.25)*.35; v+=wB*q; hot=Math.max(hot,q*.2); } else v+=wB*.06; }
+      v=clamp(v)*lvl*w; if(v<.01) continue; add(L.id, lavaHSV(hot,v)); } },
+
+  // Failles : sur les gros kicks, une fissure de lumière craque du bord vers le centre le long des barres, avec une résurgence au point de départ
+  'Failles': (t,w,p,f) => {
+    const lvl=p.level??1, minS=p.minS??4;
+    for(const ki of recent(BT.kick,BT.kickS,t,3.2,minS)){ const age=t-BT.kick[ki], cr=cracks[Math.floor(h32(ki*7+3)*cracks.length)], head=clamp(age/.3)*cr.segs.length, fl=Math.exp(-age/.5), glow=Math.exp(-age/2.2);
+      eachPathLED(cr, head, (id)=>{ add(id, hsv(lerp(4,52,clamp(fl*1.2+glow*.25)), lerp(1,.35,clamp(fl-.5)*2), clamp(.85*glow+.9*fl)*lvl*w)); });
+      const vx=V0[cr.v0]; for(const L of LED){ const dx=L.x-vx[0], dy=L.y-vx[1], d2=dx*dx+dy*dy; if(d2>6000) continue; const g=Math.exp(-d2/(2*30*30)); add(L.id, hsv(lerp(5,30,glow),1,.7*glow*g*lvl*w)); } } },
+
+  // Flammes : montent du bord vers le centre en vacillant ; gros débris enflammés qui retombent du centre vers le bord (sur les gros kicks)
+  'Flammes': (t,w,p,f) => {
+    const lvl=p.level??1, sp=p.speed??1, kb=kickEnv(t,.15,3), pk=Math.max(srcOf(p,f),kb);
+    for(const L of LED){ const s=1-L.r, n=.65*vnoise(L.theta*3.2+11, s*4.5-t*1.7*sp)+.35*vnoise(L.theta*7+3, s*9-t*3.1*sp), reach=.45+.35*pk+.15*f.flux, inten=clamp((n*1.25+.35)-s/reach);
+      if(inten<.02) continue; add(L.id, lavaHSV(inten, clamp(Math.pow(inten,.85)*lvl*w*(.7+.5*pk)))); }
+    for(const ki of recent(BT.kick,BT.kickS,t,2.2,p.debrisMinS??6)){ const age=t-BT.kick[ki], th=h32(ki*31+5)*6.2832, TT=1.3, rp=.05+.95*Math.pow(clamp(age/TT),1.8);
+      for(const L of LED){ const arc=Math.abs(adiff(L.theta,th))*Math.max(L.r,.1);
+        if(age<TT){ if(L.r>rp||L.r<rp-.14||arc>.05) continue; add(L.id, hsv(48,.45,clamp((1-(rp-L.r)/.14)*(1-arc/.05))*lvl*w)); }
+        else { const ia=age-TT; if(ia>.8) continue; const d2=arc*arc+(1-L.r)*(1-L.r)*.5, q=Math.exp(-d2/.012)*Math.exp(-ia/.3); add(L.id, hsv(50,.3,clamp(q*1.2)*lvl*w)); } } } },
+
+  // Collision lave-eau (phase 33) : plusieurs coulées globales de lave rouge vif arrivent par le HAUT du dôme (centre) au contact de l'eau, fondent dans le bleu (rouge vif -> violet sombre -> bleu).
+  // Chaque coulée est asymétrique (bruit d'angle + obstacles que la lave contourne). En bas, il ne reste du rouge vif que des pointes aléatoires ; de petits tunnels rougeoyants s'infiltrent vers le bas.
+  'Collision lave-eau': (t,w,p,f) => {
+    const t0=p.t0, NC=p.repeats??4, P=p.period??32, D=p.spread??26, FD=p.fade??12, ss=x=>x<=0?0:x>=1?1:x*x*(3-2*x), red=[1,.06,.04], blue=[.1,.24,.75];
+    for(let c=0;c<NC;c++){ const tc0=t0+c*P; if(t<tc0) break; const R=(p.reach??.62)*(.82+.25*h32(c*7+1)), obs=waterObstacles[c%waterObstacles.length];
+      for(const L of LED){ if(L.r>R*1.08) continue;
+        let blocked=false, delay=D*Math.pow(clamp(L.r/R),1.2)*(.6+.8*vnoise(L.theta*2.3+c*5.1, L.r*3.2+c*1.7));
+        for(const o of obs){ const d=Math.hypot(L.x-o.x,L.y-o.y)/R_PLAN; if(d<o.rho){ blocked=true; break; } delay+=9*Math.exp(-Math.pow(d/(o.rho*2.4),2));
+          if(L.r>o.r){ const arc=Math.abs(adiff(L.theta,o.th))*L.r; if(arc<o.rho*1.3) delay+=8*(1-arc/(o.rho*1.3)); } }
+        if(blocked) continue; const tcL=tc0+delay; if(t<tcL) continue;
+        const age=t-tcL, k=ss(age/FD), nz=.85+.3*vnoise(L.theta*3+age*.2, L.r*6), life=1-ss((age-(FD+14))/18); if(life<=.01) continue;
+        const m=(lerp(1,.4,k)+.6*Math.exp(-age/1.5))*nz*life*w*.9*(p.gain??1);
+        add(L.id,[lerp(red[0],blue[0],k)*m, lerp(red[1],blue[1],k)*m, lerp(red[2],blue[2],k)*m]); } }
+    // résidus : de petits tunnels rougeoyants s'infiltrent lentement vers le bas ; seule la pointe reste vive
+    seeps.forEach((sp,i)=>{ const ts=t0+8+i*(p.seepEvery??8); if(t<ts) return; const head=Math.min(sp.segs.length+.6,(t-ts)*.16);
+      eachPathLED(sp, head, (id,s)=>{ const hd=head-s, fl=.55+.45*Math.sin(6.283*(t/5+i*.37)+s*.8), v=(.07+.5*Math.exp(-hd/.9))*fl*w*clamp(hd/.4+.2); add(id, hsv(lerp(2,10,Math.exp(-hd/2)),1,v)); }); });
+    // en bas du dôme : plus de rouge vif que des pointes, aléatoires
+    if(t>t0+30){ const ep=Math.floor(t/1.6), ph=t/1.6-ep, e=Math.sin(Math.PI*ph), ramp=ss((t-t0-30)/20);
+      for(const L of LED){ if(L.r>.7 && h32(L.id*53+ep*997)<.012*(p.tips??1)) add(L.id, hsv(2,.95,.95*e*w*ramp)); } } },
+  // Lever de soleil (phase 34) : plus de lave ; l'eau reste bleue. Le soleil se lève à l'EST du dôme (côté droit du plan par défaut), apparaît en `delay` secondes,
+  // puis monte lentement vers le SOMMET (centre) en éclairant de plus en plus l'eau, qui s'éclaircit.
+  'Lever de soleil': (t,w,p,f) => {
+    const t0=p.t0, t1=p.t1, dl=p.delay??5, ss=x=>x<=0?0:x>=1?1:x*x*(3-2*x), appear=ss((t-t0)/dl), s=ss((t-t0-dl)/Math.max(1,t1-t0-dl)), e=s, ea=(p.eastDeg??0)*Math.PI/180;
+    let maxR=0; for(const L of LED) if(L.r>maxR) maxR=L.r; const RH=maxR*R_PLAN, dist=(1-s)*(RH*1.02), Sx=CENTER.x+Math.cos(ea)*dist, Sy=CENTER.y+Math.sin(ea)*dist;
+    for(const L of LED){ const d=Math.hypot(L.x-Sx,L.y-Sy)/R_PLAN, core=Math.exp(-Math.pow(d/.075,2)), halo=Math.exp(-Math.pow(d/(.22+.12*e),2)), lit=(.4+.6*e)*Math.exp(-Math.pow(d/lerp(.5,1.1,e),2));
+      const warm=clamp((core*1.1+halo*.55)*appear)*w; if(warm>.01) add(L.id, hsv(lerp(22,46,e), lerp(.95,.3,Math.min(1,core*1.3+e*.4)), warm));
+      const q=Math.pow(clamp(lit*appear*1.15),.85)*w; if(q>.01) add(L.id, hsv(lerp(228,194,q), lerp(.92,.28,q*q), .9*q)); } },
+  // Eau de nuit : bleu nuit sombre et UNIFORME sur tout le dôme (aucune vague) ; seule une autre source de lumière (le soleil) en modifie les couleurs.
+  'Eau de nuit': (t,w,p) => { const c=hsv(p.hue??226,.88,(p.level??.16)*w); for(const L of LED) add(L.id,c); },
+  // Vagues bleues lentes (océan), reflets bleu-vert / violet ; l'écume blanche suit les aigus
+  'Vagues': (t,w,p,f) => {
+    const lvl=p.level??1, he=hitEnv(t,.1,5), lift=p.liftT0!==undefined?Math.min(1,Math.max(0,(t-p.liftT0)/(p.liftT1-p.liftT0))):0, liftS=lift*lift*(3-2*lift), dtm=p.dimT0!==undefined?Math.min(1,Math.max(0,(t-p.dimT0)/(p.dimT1-p.dimT0))):0, dimS=dtm*dtm*(3-2*dtm), LS=Math.max(liftS,(p.clear??0)*(1-dimS));
+    for(const L of LED){ const w1=Math.sin(6.2832*(L.r*1.3-t*.07)+2.2*Math.sin(L.theta*2+t*.15)), w2=Math.sin(6.2832*(L.r*2.1+t*.05)+L.theta*3);
+      const v=lvl*w*(.24+.4*(.5+.5*w1)+.22*(.5+.5*w2))*(.7+.3*f.rms); let hue=lerp(188,232,.5+.5*w2)+40*f.high*(.5+.5*w1);
+      add(L.id, hsv(hue-18*LS+14*dimS,.9-.4*LS,clamp(v*(1+.8*LS)*Math.pow(1-dimS,1.3))));
+      if(he>0.02 && h32(L.id*7+Math.floor(t*20))<.18*f.high) add(L.id, hsv(195,.2,he*w)); } },
+
+  // Éclairs : sur les gros aigus (au hasard), un trait blanc-bleuté tombe du sommet (centre) vers le bord, flash faible sur tout le dôme
+  'Éclairs': (t,w,p,f) => {
+    const rate=p.rate??.4, minS=p.minS??6;
+    for(const hi of recent(BT.hit,BT.hitS,t,.5,minS)){ if(h32(hi*13+7)>rate) continue; const age=t-BT.hit[hi], bolt=bolts[Math.floor(h32(hi*5+1)*bolts.length)], head=clamp(age/.06)*bolt.segs.length, fl=age<.12?1:Math.exp(-(age-.12)/.1);
+      eachPathLED(bolt, head, (id)=>{ add(id, hsv(212,lerp(.15,.5,clamp(age/.3)),clamp(fl)*w)); });
+      for(const L of LED) add(L.id, hsv(220,.5,.07*Math.exp(-age/.12)*w)); } },
+});
+
+/* ---------- Descriptif (texte) + effets, rechargés à chaud ---------- */
+let PH = [], EV = [], DUR = Math.floor(NF/10), lastTxt = '';
+const key = s => mmss(s);
+// Mix sans partition d'effets (pas encore travaillé) : dôme éteint. Sinon, phase non associée : pulsation par défaut.
+/* ---------- EFFECTS BANK : animations-type SANS couleur ----------
+   Chaque effet donne, pour une LED L et un temps t, une valeur 0..1 (l'animation seule). La couleur vient ensuite d'un dégradé (blanc par défaut).
+   Même bibliothèque pour l'onglet « Effects bank » et pour l'effet de phase 'Bank' : { n:'Bank', eff:'Montée', grad:'Lave', speed:1, level:0.8, t0:instant_de_départ }. */
+let bankView=false, eventView=false;
+const BK={ x0:0,x1:1,y0:0,y1:1,ok:false }, TAU=6.2832;
+function bkExt(){ if(BK.ok) return; BK.x0=BK.y0=1e9; BK.x1=BK.y1=-1e9; for(const L of LED){ BK.x0=Math.min(BK.x0,L.x); BK.x1=Math.max(BK.x1,L.x); BK.y0=Math.min(BK.y0,L.y); BK.y1=Math.max(BK.y1,L.y); } BK.ok=true; }
+const bandf=(x,p=1.6)=>Math.pow(Math.max(0,Math.sin(TAU*x)),p), gauss=(d,w)=>Math.exp(-(d/w)*(d/w));
+const BANK={
+  'Pulsation':        { d:"Respiration de tout le dôme, lente et régulière.", f:(L,t)=>.5+.5*Math.sin(t*2.2) },
+  'Flash pulsé':      { d:"Éclat bref qui retombe, répété (comme un battement de cœur).", f:(L,t)=>Math.exp(-5*((t*1.4)%1)) },
+  'Stroboscope':      { d:"Clignotement net tout le dôme (allumé / éteint).", f:(L,t)=>((t*6)%1)<.4?1:0 },
+  'Montée':           { d:"Bandes de lumière qui montent du bord vers le centre (la lave remonte).", f:(L,t)=>bandf(L.r*2.4+t*.7) },
+  'Descente':         { d:"Bandes de lumière qui descendent du centre vers le bord (la lave s'écoule).", f:(L,t)=>bandf(L.r*2.4-t*.7) },
+  'Onde sortante':    { d:"Un anneau part du centre et s'élargit jusqu'au bord.", f:(L,t)=>{ const R=(t*.3)%1.15; return gauss(L.r-R,.09)*(1-R*.45); } },
+  'Onde entrante':    { d:"Un anneau part du bord et se resserre vers le centre.", f:(L,t)=>{ const R=1.1-((t*.3)%1.15); return gauss(L.r-R,.09)*(.55+R*.45); } },
+  'Rotation':         { d:"Un bras de lumière tourne autour du dôme.", f:(L,t)=>Math.pow(Math.max(0,Math.cos(L.theta-t*1.4)),8) },
+  'Hélice (3 bras)':  { d:"Trois bras de lumière tournent ensemble.", f:(L,t)=>Math.pow(Math.max(0,Math.cos(3*(L.theta-t*.8))),3) },
+  'Spirale':          { d:"Deux bras qui s'enroulent du centre vers le bord en tournant.", f:(L,t)=>bandf(L.theta/TAU*2+L.r*1.2+t*.5,2) },
+  'Balayage':         { d:"Une barre de lumière traverse le dôme de gauche à droite.", f:(L,t)=>{ bkExt(); const u=(L.x-BK.x0)/(BK.x1-BK.x0), c=(t*.3)%1.3-.15; return gauss(u-c,.1); } },
+  'Vague diagonale':  { d:"Vagues larges qui traversent le dôme en diagonale.", f:(L,t)=>{ bkExt(); const u=(L.x-BK.x0)/(BK.x1-BK.x0), v=(L.y-BK.y0)/(BK.y1-BK.y0); return bandf(u+v*.8-t*.5,2); } },
+  'Étincelles':       { d:"Points qui s'allument au hasard et s'éteignent en traînée courte.", f:(L,t)=>{ const tick=Math.floor(t*12); for(let k=0;k<4;k++) if(h32(L.id*131+(tick-k)*7919)<.05) return Math.pow(1-k/4,1.5); return 0; } },
+  'Lave (bruit)':     { d:"Nappes irrégulières qui coulent lentement, comme de la lave.", f:(L,t)=>clamp(vnoise(L.theta*2.6+3,(1-L.r)*3.5-t*.8)*1.4-.2) },
+  'Course de barres': { d:"Une barre après l'autre s'allume en laissant une traînée.", f:(L,t)=>{ const nb=bars.length, p=(t*10)%nb, d=((L.bar.id-p)%nb+nb)%nb; return d<6?Math.pow(1-d/6,2):0; } },
+  'Damier de barres': { d:"Une barre sur deux, en alternance.", f:(L,t)=>((L.bar.id+Math.floor(t*2.5))%2)?1:0 },
+};
+const BANK_GRADS={ 'Blanc':['#000000','#ffffff'], 'Lave':['#000000','#6e0a00','#ff3a00','#ffd060'], 'Feu':['#000000','#8a1200','#ff6a00','#fff2a0'], 'Océan':['#00040c','#0a3d91','#4fc3f7','#eaffff'], 'Violet':['#05000c','#4b1a8f','#b86bff','#ffe6ff'], 'Arc-en-ciel':['#000000','#5a00ff','#00a0ff','#00ff80','#ffee00','#ff2000'] };
+const hex2rgb=h=>[1,3,5].map(i=>parseInt(h.substr(i,2),16)/255), _gs=new Map();
+/* Dégradé = suite d'arrêts « #couleur@position » (position 0..1 = valeur de l'animation, 0 le plus bas, 1 le plus haut), séparés par '>'. Ex. : #000000@0>#ff3a00@0.6>#ffffff@1
+   (les anciens noms de presets restent lisibles par compatibilité). Sans position : répartition régulière. */
+function gradStops(g){ if(_gs.has(g)) return _gs.get(g); let toks;
+  if(BANK_GRADS[g]) toks=BANK_GRADS[g].map(c=>c); else toks=String(g).split('>');
+  let st=toks.map((k,i)=>{ const m=k.trim().match(/^(#[0-9a-f]{6})(?:@([\d.]+))?$/i); return m?{p:m[2]!==undefined?Math.min(1,Math.max(0,+m[2])):i/Math.max(1,toks.length-1), c:hex2rgb(m[1])}:null; }).filter(Boolean);
+  if(st.length<2) st=[{p:0,c:[0,0,0]},{p:1,c:[1,1,1]}];
+  st.sort((x,y)=>x.p-y.p); _gs.set(g,st); return st; }
+function gradColor(s,v){ v=v<=0?0:v>=1?1:v; if(v<=s[0].p) return s[0].c; const n=s.length; if(v>=s[n-1].p) return s[n-1].c;
+  for(let i=1;i<n;i++){ if(v<=s[i].p){ const a=s[i-1], b=s[i], u=(v-a.p)/Math.max(1e-6,b.p-a.p); return [a.c[0]+(b.c[0]-a.c[0])*u, a.c[1]+(b.c[1]-a.c[1])*u, a.c[2]+(b.c[2]-a.c[2])*u]; } } return s[n-1].c; }
+FX['Bank']=(t,w,p)=>{ const e=BANK[p.eff]; if(!e) return; const s=gradStops(p.grad||'Blanc'), tt=(t-(p.t0||0))*(p.speed??1), lv=(p.level??1)*w; for(const L of LED){ const v=clamp(e.f(L,tt))*lv; if(v<.004) continue; const c=gradColor(s,v); add(L.id,c); } };
+const BANKSTATE={ eff:'Montée', stops:[{c:'#000000',p:0},{c:'#ffffff',p:1}], speed:1, int:1 };
+const bankGradKey=b=>b.stops.slice().sort((x,y)=>x.p-y.p).map(s=>s.c+'@'+(+s.p.toFixed(2))).join('>');
+function bankFill(now){ const b=BANKSTATE, e=BANK[b.eff]; if(!e) return; BK.dt=Math.min(.1,Math.max(0,now-(BK.last||now))); BK.last=now; BK.t=(BK.t||0)+BK.dt*b.speed; const s=gradStops(bankGradKey(b)), tt=BK.t; for(const L of LED){ const c=gradColor(s,clamp(e.f(L,tt))*b.int); buf[3*L.id]=c[0]; buf[3*L.id+1]=c[1]; buf[3*L.id+2]=c[2]; } }
+const DEFAULT_FX = Object.keys(FXMAP.phases||{}).length ? { palette:'fire', fx:[{ n:'Pulsation audio', pal:'fire', level:.8 }] } : { palette:'dark', fx:[] };
+function applyDescriptif(d){
+  DUR = d.duration || DUR;
+  PH = d.phases.map(p => { const m = FXMAP.phases[key(p.start)] || DEFAULT_FX;
+    return { start:p.start, end:p.end, title:p.title||'(sans titre)', tech:p.tech||"", text:p.text, audio:p.audio, sub:p.sub||[], prov:p.prov, palette:m.palette, fx:m.fx, mapped:!!FXMAP.phases[key(p.start)] }; });
+  EV = (d.events||[]).map(e => { const k=key(e.t), m = FXMAP.events[k]; /* instant réel : déplacé à la main sur la timeline (events-timing.json) > 'at' de fxmap > seconde notée dans le descriptif */ const on=(EVT[k]!==undefined)?EVT[k]:(m&&m.at!==undefined)?m.at:e.t; return { k, t:e.t, on, name:shortName(e.text), text:e.text, dur:m?m.dur:4, span:m?m.span:undefined, rush:m?m.rush:undefined, txtDur:Math.max(2, m?m.dur:0), fx:m?(Array.isArray(m.fx)?m.fx:[m.fx]).map(x=>Object.assign({},x,{t0:on})):[] }; });
+  /* doublons d'events (Maj+clic sur la poignée) : mémorisés dans events-timing.json sous __dups = [{k:'02:21', on:142.3}] */
+  (EVT.__dups||[]).forEach(dp=>{ const b=EV.find(e=>e.k===dp.k&&!e.isDup); if(b) EV.push(Object.assign({},b,{ isDup:true, on:dp.on, fx:b.fx.map(f=>Object.assign({},f,{t0:dp.on})) })); });
+  shownPhase=-1; shownSub=null; updateTitleGradient(); setTimeout(computePhaseColors,80); if(eventView) eventBankRefresh();
+}
+let EVT={};   /* instants d'events déplacés à la main : { \"02:21\": 140.1 } */
+/* nom ultra-court affiché sous la barre d'un event : texte avant « : », sans les petits mots (de, la, le...), 2 mots max, collés avec majuscules, 14 caractères max. Ex. « Cri de corbeau » -> « CriCorbeau » */
+function shortName(txt){ const STOP=new Set(['de','du','des','la','le','les','un','une','l','d','et','à','au','aux','en']), t=String(txt||'').split(/\s*[:–—]\s*/)[0].trim();
+  let w=t.split(/[\s'’]+/).filter(x=>x&&!STOP.has(x.toLowerCase())); if(!w.length) w=t.split(/\s+/).filter(Boolean); const s=w.slice(0,2).map(x=>x.charAt(0).toUpperCase()+x.slice(1)).join(''); return s.length>14?s.slice(0,14):s; }
+function loadEvt(){ return fetch(mixPath('events-timing.json')+'?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.json():{}).catch(()=>({})).then(o=>{ EVT=o||{}; }); }
+function loadDescriptif(){ return loadEvt().then(()=>fetch(mixPath('descriptif.json')+'?'+Date.now(),{cache:'no-store'})).then(r=>r.text()).then(txt=>{ if(txt!==lastTxt){ lastTxt=txt; applyDescriptif(JSON.parse(txt.replace(/^﻿/,''))); } }).catch(()=>{}); }
+
+function phaseAt(t){ for(let i=0;i<PH.length;i++) if(t>=PH[i].start && t<PH[i].end) return i; return Math.max(0,PH.length-1); }
+// Fondus entre phases guidés par le son : changement brutal => fondu très court (0,5 s) ; évolution douce => fondu long (jusqu'à 8 s).
+// Le fondu est centré sur la frontière de phase.
+function boundaryFade(tb){
+  const a=Math.max(0,Math.floor((tb-1.5)*10)), b=Math.min(NF-1,Math.floor(tb*10)), c=Math.min(NF-1,Math.floor((tb+1.5)*10)); let d=0;
+  for(const k of ['rms','bass','mid','high','flux']){ const arr=E[k]; let m1=0,m2=0; for(let i=a;i<b;i++) m1+=arr[i]; for(let i=b;i<c;i++) m2+=arr[i];
+    m1/=Math.max(1,b-a); m2/=Math.max(1,c-b); d+=Math.abs(m2-m1); }
+  d/=5; const x=clamp((d-0.04)/0.2); return lerp(8,0.5,Math.pow(x,0.7)); }
+function ensureFades(){ if(PH._f) return; PH._f=true;
+  PH.forEach((p,i)=>{ if(i===0){ p.L=0; return; } const prev=PH[i-1]; p.L=Math.min(boundaryFade(p.start),0.8*(p.end-p.start),0.8*(prev.end-prev.start)); p.d=0; }); }
+const smooth=x=>x*x*(3-2*x);
+function inProg(j,t){ if(j<=0) return 1; if(j>=PH.length) return 0; const p=PH[j]; if(p.L<0.05) return t>=p.start?1:0; return smooth(clamp((t-(p.start-p.L/2))/p.L)); }
+function activeFx(t, i){
+  const list=[]; if(!PH.length) return list; ensureFades();
+  for(let j=Math.max(0,i-1); j<=Math.min(PH.length-1,i+1); j++){ const w=inProg(j,t)*(1-inProg(j+1,t)); if(w<=0.002) continue;
+    PH[j].fx.forEach(fx => list.push({fx, w})); }
+  EV.forEach(e => { if(t>=e.on-.05 && t<e.on+e.dur) e.fx.forEach(fx => list.push({fx, w:1, ev:e})); });
+  return list; }
+
+// Couleur d'une phase = couleur DOMINANTE réellement rendue par ses effets (moyenne pondérée des LEDs allumées, échantillonnée sur la phase).
+// Elle se met donc à jour toute seule quand les effets changent. Sert aux barres de la frise, au titre des effets, à l'en-tête et au dégradé du titre.
+function computeBuf(t){ const i=phaseAt(t), f=feat(t), act=activeFx(t,i); buf.fill(0);
+  GAIN=1; if(gradeSkip.length!==LED.length) gradeSkip=new Uint8Array(LED.length); else gradeSkip.fill(0); for(const a of act){ const fn=FX[a.fx.n]; if(fn) fn(t,a.w,a.fx,a.fx.slow?featSlow(t):f); }
+  if(GAIN<.9999) for(let k=0;k<buf.length;k++) buf[k]*=GAIN;
+  { const gc=gradeAt(t); if(gc<.999) applyGrade(gc); }
+  return act; }
+const _colCache={};
+function computePhaseColors(){ if(!PH.length) return; const saved=LEDS_PER_BAR; let todo=PH.filter(p=>!_colCache[p.start+':'+p.end+':'+JSON.stringify(p.fx)]); 
+  if(todo.length){ buildLEDs(4); const N=6;
+    todo.forEach(p=>{ let R=0,G=0,B=0,Wt=0; for(let k=0;k<N;k++){ const t=p.start+(k+.5)/N*(p.end-p.start); computeBuf(t);
+        for(let id=0;id<LED.length;id++){ const r=Math.min(1,buf[3*id]), g=Math.min(1,buf[3*id+1]), b=Math.min(1,buf[3*id+2]), v=Math.max(r,g,b); if(v<.04) continue; const wt=v*v; R+=r/v*wt; G+=g/v*wt; B+=b/v*wt; Wt+=wt; } }
+      let hsl; if(Wt<1e-6) hsl=null; else { const r=R/Wt, g=G/Wt, b=B/Wt, mx=Math.max(r,g,b), mn=Math.min(r,g,b), dd=mx-mn; let h=0; if(dd>1e-6){ h=mx===r?((g-b)/dd+(g<b?6:0)):mx===g?((b-r)/dd+2):((r-g)/dd+4); h*=60; } hsl=[Math.round(h), Math.min(1,Math.max(.4,mx>0?dd/mx:0)), .45]; }
+      _colCache[p.start+':'+p.end+':'+JSON.stringify(p.fx)]=hsl||'dark'; });
+    buildLEDs(saved); }
+  PH.forEach(p=>{ const c=_colCache[p.start+':'+p.end+':'+JSON.stringify(p.fx)]; p.hsl=(c==='dark')?null:c; p.isDark=(c==='dark'); });
+  for(const k in _pc) delete _pc[k]; updateTitleGradient(); }
+const hslCss=(h,s,l)=>`hsl(${h},${Math.round(s*100)}%,${Math.round(l*100)}%)`;
+function barColor(p){ if(p.isDark) return '#222'; if(p.hsl) return hslCss(p.hsl[0],p.hsl[1],.42); return PALCOL[p.palette]||'#333'; }
+// Couleur d'une phase = celle de sa barre au-dessus de l'onde sonore, éclaircie pour rester lisible sur fond noir
+const _pc={};
+function phaseColor(ph){ if(ph&&ph.hsl) return `hsl(${ph.hsl[0]},${Math.round(Math.min(100,ph.hsl[1]*100+8))}%,72%)`; if(ph&&ph.isDark) return 'hsl(250,10%,70%)'; const key=ph?ph.palette:'dark'; if(_pc[key]) return _pc[key]; const hex=(PALCOL[key]||'#888').replace('#',''); let r=parseInt(hex.substr(0,2),16)/255, g=parseInt(hex.substr(2,2),16)/255, b=parseInt(hex.substr(4,2),16)/255;
+  const mx=Math.max(r,g,b), mn=Math.min(r,g,b); let h=0, s=0, l=(mx+mn)/2; if(mx!==mn){ const dd=mx-mn; s=l>.5?dd/(2-mx-mn):dd/(mx+mn); h=mx===r?(g-b)/dd+(g<b?6:0):mx===g?(b-r)/dd+2:(r-g)/dd+4; h*=60; }
+  return _pc[key]=`hsl(${Math.round(h)},${Math.round(Math.min(100,s*100+8))}%,${Math.round(Math.max(l*100,70))}%)`; }// Dégradé du titre = progression des couleurs du mix (couleurs des barres de phases, adoucies : -30 % de saturation)
+function barHsl(key){ const hex=(PALCOL[key]||'#888').replace('#',''); const r=parseInt(hex.substr(0,2),16)/255, g=parseInt(hex.substr(2,2),16)/255, b=parseInt(hex.substr(4,2),16)/255;
+  const mx=Math.max(r,g,b), mn=Math.min(r,g,b); let h=0, s=0; const l=(mx+mn)/2; if(mx!==mn){ const dd=mx-mn; s=l>.5?dd/(2-mx-mn):dd/(mx+mn); h=mx===r?(g-b)/dd+(g<b?6:0):mx===g?(b-r)/dd+2:(r-g)/dd+4; h*=60; } return [Math.round(h),s,l]; }
+function updateTitleGradient(){ if(!PH.length) return; const stops=[];
+  PH.forEach(p=>{ if(p.isDark||p.palette==='dark') return; const [h,s,l]=p.hsl?p.hsl:barHsl(p.palette); stops.push(`hsl(${h},${Math.round(s*100*0.7)}%,${Math.round(Math.max(l*100,62))}%) ${((p.start+p.end)/2/DUR*100).toFixed(1)}%`); });
+  if(stops.length<2){ stops.length=0; stops.push('hsl(250,12%,72%) 0%','hsl(250,10%,88%) 100%'); }
+  document.querySelector('h1').style.setProperty('--tg',`linear-gradient(90deg,${stops.join(',')})`); }// Dominante de couleur (étalonnage global) : FXMAP.hueGrade = points [temps, c]. c<1 resserre les teintes chaudes (rouge-orange-jaune) vers le ROUGE ;
+// c=1 : couleurs d'origine. Interpolation linéaire entre les points. Les teintes froides (violet, bleu) ne sont pas touchées.
+/* Phase 3 (2:15 -> 4:40) : pendant une MONTÉE d'intensité (ES.redRise), la dominante glisse progressivement vers le rouge ; elle revient aux couleurs de base quand la montée cesse (facteur de teinte réduit jusqu'à -55 %) ; fondu de 4 s aux deux bords de la phase, aucun saut. Ce sont les effets existants qui rougissent, aucun nouvel effet. */
+function gradeAt(t){ let c=gradeBase(t); if(t>=135&&t<280){ const i=Math.min(NF-1,Math.floor(t*10)), red=ssG(ES.redRise[i]), win=ssG(clamp((t-135)/4))*(1-ssG(clamp((t-276)/4))); c*=1-.55*red*win; }
+  /* event Vibration : pendant toute sa durée, la couleur globale vire au rouge (fondus de 0,5 s à l'entrée et à la sortie) */
+  for(const e of EV){ if(!e.fx.some(x=>x.n==='Vibration')) continue; if(t>=e.on-.2&&t<e.on+e.dur+.5){ const vw=ssG(clamp((t-e.on+.2)/.5))*(1-ssG(clamp((t-(e.on+e.dur))/.5))); c*=1-.65*vw; } }
+  return c; }
+function gradeBase(t){ const k=(FXMAP.hueGrade||[]); if(!k.length) return 1; if(t<=k[0][0]) return k[0][1]; for(let i=1;i<k.length;i++){ if(t<=k[i][0]) return lerp(k[i-1][1],k[i][1],(t-k[i-1][0])/(k[i][0]-k[i-1][0])); } return k[k.length-1][1]; }
+let gradeSkip=new Uint8Array(0);   /* LEDs soustraites à l'étalonnage de teinte pour cette image (posées par un effet avec keepHue:true, ex. le centre jaune du Trou de lave) */
+function applyGrade(c){ for(let id=0,n=LED.length;id<n;id++){ if(gradeSkip[id]) continue; const r=buf[3*id], g=buf[3*id+1], b=buf[3*id+2], mx=Math.max(r,g,b); if(mx<.004) continue; const mn=Math.min(r,g,b), dd=mx-mn; if(dd<1e-4) continue;
+    let h=mx===r?((g-b)/dd+(g<b?6:0)):mx===g?((b-r)/dd+2):((r-g)/dd+4); h*=60; if(h>70 && h<350) continue;
+    const hh=h>=350?h-360:h, w=Math.min(1,Math.max(0,(hh-45)/25)), f=c+(1-c)*w*w*(3-2*w), nh=Math.max(0,hh)*f + (hh<0?hh:0);
+    const col=hsv(nh, dd/mx, mx); buf[3*id]=col[0]; buf[3*id+1]=col[1]; buf[3*id+2]=col[2]; } }/* ---------- Éléments géométriques numérotés (de haut en bas, sens horaire depuis le pôle nord) ---------- */
+// Listes : TRIs, BIG TRIs, nGonesA/B/C, Circles, StarsA/B/C. Les lignes extérieures sans LEDs ne sont jamais utilisées.
+const GEO=(function(){
+  const OV=DOME.vertices, CX=438, CY=412;
+  const adj=new Map(); addr.forEach(b=>{ if(!adj.has(b.a)) adj.set(b.a,new Set()); if(!adj.has(b.b)) adj.set(b.b,new Set()); adj.get(b.a).add(b.b); adj.get(b.b).add(b.a); });
+  const verts=[...adj.keys()].sort((x,y)=>x-y), barOf=new Map(); addr.forEach(b=>barOf.set(Math.min(b.a,b.b)+'-'+Math.max(b.a,b.b),b));
+  const bk=(a,b)=>barOf.get(Math.min(a,b)+'-'+Math.max(a,b));
+  const side=(p1,p2,p3)=>(p1[0]-p3[0])*(p2[1]-p3[1])-(p2[0]-p3[0])*(p1[1]-p3[1]);
+  const inTri=(p,a,b,c)=>{ const d1=side(p,a,b), d2=side(p,b,c), d3=side(p,c,a); return !(((d1<0)||(d2<0)||(d3<0))&&((d1>0)||(d2>0)||(d3>0))); };
+  const bary=(p,a,b,c)=>{ const det=(b[1]-c[1])*(a[0]-c[0])+(c[0]-b[0])*(a[1]-c[1]), l1=((b[1]-c[1])*(p[0]-c[0])+(c[0]-b[0])*(p[1]-c[1]))/det, l2=((c[1]-a[1])*(p[0]-c[0])+(a[0]-c[0])*(p[1]-c[1]))/det; return [l1,l2,1-l1-l2]; };
+  const tris=[]; for(const a of verts) for(const b of adj.get(a)) if(b>a) for(const c of adj.get(b)) if(c>b && adj.get(a).has(c)){ let ok=true; for(const v of verts){ if(v===a||v===b||v===c) continue; if(inTri(OV[v],OV[a],OV[b],OV[c])){ ok=false; break; } } if(ok) tris.push([a,b,c]); }
+  const deg={}; verts.forEach(v=>deg[v]=adj.get(v).size);
+  const inc={}; verts.forEach(v=>inc[v]=[]); tris.forEach((t,i)=>t.forEach(v=>inc[v].push(i)));
+  const rad0=v=>Math.hypot(OV[v][0]-CX,OV[v][1]-CY), pole=verts.reduce((m,v)=>rad0(v)<rad0(m)?v:m,verts[0]);
+  const triBars=t=>[bk(t[0],t[1]),bk(t[1],t[2]),bk(t[0],t[2])];
+  const cen=(vs,P)=>[vs.reduce((s,v)=>s+P[v][0],0)/vs.length, vs.reduce((s,v)=>s+P[v][1],0)/vs.length];
+  const mk=(bars,c0,c1,ex)=>Object.assign({ bars:[...new Set(bars.map(b=>b.id))], c0, x:c1[0], y:c1[1], faces:[], cv:null },ex||{});
+  const lists={};
+  // TRIs : tous les triangles de 3 barres
+  lists['TRIs']=tris.map(t=>mk(triBars(t),cen(t,OV),cen(t,V),{faces:[t]}));
+  // BigTrisA / BigTrisB : grands triangles icosaédriques (3 petits triangles par côté). Les arêtes icosaédriques sont tracées « tout droit » depuis chaque moyeu à 5 barres
+  // sur le dôme complet ; les petites faces séparées par ces arêtes forment les grands triangles.
+  //   A = les 5 grands triangles complets autour du pôle (9 petits triangles chacun) ; B = la 2e couronne, coupée par la base du dôme (seuls ses petits triangles à 3 barres lumineuses sont comptés).
+  const adjF=new Map(); bars.forEach(b=>{ if(!adjF.has(b.a)) adjF.set(b.a,new Set()); if(!adjF.has(b.b)) adjF.set(b.b,new Set()); adjF.get(b.a).add(b.b); adjF.get(b.b).add(b.a); });
+  const allV=[...adjF.keys()], ek=(a,b)=>Math.min(a,b)+'-'+Math.max(a,b), trisF=[];
+  for(const a of allV) for(const b of adjF.get(a)) if(b>a) for(const c of adjF.get(b)) if(c>b && adjF.get(a).has(c)){ let ok=true; for(const v of allV){ if(v===a||v===b||v===c) continue; if(inTri(OV[v],OV[a],OV[b],OV[c])){ ok=false; break; } } if(ok) trisF.push([a,b,c]); }
+  const hubsF=allV.filter(v=>adjF.get(v).size===5), ang=(v,w)=>Math.atan2(OV[w][1]-OV[v][1],OV[w][0]-OV[v][0]), nbrs=v=>[...adjF.get(v)].sort((x,y)=>ang(v,x)-ang(v,y)), icoBars=new Set();
+  hubsF.forEach(h=>adjF.get(h).forEach(first=>{ let prev=h, cur=first; icoBars.add(ek(prev,cur)); for(let s=0;s<3;s++){ if(hubsF.includes(cur)) break; const n=nbrs(cur); if(n.length!==6) break; const nxt=n[(n.indexOf(prev)+3)%6]; icoBars.add(ek(cur,nxt)); prev=cur; cur=nxt; } }));
+  const edgeFaces=new Map(); trisF.forEach((t,i)=>[[t[0],t[1]],[t[1],t[2]],[t[0],t[2]]].forEach(([a,b])=>{ const k=ek(a,b); if(!edgeFaces.has(k)) edgeFaces.set(k,[]); edgeFaces.get(k).push(i); }));
+  const comp=new Array(trisF.length).fill(-1), groups=[]; for(let i=0;i<trisF.length;i++){ if(comp[i]>=0) continue; const st=[i], g=[]; comp[i]=groups.length; while(st.length){ const f=st.pop(); g.push(trisF[f]); const t=trisF[f];
+      [[t[0],t[1]],[t[1],t[2]],[t[0],t[2]]].forEach(([a,b])=>{ const k=ek(a,b); if(icoBars.has(k)) return; (edgeFaces.get(k)||[]).forEach(x=>{ if(comp[x]<0){ comp[x]=groups.length; st.push(x); } }); }); } groups.push(g); }
+  const isAddrFace=t=>!!(bk(t[0],t[1])&&bk(t[1],t[2])&&bk(t[0],t[2])), cenF=(fs,P)=>{ const cs=fs.map(t=>cen(t,P)); return [cs.reduce((s,c)=>s+c[0],0)/cs.length, cs.reduce((s,c)=>s+c[1],0)/cs.length]; };
+  const bigA=[]; groups.forEach(g=>{ const af=g.filter(isAddrFace); if(g.length>=8 && af.length===g.length && g.length===9) bigA.push(mk(af.flatMap(triBars),cenF(af,OV),cenF(af,V),{faces:af})); });
+  lists['BigTris']=bigA;
+  // TrisMoy : triangles de côté 2 = un petit triangle + ses 3 voisins par les arêtes (4 petits triangles) ; chacun est énuméré par son triangle central
+  { const ef=new Map(); tris.forEach((t,i)=>[[t[0],t[1]],[t[1],t[2]],[t[0],t[2]]].forEach(([a,b])=>{ const k=Math.min(a,b)+'-'+Math.max(a,b); if(!ef.has(k)) ef.set(k,[]); ef.get(k).push(i); }));
+    const tm=[]; tris.forEach((t,i)=>{ const nb=[[t[0],t[1]],[t[1],t[2]],[t[0],t[2]]].map(([a,b])=>(ef.get(Math.min(a,b)+'-'+Math.max(a,b))||[]).find(x=>x!==i)); if(nb.some(x=>x===undefined)) return;
+      const fs=[t,...nb.map(x=>tris[x])]; tm.push(mk(fs.flatMap(triBars),cen(t,OV),cen(t,V),{faces:fs,cf:t})); });
+    // on ne garde que des triangles qui ne se recoupent pas (aucun petit triangle partagé) : empaquetage maximal, symétrique gauche/droite, en partant du centre
+    const fk=t=>t.slice().sort((a,b)=>a-b).join('-'), fsets=tm.map(e=>new Set(e.faces.map(fk)));
+    const mi=tm.map((e,i)=>{ let b=i, bd=1e9; tm.forEach((f,j)=>{ const d=Math.hypot(2*CX-e.c0[0]-f.c0[0],e.c0[1]-f.c0[1]); if(d<bd){ bd=d; b=j; } }); return b; });
+    const units=[]; tm.forEach((e,i)=>{ const m=mi[i]; if(m===i) units.push([i]); else if(m>i&&mi[m]===i&&![...fsets[i]].some(x=>fsets[m].has(x))) units.push([i,m]); });
+    units.sort((a,b)=>tm[a[0]].r0-tm[b[0]].r0||a[0]-b[0]);
+    const ufs=units.map(u=>{ const s=new Set(); u.forEach(i=>fsets[i].forEach(x=>s.add(x))); return s; }), tot=units.map(u=>u.length), suf=[]; let acc=0; for(let i=units.length-1;i>=0;i--){ acc+=tot[i]; suf[i]=acc; } suf[units.length]=0;
+    let best=-1, bestSel=[], nodes=0; const used=new Set();
+    (function rec(i,cur,cnt){ if(++nodes>3e6) return; if(cnt+suf[i]<=best) return; if(i===units.length){ if(cnt>best){ best=cnt; bestSel=cur.slice(); } return; }
+      if(![...ufs[i]].some(x=>used.has(x))){ ufs[i].forEach(x=>used.add(x)); cur.push(i); rec(i+1,cur,cnt+tot[i]); cur.pop(); ufs[i].forEach(x=>used.delete(x)); } rec(i+1,cur,cnt); })(0,[],0);
+    lists['TrisMoy']=bestSel.flatMap(u=>units[u]).map(i=>tm[i]); }
+  const bfs=s=>{ const d={[s]:0}, q=[s]; while(q.length){ const a=q.shift(); adj.get(a).forEach(b=>{ if(d[b]===undefined){ d[b]=d[a]+1; q.push(b); } }); } return d; };   // distances sur les barres lumineuses
+  // nGones : « fleurs » (pentagone = 5 triangles autour d'un moyeu à 5 barres, hexagone = 6 triangles autour d'un moyeu à 6 barres)
+  const flowers=verts.filter(v=>inc[v].length===deg[v]);
+  const mir={}; verts.forEach(v=>{ let best=verts[0], bd=1e9; verts.forEach(w=>{ const dd=Math.hypot(OV[w][0]-(2*CX-OV[v][0]),OV[w][1]-OV[v][1]); if(dd<bd){ bd=dd; best=w; } }); mir[v]=best; });
+  const isSym=s=>{ const S=new Set(s); return s.every(c=>S.has(mir[c])); };
+  function packings(cands,forced){ const order=[...forced.filter(f=>cands.includes(f)),...cands.filter(c=>!forced.includes(c))], n=order.length; let best=-1, sols=[];
+    function rec(i,cur,cov){ if(cov+(n-i)*6<best) return; if(i===n){ if(cov>best){ best=cov; sols=[]; } if(cov===best) sols.push(cur.slice()); return; }
+      const c=order[i]; if(cur.every(x=>!adj.get(x).has(c))){ cur.push(c); rec(i+1,cur,cov+inc[c].length); cur.pop(); } if(!forced.includes(c)) rec(i+1,cur,cov); }
+    rec(0,[],0); return sols; }
+  const pick=sols=>sols.find(isSym)||sols[0];
+  const setA=pick(packings(flowers.slice(),[pole])), restA=flowers.filter(c=>!setA.includes(c)), setB=pick(packings(restA.slice(),[])), setC=flowers.filter(c=>!setA.includes(c)&&!setB.includes(c));
+  const flowerEl=c=>mk(inc[c].flatMap(i=>triBars(tris[i])),OV[c],V[c],{faces:inc[c].map(i=>tris[i]),cv:c});
+  lists['nGonesA']=setA.map(flowerEl); lists['nGonesB']=setB.map(flowerEl); lists['nGonesC']=setC.map(flowerEl);
+  // Stars : fleur + triangles voisins de ses arêtes extérieures (12 triangles pour un hexagone, 10 pour le pentagone central) ; centrées sur les mêmes sommets que nGonesA/B/C
+  const edgeTris=new Map(); tris.forEach((t,i)=>[[t[0],t[1]],[t[1],t[2]],[t[0],t[2]]].forEach(([a,b])=>{ const k=Math.min(a,b)+'-'+Math.max(a,b); if(!edgeTris.has(k)) edgeTris.set(k,[]); edgeTris.get(k).push(i); }));
+  const starOf=c=>{ const out=new Set(inc[c]); let ok=true; inc[c].forEach(ti=>{ const o=tris[ti].filter(v=>v!==c), k=Math.min(o[0],o[1])+'-'+Math.max(o[0],o[1]), nb=(edgeTris.get(k)||[]).filter(x=>x!==ti); if(!nb.length) ok=false; nb.forEach(x=>out.add(x)); }); return ok?[...out]:null; };
+  const starEl=c=>{ const ts=starOf(c); return ts?mk(ts.flatMap(i=>triBars(tris[i])),OV[c],V[c],{faces:ts.map(i=>tris[i]),cv:c}):null; };
+  lists['StarsA']=setA.map(starEl).filter(Boolean); lists['StarsB']=setB.map(starEl).filter(Boolean); lists['StarsC']=setC.map(starEl).filter(Boolean);
+  // Circles : anneaux fermés de barres à distance 1, 2, 3 et 4 du pôle (2 petits pentagones centraux + 2 grandes lignes circulaires) ; numéro posé à leur pôle nord
+  const dist=bfs(pole), circ=[];
+  for(let dd=1;dd<=4;dd++){ const vs=verts.filter(v=>dist[v]===dd); if(!vs.length) continue; const north=vs.reduce((m,v)=>OV[v][1]<OV[m][1]?v:m,vs[0]);
+    circ.push(mk(addr.filter(b=>dist[b.a]===dd&&dist[b.b]===dd),OV[north],V[north],{dd})); }
+  lists['Circles']=circ;
+  // Lines : lignes droites de barres (on continue « tout droit » à travers chaque moyeu à 6 barres, jusqu'à un moyeu à 5 barres ou au bord) ; seules les barres lumineuses comptent, lignes d'au moins 4 barres
+  { const seenL=new Set(), ln=[], extL=(p,c)=>{ const ch=[]; for(let g=0;g<25;g++){ const n=nbrs(c), k=n.indexOf(p); if(n.length!==6||k<0) break; const nx=n[(k+3)%6]; ch.push(nx); p=c; c=nx; } return ch; };
+    for(const v of allV) for(const w of adjF.get(v)){ if(seenL.has(ek(v,w))) continue; const fw=extL(v,w), bw=extL(w,v); if(fw.length+bw.length>24) continue; const vs=[...bw.reverse(),v,w,...fw]; for(let i=0;i<vs.length-1;i++) seenL.add(ek(vs[i],vs[i+1]));
+      const bs=[]; for(let i=0;i<vs.length-1;i++){ const b=bk(vs[i],vs[i+1]); if(b) bs.push(b); } if(bs.length<4) continue;
+      const mv=vs.filter(x=>verts.includes(x)), mid=mv[Math.floor(mv.length/2)], cv=mv.reduce((m,x)=>rad0(x)<rad0(m)?x:m,mv[0]); ln.push(mk(bs,OV[mid],V[mid],{cv})); }
+    lists['LinesB']=ln; }
+  // ---- listes supplémentaires ----
+  const minRad=vs=>vs.reduce((m,x)=>rad0(x)<rad0(m)?x:m,vs[0]);
+  const chainEl=vs=>{ const bs=[]; for(let i=0;i<vs.length-1;i++){ const b=bk(vs[i],vs[i+1]); if(b) bs.push(b); } if(bs.length<2) return null; const mv=vs.filter(x=>verts.includes(x)), mid=mv[Math.floor(mv.length/2)]; return mk(bs,OV[mid],V[mid],{cv:minRad(mv)}); };
+  // LinesA : les 5 lignes droites qui partent du centre (tout droit à travers les moyeux à 6 barres ; à un moyeu à 5 barres on prend la barre « presque en face », toujours du même côté)
+  const walk=(f,rule)=>{ let p=pole, c=f; const path=[pole,f], seenW=new Set([pole,f]); for(let g=0;g<16;g++){ const n=nbrs(c), k=n.indexOf(p); if(k<0||(n.length!==5&&n.length!==6)) break; const nx=n[(k+rule(n.length,g))%n.length]; if(seenW.has(nx)) break; seenW.add(nx); path.push(nx); p=c; c=nx; } return path; };
+  lists['LinesA']=[...adjF.get(pole)].map(f=>chainEl(walk(f,(L)=>L===6?3:2))).filter(Boolean);
+  // Spirales : à partir du centre, on alterne un pas tout droit et un pas tournant du même côté (A = à droite, B = à gauche)
+  lists['SpiralesA']=[...adjF.get(pole)].map(f=>chainEl(walk(f,(L,g)=>g%2?(L===6?2:2):(L===6?3:2)))).filter(Boolean);
+  lists['SpiralesB']=[...adjF.get(pole)].map(f=>chainEl(walk(f,(L,g)=>g%2?(L===6?4:3):(L===6?3:3)))).filter(Boolean);
+  // Pentas / Hexas : nGones séparés par type
+  lists['Pentas']=flowers.filter(c=>deg[c]===5).map(flowerEl); lists['Hexas']=flowers.filter(c=>deg[c]===6).map(flowerEl);
+  // Losanges : deux petits triangles voisins (5 barres)
+  lists['Losanges']=[]; edgeTris.forEach((tl,k)=>{ if(tl.length!==2) return; const ev=k.split('-').map(Number), t1=tris[tl[0]], t2=tris[tl[1]]; lists['Losanges'].push(mk([...triBars(t1),...triBars(t2)],cen(ev,OV),cen(ev,V),{faces:[t1,t2],cv:ev.reduce((m,x)=>dist[x]<dist[m]?x:m,ev[0])})); });
+  // Bandes : rangées de triangles entre deux anneaux consécutifs (à distance dd-1 et dd du pôle)
+  lists['Anneaux']=[]; for(let dd=1;dd<=20;dd++){ const fs=tris.filter(t=>{ const ds=t.map(v=>dist[v]); return Math.min(...ds)===dd-1&&Math.max(...ds)===dd; }); if(!fs.length) continue; const vs=[...new Set(fs.flat())], north=vs.reduce((m,v)=>OV[v][1]<OV[m][1]?v:m,vs[0]); lists['Anneaux'].push(mk([...new Set(fs.flatMap(triBars))],OV[north],V[north],{faces:fs,dd})); }
+  // Rayons / Anneaux : chaque barre est une forme ; Rayons = barres plutôt radiales, Anneaux = barres plutôt tangentielles
+  lists['Rayons']=[]; addr.forEach(b=>{ const m=[(OV[b.a][0]+OV[b.b][0])/2,(OV[b.a][1]+OV[b.b][1])/2], mV=[(V[b.a][0]+V[b.b][0])/2,(V[b.a][1]+V[b.b][1])/2], rx=m[0]-CX, ry=m[1]-CY, dx=OV[b.b][0]-OV[b.a][0], dy=OV[b.b][1]-OV[b.a][1], rl=Math.hypot(rx,ry), c=rl<8?1:Math.abs(dx*rx+dy*ry)/(Math.hypot(dx,dy)*rl);
+    if(c>0.7071) lists['Rayons'].push(mk([b],m,mV,{cv:dist[b.a]<=dist[b.b]?b.a:b.b})); });
+  // Quartiers (5 secteurs de 72°) et Moitiés (gauche, droite, haut, bas)
+  { const mid=b=>[(OV[b.a][0]+OV[b.b][0])/2,(OV[b.a][1]+OV[b.b][1])/2], midV=b=>[(V[b.a][0]+V[b.b][0])/2,(V[b.a][1]+V[b.b][1])/2], avg=(bs,f)=>{ const pts=bs.map(f); return [pts.reduce((s,p)=>s+p[0],0)/pts.length, pts.reduce((s,p)=>s+p[1],0)/pts.length]; };
+    const secOf=b=>{ const m=mid(b); return Math.floor(((Math.atan2(m[0]-CX,-(m[1]-CY))*180/Math.PI+360)%360+15)%360/72); };
+    lists['Quartiers']=[0,1,2,3,4].map(s=>{ const bs=addr.filter(b=>secOf(b)===s); return mk(bs,avg(bs,mid),avg(bs,midV),{cv:pole}); });
+    const half=f=>{ const bs=addr.filter(f); return mk(bs,avg(bs,mid),avg(bs,midV),{cv:pole}); };
+    lists['Moitiés']=[half(b=>mid(b)[0]<CX-4), half(b=>mid(b)[0]>CX+4), half(b=>mid(b)[1]<CY-4), half(b=>mid(b)[1]>CY+4)]; }
+  // Cross : « flocons » = un moyeu + toutes les barres lumineuses qui s'y croisent (6 ; 5 au sommet ; 4 sur le cercle extérieur). CrossA = moyeux à distance PAIRE du pôle (pôle inclus), CrossB = distance IMPAIRE.
+  { const cr=v=>mk(addr.filter(b=>b.a===v||b.b===v),OV[v],V[v],{cv:v}), cv=verts.filter(v=>deg[v]>=4), dP=bfs(pole);
+    lists['CrossA']=cv.filter(v=>dP[v]%2===0).map(cr); lists['CrossB']=cv.filter(v=>dP[v]%2===1).map(cr); }
+  // numérotation : de haut en bas (rayon croissant, par rangées), puis dans le sens horaire en partant du nord ; départ à 12 h
+  for(const k in lists){ const els=lists[k]; els.forEach(e=>{ const dx=e.c0[0]-CX, dy=e.c0[1]-CY; e.r0=Math.hypot(dx,dy); e.phi=(Math.atan2(dx,-dy)+2*Math.PI+0.06)%(2*Math.PI); });
+    els.sort((a,b)=>a.r0-b.r0); const rows=[]; els.forEach(e=>{ const g=rows[rows.length-1]; if(g&&e.r0-g.rmax<12){ g.items.push(e); g.rmax=e.r0; } else rows.push({items:[e],rmax:e.r0}); });
+    let n=0; const sorted=[]; rows.forEach(g=>{ g.items.sort((a,b)=>a.phi-b.phi); g.items.forEach(e=>{ e.n=++n; sorted.push(e); }); }); lists[k]=sorted; }
+  // Coordonnées de chaque élément : SECTEUR = quartier de 72° (1..5 dans le sens horaire depuis le nord ; 0 = pôle ou anneau) ; ANNEAU = profondeur depuis le pôle
+  // (pour les triangles : nombre de pas de triangles depuis le pentagone central ; pour les fleurs/étoiles : distance en barres du sommet central) ; POS = rang (a, b…) quand plusieurs éléments partagent secteur+anneau.
+  const triRingMap=new Map(), distP=bfs(pole), denseRank=vals=>{ const u=[...new Set(vals)].sort((a,b)=>a-b); return v=>u.indexOf(v)+1; };
+  for(const k in lists){ const els=lists[k]; let key;
+    if(k==='TRIs'){ const use=new Map(); els.forEach((e,i)=>e.bars.forEach(id=>{ if(!use.has(id)) use.set(id,[]); use.get(id).push(i); })); const nb=els.map(()=>[]); use.forEach(l=>{ if(l.length===2){ nb[l[0]].push(l[1]); nb[l[1]].push(l[0]); } });
+      const dep=new Array(els.length).fill(0), q=[]; els.forEach((e,i)=>{ if(e.faces[0].includes(pole)){ dep[i]=1; q.push(i); } }); while(q.length){ const a=q.shift(); nb[a].forEach(b=>{ if(!dep[b]){ dep[b]=dep[a]+1; q.push(b); } }); } key=i=>dep[i]; }
+    else if(k==='Circles'||k==='Anneaux') key=i=>els[i].dd;
+    else if(k==='BigTris') key=i=>Math.round(els[i].r0/60);
+    else if(k==='TrisMoy') key=i=>triRingMap.get(els[i].cf.slice().sort((a,b)=>a-b).join('-'));
+    else key=i=>distP[els[i].cv];
+    const rk=denseRank(els.map((e,i)=>key(i)));
+    els.forEach((e,i)=>{ e.ring=rk(key(i)); const dx=e.c0[0]-CX, dy=e.c0[1]-CY; e.sec=(k==='Circles'||k==='Anneaux'||e.r0<20)?0:Math.floor(((Math.atan2(dx,-dy)*180/Math.PI+360)%360+15)%360/72)+1; });
+    if(k==='TRIs') els.forEach(e=>triRingMap.set(e.faces[0].slice().sort((a,b)=>a-b).join('-'),e.ring));
+    const grp=new Map(); els.forEach(e=>{ const g=e.sec+'.'+e.ring; if(!grp.has(g)) grp.set(g,[]); grp.get(g).push(e); });
+    grp.forEach(g=>{ g.sort((a,b)=>a.phi-b.phi); g.forEach((e,i)=>{ e.pos=i+1; e.gsize=g.length; }); }); }
+  // Alternance « une forme sur deux » (boutons Pairs / Impairs) : 2-coloration des formes voisines qui alterne au maximum (max-cut) tout en restant symétrique gauche/droite (miroir autour de l'axe vertical) ; la forme n°1 est « Pairs ».
+  for(const k in lists){ const els=lists[k], N=els.length; if(N<2) continue;
+    const dd=(a,b)=>Math.hypot(els[a].c0[0]-els[b].c0[0],els[a].c0[1]-els[b].c0[1]), nn=els.map((e,i)=>{ let m=1e9; for(let j=0;j<N;j++) if(j!==i) m=Math.min(m,dd(i,j)); return m; });
+    const edges=[]; for(let i=0;i<N;i++) for(let j=i+1;j<N;j++) if(dd(i,j)<1.45*Math.min(nn[i],nn[j])) edges.push([i,j]);
+    const mirr=els.map((e,i)=>{ let best=i, bd=1e9; for(let j=0;j<N;j++){ const d=Math.hypot(2*CX-e.c0[0]-els[j].c0[0],e.c0[1]-els[j].c0[1]); if(d<bd){ bd=d; best=j; } } return bd<14?best:i; });
+    const nbr=els.map(()=>[]); edges.forEach(([a,b])=>{ nbr[a].push(b); nbr[b].push(a); });
+    const score=c=>{ let s=0; edges.forEach(([a,b])=>{ if(c[a]!==c[b]) s+=1; }); for(let i=0;i<N;i++) if(mirr[i]>i&&c[i]===c[mirr[i]]) s+=4; return s; };
+    let seed=12345; const rnd=()=>{ seed=(seed*1664525+1013904223)>>>0; return seed/4294967296; };
+    let bestC=null, bestS=-1; for(let rs=0;rs<40;rs++){ const c=els.map(()=>rnd()<.5?1:0); c.forEach((v,i)=>{ if(mirr[i]<i) c[i]=c[mirr[i]]; }); let s=score(c);
+      for(let it=0;it<1500;it++){ const i=Math.floor(rnd()*N), m=mirr[i], old=[c[i],c[m]]; if(m===i){ c[i]^=1; } else { c[i]^=1; c[m]^=1; } const s2=score(c); if(s2>=s) s=s2; else { c[i]=old[0]; c[m]=old[1]; } }
+      if(s>bestS){ bestS=s; bestC=c.slice(); } }
+    const flip=bestC[els.findIndex(e=>e.n===1)]; els.forEach((e,i)=>e.alt=bestC[i]^flip); }
+  const colors={ 'TRIs':'#e8e8f0','BigTris':'#ffd84d','TrisMoy':'#d4ff4d','nGonesA':'#ff9f45','nGonesB':'#45d0ff','nGonesC':'#b98cff','Circles':'#6bf08a','StarsA':'#ff6f91','StarsB':'#9be564','StarsC':'#4de1d0','CrossA':'#ffb0e0','CrossB':'#ffe08a','LinesA':'#ffa64d','LinesB':'#ffc98a','SpiralesA':'#8affc1','SpiralesB':'#8ad4ff','Losanges':'#ff8a8a','Bandes':'#c9a0ff','Pentas':'#ffd0a0','Hexas':'#a0e0ff','Rayons':'#ffee66','Anneaux':'#66ffee','Quartiers':'#ff99cc','Moitiés':'#ccff99' };
+  return { keys:['TRIs','BigTris','TrisMoy','Losanges','nGonesA','nGonesB','nGonesC','Pentas','Hexas','Circles','StarsA','StarsB','StarsC','CrossA','CrossB','LinesA','LinesB','SpiralesA','SpiralesB','Rayons','Anneaux','Quartiers','Moitiés'], lists, colors, setA, setB, setC };
+})();
+const geoOn=new Set(); let geoParity=null, geoVisible=null;
+const geoShown=e=>!(geoParity==='even'&&e.alt) && !(geoParity==='odd'&&!e.alt);
+function geoRecompute(){ if(!geoOn.size){ geoVisible=null; return; } const s=new Set(); for(const k of geoOn) for(const e of GEO.lists[k]) if(geoShown(e)) e.bars.forEach(id=>s.add(id)); geoVisible=s; }
+// étiquettes toujours sur fond noir (pastille noire), jamais directement sur les LEDs ; pastille pleine = forme sélectionnée
+let geoNums=true;
+const geoLab=e=>e.sec+'.'+e.ring+(e.gsize>1?'.'+e.pos:'');   // numéros uniquement (secteur.anneau, + .rang si doublon)
+const barSel=new Set();      // sélection = barres (partagée entre toutes les listes)
+const geoSel={ get(k){ const s=new Set(); if(barSel.size) GEO.lists[k].forEach((e,i)=>{ if(e.bars.length&&e.bars.every(id=>barSel.has(id))) s.add(i); }); return s; } };   // indices des éléments de la liste entièrement sélectionnés
+function drawGeoLabels(){ if(!geoOn.size||!geoNums) return; const fs=15/(VIEW_SCALE*GZ), used=[]; ctx.font='700 '+fs+'px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  for(const k of GEO.keys){ if(!geoOn.has(k)) continue; const col=GEO.colors[k], sel=geoSel.get(k);
+    GEO.lists[k].forEach((e,i)=>{ if(!geoShown(e)) return; let x=e.x, y=e.y, off=0; while(used.some(u=>Math.abs(u[0]-x)<fs*2.1&&Math.abs(u[1]-(y+off))<fs*1.2)) off+=fs*1.2; y+=off; used.push([x,y]);
+      const txt=geoLab(e), w=ctx.measureText(txt).width+fs*.8, h=fs*1.2, on=sel&&sel.has(i); ctx.fillStyle=on?col:'#000'; ctx.fillRect(x-w/2,y-h/2,w,h); ctx.strokeStyle=col; ctx.lineWidth=1/(VIEW_SCALE*GZ); ctx.strokeRect(x-w/2,y-h/2,w,h); ctx.fillStyle=on?'#000':col; ctx.fillText(txt,x,y+fs*.05); }); } }(function buildGeoUI(){ const box=document.getElementById('geoBar'); if(!box) return;
+  GEO.keys.forEach(k=>{ const b=document.createElement('button'); b.className='chip'; b.style.setProperty('--c',GEO.colors[k]); b.dataset.key=k; b.title=GEO.lists[k].length+' éléments';
+    const upd=()=>{ b.classList.toggle('on',geoOn.has(k)); b.textContent=k; }; upd();
+    b.onclick=()=>{ if(geoOn.has(k)) geoOn.delete(k); else { geoOn.clear(); geoOn.add(k); } geoSyncChips(); geoRecompute(); }; box.appendChild(b); });
+  const mkp=(label,val)=>{ const b=document.createElement('button'); b.className='chip par'; b.textContent=label; b.onclick=()=>{ geoParity=(geoParity===val)?null:val; document.querySelectorAll('.par').forEach(x=>x.classList.toggle('on',x===b&&geoParity===val)); geoRecompute(); }; document.getElementById('geoPar').appendChild(b); };
+  mkp('Pairs only','even'); mkp('Impairs only','odd'); })();
+/* ---------- Vue Géo : visualiseur de formes. On sélectionne des formes (barres seules) et on obtient une formule à donner à Claude ---------- */
+let geoView=false, geoHover=null;
+const fillColor=e=>'hsl('+Math.round((e.n*137.508)%360)+',72%,56%)';   // une couleur différente par forme
+const ptInTri=(x,y,a,b,c)=>{ const d1=(x-b[0])*(a[1]-b[1])-(a[0]-b[0])*(y-b[1]), d2=(x-c[0])*(b[1]-c[1])-(b[0]-c[0])*(y-c[1]), d3=(x-a[0])*(c[1]-a[1])-(c[0]-a[0])*(y-a[1]); return !((d1<0||d2<0||d3<0)&&(d1>0||d2>0||d3>0)); };
+const distSeg=(x,y,a,b)=>{ const dx=b[0]-a[0], dy=b[1]-a[1], l=dx*dx+dy*dy, tt=l?Math.max(0,Math.min(1,((x-a[0])*dx+(y-a[1])*dy)/l)):0; return Math.hypot(x-(a[0]+tt*dx), y-(a[1]+tt*dy)); };
+function geoPick(ev){ const r=cv.getBoundingClientRect(), cx=(ev.clientX-r.left)*cv.width/r.width-GDX, cy=(ev.clientY-r.top)*cv.height/r.height-OFF, x=(cx-CENTER.x)/(VIEW_SCALE*GZ)+CENTER.x, y=(cy-CENTER.y)/(VIEW_SCALE*GZ)+CENTER.y; let best=null;
+  for(const k of GEO.keys){ if(!geoOn.has(k)) continue; GEO.lists[k].forEach((e,i)=>{ if(!geoShown(e)) return; let hit, size;
+      if(e.faces.length){ hit=e.faces.some(t=>ptInTri(x,y,V[t[0]],V[t[1]],V[t[2]])); size=e.faces.length; } else { hit=e.bars.some(id=>distSeg(x,y,bars[id].pa,bars[id].pb)<9); size=.5; }
+      if(hit&&(!best||size<best.size)) best={k,i,size}; }); } return best; }
+function drawGeoView(){
+  for(const k of GEO.keys){ if(!geoOn.has(k)) continue; const sel=geoSel.get(k);   // remplissage = simple aide ; jamais sur les formes sélectionnées
+    GEO.lists[k].forEach((e,i)=>{ if(!geoShown(e)||(sel&&sel.has(i))) return; ctx.globalAlpha=.45; ctx.fillStyle=fillColor(e); e.faces.forEach(t=>{ ctx.beginPath(); ctx.moveTo(V[t[0]][0],V[t[0]][1]); ctx.lineTo(V[t[1]][0],V[t[1]][1]); ctx.lineTo(V[t[2]][0],V[t[2]][1]); ctx.closePath(); ctx.fill(); }); }); }
+  ctx.globalAlpha=1; ctx.lineCap='round'; ctx.setLineDash([]);
+  for(const b of bars){ const ext=b.contour||b.outer; if(geoVisible){ if(!geoVisible.has(b.id)) continue; } if(!geoVisible&&ext) ctx.setLineDash([4,6]); ctx.beginPath(); ctx.moveTo(b.pa[0],b.pa[1]); ctx.lineTo(b.pb[0],b.pb[1]); ctx.strokeStyle=geoVisible?'#6a6a86':(ext?'#2c2c36':'#4a4a62'); ctx.lineWidth=2; ctx.stroke(); ctx.setLineDash([]); }
+  for(const k of GEO.keys){ if(!geoOn.has(k)) continue; GEO.lists[k].forEach(e=>{ if(e.faces.length||!geoShown(e)) return; ctx.strokeStyle=fillColor(e); ctx.lineWidth=4; e.bars.forEach(id=>{ const b=bars[id]; ctx.beginPath(); ctx.moveTo(b.pa[0],b.pa[1]); ctx.lineTo(b.pb[0],b.pb[1]); ctx.stroke(); }); }); }   // formes sans surface (Circles, Cross) : barres colorées
+  ctx.strokeStyle='#fff'; ctx.lineWidth=5; barSel.forEach(id=>{ const b=bars[id]; if(!b) return; ctx.beginPath(); ctx.moveTo(b.pa[0],b.pa[1]); ctx.lineTo(b.pb[0],b.pb[1]); ctx.stroke(); });   // sélection = BARRES seules, épaisses, visibles dans toutes les listes
+  if(geoHover){ const e=GEO.lists[geoHover.k][geoHover.i]; if(e){ ctx.strokeStyle='#fff'; ctx.lineWidth=2.5; ctx.setLineDash([6,5]); e.bars.forEach(id=>{ const b=bars[id]; ctx.beginPath(); ctx.moveTo(b.pa[0],b.pa[1]); ctx.lineTo(b.pb[0],b.pb[1]); ctx.stroke(); }); ctx.setLineDash([]); } }
+  drawGeoLabels();
+  if(showNum){ ctx.fillStyle='#fff'; ctx.font='10px system-ui'; ctx.textAlign='center'; ctx.textBaseline='alphabetic'; for(const b of addr) ctx.fillText(b.id,(b.pa[0]+b.pb[0])/2,(b.pa[1]+b.pb[1])/2-7); } }
+function drawGeoBanner(){ const names=GEO.keys.filter(k=>geoOn.has(k)); ctx.textAlign='center'; ctx.textBaseline='alphabetic'; ctx.font='500 24px system-ui'; ctx.fillStyle='#e8e8f0'; ctx.fillText('Vue Géo'+(names.length?' · '+names.join(' + '):' · choisis une liste'),W/2+GDX,50); }
+
+// --- formule : décrit la sélection avec anneau / secteur / pos ---
+function geoSynth(k){ const U=GEO.lists[k], sel=geoSel.get(k); if(!sel||!sel.size) return null; const inSel=U.map((e,i)=>sel.has(i)); if(inSel.every(Boolean)) return {js:'true',fr:'tous les éléments'};
+  const uniq=a=>[...new Set(a)].sort((x,y)=>x-y), rings=uniq(U.map(e=>e.ring)), secs=uniq(U.map(e=>e.sec)), poss=uniq(U.map(e=>e.pos)), letter=p=>String.fromCharCode(96+p);
+  const range=(arr,name)=>{ const a=arr.slice().sort((x,y)=>x-y), cont=a.every((v,i)=>i===0||v===a[i-1]+1);
+    if(a.length===1) return {js:name+'=='+a[0], fr:name+' '+a[0]}; if(cont) return {js:name+'>='+a[0]+'&&'+name+'<='+a[a.length-1], fr:name+' '+a[0]+'–'+a[a.length-1]}; return {js:'['+a.join(',')+'].includes('+name+')', fr:name+' '+a.join(', ')}; };
+  const P=[], addP=(js,fr,f)=>P.push({js,fr,f});
+  rings.forEach(r=>addP('anneau=='+r,'anneau '+r,e=>e.ring===r)); secs.forEach(s=>addP('secteur=='+s,'secteur '+s,e=>e.sec===s));
+  if(poss.length>1) poss.forEach(p=>addP('pos=='+p,'position '+p,e=>e.pos===p));
+  [[0,'pair'],[1,'impair']].forEach(([m,w])=>{ addP('anneau%2=='+m,'anneau '+w,e=>e.ring%2===m); addP('secteur%2=='+m,'secteur '+w,e=>e.sec%2===m); addP('(anneau+secteur)%2=='+m,'anneau+secteur '+w,e=>(e.ring+e.sec)%2===m); });
+  rings.forEach(r=>{ addP('anneau<='+r,'anneau ≤ '+r,e=>e.ring<=r); addP('anneau>='+r,'anneau ≥ '+r,e=>e.ring>=r); });
+  const selE=U.filter((e,i)=>inSel[i]), selRings=uniq(selE.map(e=>e.ring)), selSecs=uniq(selE.map(e=>e.sec));
+  { const rr=range(selRings,'anneau'), ss=range(selSecs,'secteur'); addP(rr.js,rr.fr,e=>selRings.includes(e.ring)); addP(ss.js,ss.fr,e=>selSecs.includes(e.sec)); }
+  const wrap=s=>/&&|\|\|/.test(s)?'('+s+')':s, test=(f,target)=>U.every((e,i)=>!!f(e)===target[i]);
+  const search=target=>{ for(const p of P) if(test(p.f,target)) return {js:p.js,fr:p.fr}; let best=null;
+    for(let i=0;i<P.length;i++) for(let j=i+1;j<P.length;j++){ if(test(e=>P[i].f(e)&&P[j].f(e),target)){ const c={js:wrap(P[i].js)+'&&'+wrap(P[j].js), fr:P[i].fr+' et '+P[j].fr}; if(!best||c.js.length<best.js.length) best=c; } } return best; };
+  let r=search(inSel); if(r) return r;
+  const c=search(inSel.map(v=>!v)); if(c) return {js:'!('+c.js+')', fr:'tous sauf ('+c.fr+')'};
+  const labels=selE.map(geoLab); return {js:'['+labels.map(l=>'"'+l+'"').join(',')+'].includes(label)', fr:'liste : '+labels.join(', ')}; }
+function geoSyncChips(){ document.querySelectorAll('#geoBar .chip[data-key]').forEach(b=>{ const on=geoOn.has(b.dataset.key); b.classList.toggle('on',on); b.textContent=b.dataset.key; }); }
+function geoUpdateFormula(){ const lines=[], words=[]; let count=barSel.size; GEO.keys.forEach(k=>{ if(!geoOn.has(k)) return; const sel=geoSel.get(k); if(!sel.size) return; const s=geoSynth(k); lines.push(k+' : '+s.js); words.push(k+' = '+s.fr); });
+  const ta=document.getElementById('gtFormula'), wd=document.getElementById('gtWords'), c=document.getElementById('gtCount'); if(ta) ta.value=lines.join('\n'); if(wd) wd.textContent=words.join('  ·  '); if(c) c.textContent=count+' barre'+(count>1?'s':'')+' sélectionnée'+(count>1?'s':''); }
+function geoSetView(on){ if(on&&bankView) bankSetView(false); if(on&&eventView) eventSetView(false); geoView=on; document.querySelector('.side').classList.toggle('geomode',on); document.getElementById('geoTools').hidden=!on; const vb=document.getElementById('geoViewBtn'); vb.textContent=on?'Vue Anim':'Vue Géo'; document.getElementById('geoOv').classList.toggle('on',on); document.getElementById('ovL').classList.toggle('on',on);
+  if(on&&!geoOn.size){ geoOn.add('TRIs'); geoSyncChips(); geoRecompute(); } if(!on) geoHover=null; cv.style.cursor='default'; }
+(function buildGeoTools(){ const side=document.querySelector('.side'), box=document.getElementById('geoBar'); if(!side||!box) return;
+  const vb=document.createElement('button'); vb.id='geoViewBtn'; vb.className='chip vue'; vb.textContent='Vue Géo'; vb.onclick=()=>geoSetView(!geoView); document.getElementById('geoTop').insertBefore(vb,document.getElementById('geoTop').firstChild);
+  const gt=document.createElement('div'); gt.id='geoTools'; gt.hidden=true;
+  gt.innerHTML='<div class="gt-hint">Clique sur les formes pour les sélectionner (re-clic = retirer) : chaque forme de la liste a sa propre couleur, la sélection s\'affiche en barres blanches épaisses.</div>'
+   +'<div class="gt-row"><b id="gtCount">0 forme sélectionnée</b></div>'
+   +'<div class="gt-l">Formule à me donner</div><textarea id="gtFormula" readonly rows="3" placeholder="La formule de ta sélection apparaît ici"></textarea><div class="gt-words" id="gtWords"></div><div class="gt-row"><button class="chip" id="gtCopy">Copier</button></div>'
+   ;
+  side.appendChild(gt); { const nb=document.createElement('button'); nb.className='chip on geoOnly'; nb.id='geoNumBtn';nb.textContent='N° Géo'; nb.onclick=()=>{ geoNums=!geoNums; nb.classList.toggle('on',geoNums); }; document.getElementById('ovL').appendChild(nb); const cb=document.createElement('button'); cb.className='chip'; cb.id='gtClear'; cb.textContent='Tout désélectionner'; document.getElementById('geoMain').appendChild(cb); }
+  document.getElementById('gtClear').onclick=()=>{ barSel.clear(); geoOn.clear(); geoSyncChips(); geoRecompute(); geoUpdateFormula(); };   // désélectionne toutes les barres et décoche les listes
+  document.getElementById('gtCopy').onclick=()=>{ const v=document.getElementById('gtFormula').value; if(navigator.clipboard) navigator.clipboard.writeText(v).catch(()=>{}); const b=document.getElementById('gtCopy'); b.textContent='Copié ✓'; setTimeout(()=>b.textContent='Copier',1500); };
+  cv.addEventListener('pointerdown',ev=>{ if(!geoView) return; const el=geoPick(ev); if(!el) return; const eb=GEO.lists[el.k][el.i].bars; if(eb.every(id=>barSel.has(id))) eb.forEach(id=>barSel.delete(id)); else eb.forEach(id=>barSel.add(id)); geoUpdateFormula(); });
+  cv.addEventListener('pointermove',ev=>{ if(!geoView) return; geoHover=geoPick(ev); cv.style.cursor=geoHover?'pointer':'default'; });
+  cv.addEventListener('pointerleave',()=>{ geoHover=null; }); })();
+/* ---------- EVENT BANK : le recensement des types d'events créés (nom, description, occurrences, durée) ; on peut en ajouter un à la position de lecture ---------- */
+const evFmt=s=>Math.floor(s/60)+':'+(s%60).toFixed(1).padStart(4,'0').replace('.',',');
+function eventSetView(on){ eventView=!!on; if(!eventView) evPrev=null; if(eventView&&bankView) bankSetView(false); document.querySelector('.side').classList.toggle('eventmode',eventView); document.getElementById('eventTools').hidden=!eventView; syncTabs(); if(eventView&&geoView) geoSetView(false); if(eventView) eventBankRefresh(); }
+/* Banque d'events = MODÈLES sans timing (nom, description, durée, effet), réutilisables ailleurs ; listés automatiquement dès qu'un event existe (descriptif/fxmap ou copie). ▶ Aperçu : rejoue l'effet seul sur le dôme (le contexte du morceau de son event d'origine, les autres events masqués). × : retire le modèle de CETTE liste (l'event existe toujours). */
+let evPrev=null; const evHideKey='animadome.evBankHidden:'+MIX.slug;
+const evHidden=()=>{ try{ return new Set(JSON.parse(localStorage.getItem(evHideKey)||'[]')); }catch(e){ return new Set(); } };
+const evSaveHidden=s=>{ try{ localStorage.setItem(evHideKey,JSON.stringify([...s])); }catch(e){} };
+function evPreviewStart(src){ const d=Math.max(src.dur||0,src.span||0,1); evPrev={ ev:src, name:src.name, tStart:Math.max(0,src.on-1.5), tEnd:src.on+d+2, wall:performance.now() }; }
+function evPreviewTime(){ const w=evPrev.tEnd-evPrev.tStart, x=((performance.now()-evPrev.wall)/1000)%(w+.8); return evPrev.tStart+Math.min(x,w); }
+function eventBankRefresh(){ const box=document.getElementById('eventList'); if(!box) return; const groups=new Map(), hidden=evHidden();
+  EV.slice().sort((a,b)=>a.on-b.on).forEach(e=>{ if(!groups.has(e.name)) groups.set(e.name,{name:e.name,src:null,items:[]}); const g=groups.get(e.name); if(!e.isDup&&!g.src) g.src=e; g.items.push(e); });
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'), nf=x=>x.toFixed(1).replace('.',','); box.innerHTML=''; let shown=0, nHidden=0;
+  groups.forEach(g=>{ if(hidden.has(g.name)){ nHidden++; return; } const src=g.src||g.items[0], i=src.text.indexOf(':'), rawDesc=i>0?src.text.slice(i+1).trim():src.text, desc=((window.FXMAP&&FXMAP.eventTypes&&FXMAP.eventTypes[g.name])||rawDesc.replace(/(\b(de|à|vers|environ|jusqu'à)\s+)*\d{1,2}:\d{2}([,.]\d+)?/g,'').replace(/\(\s*\)/g,'').replace(/\s{2,}/g,' ').replace(/\s+([,;.)])/g,'$1').trim()), kind=(src.fx&&src.fx[0]&&src.fx[0].n)||'',
+      sp=g.items.map(e=>e.span).filter(Boolean), dur=sp.length?(Math.min(...sp)===Math.max(...sp)?nf(sp[0])+' s':nf(Math.min(...sp))+'–'+nf(Math.max(...sp))+' s'):'ponctuel', active=evPrev&&evPrev.name===g.name;
+    const card=document.createElement('div'); card.className='evc'+(active?' act':'');
+    card.innerHTML='<button class="evx" title="Retirer de la banque (l\'event existe toujours, il n\'est juste plus listé ici)">×</button><div class="evh"><b>'+esc(g.name)+'</b></div><div class="evm">'+dur+(kind?' · effet '+esc(kind):'')+' · utilisé '+g.items.length+' fois</div><p class="evd">'+esc(desc)+'</p><div class="evo"><button class="chip evpv">'+(active?'■ Arrêter l\'aperçu':'▶ Aperçu')+'</button><button class="chip evadd">+ Ajouter à la position de lecture</button></div>';
+    card.querySelector('.evx').onclick=()=>{ hidden.add(g.name); evSaveHidden(hidden); if(evPrev&&evPrev.name===g.name) evPrev=null; eventBankRefresh(); };
+    card.querySelector('.evpv').onclick=()=>{ if(evPrev&&evPrev.name===g.name) evPrev=null; else evPreviewStart(src); eventBankRefresh(); };
+    card.querySelector('.evadd').onclick=()=>{ const on=Math.round((au.currentTime||0)*20)/20, c=Object.assign({},src,{isDup:true,on,fx:src.fx.map(f=>Object.assign({},f,{t0:on}))}); EV.push(c); saveEvt(); eventBankRefresh(); };
+    box.appendChild(card); shown++; });
+  if(!shown&&!nHidden) box.innerHTML='<p class="evd">Aucun event pour l\'instant : chaque event créé apparaîtra ici automatiquement.</p>';
+  if(nHidden){ const b=document.createElement('button'); b.className='chip'; b.textContent='Réafficher les '+nHidden+' event'+(nHidden>1?'s':'')+' retiré'+(nHidden>1?'s':'')+' de la banque'; b.onclick=()=>{ evSaveHidden(new Set()); eventBankRefresh(); }; box.appendChild(b); } }
+(function buildEventBank(){ const side=document.querySelector('.side'); if(!side) return; const et=document.createElement('div'); et.id='eventTools'; et.hidden=true;
+  et.innerHTML='<div class="bk-l">Modèles d\'events, sans timing : réutilisables ailleurs. ▶ Aperçu rejoue l\'effet seul sur le dôme ; « + Ajouter » le place à la position de lecture (déplaçable en Vue Phase, Alt+clic sur sa poignée le supprime) ; × le retire de cette liste sans le supprimer. Tout nouvel event apparaît ici automatiquement.</div><div id="eventList"></div>'; side.appendChild(et); })();/* ---------- Onglets DESCRIPTIF / EFFECTS BANK / EVENT BANK (panneau de droite) ---------- */
+function syncTabs(){ document.getElementById('tabDesc').classList.toggle('on',!bankView&&!eventView); document.getElementById('tabBank').classList.toggle('on',bankView); document.getElementById('tabEvent').classList.toggle('on',eventView); }
+function bankSetView(on){ if(on&&eventView) eventSetView(false); bankView=!!on; const side=document.querySelector('.side'); side.classList.toggle('bankmode',bankView); document.getElementById('bankTools').hidden=!bankView;
+  syncTabs();
+  if(bankView&&geoView) geoSetView(false); if(bankView){ BK.last=performance.now()/1000; bankRefresh(); } }
+function bankCode(){ const b=BANKSTATE, g=bankGradKey(b);
+  return 'BANK '+b.eff+' | dégradé='+g+' | vitesse='+b.speed.toFixed(2)+' | intensité='+b.int.toFixed(2)+'\n'+"{ n:'Bank', eff:'"+b.eff+"', grad:'"+g+"', speed:"+(+b.speed.toFixed(2))+", level:"+(+b.int.toFixed(2))+" }"; }
+function bankPrev(){ const st=gradStops(bankGradKey(BANKSTATE)); document.getElementById('bkPrev').style.background='linear-gradient(90deg,'+st.map(s=>'rgb('+s.c.map(x=>Math.round(x*255)).join(',')+') '+Math.round(s.p*100)+'%').join(',')+')'; }
+function bankRefresh(){ const b=BANKSTATE, $=id=>document.getElementById(id);
+  $('bkEff').value=b.eff; $('bkDesc').textContent=(BANK[b.eff]||{}).d||'';
+  $('bkSpeed').value=b.speed; $('bkSpeedV').textContent='×'+b.speed.toFixed(2); $('bkInt').value=b.int; $('bkIntV').textContent=Math.round(b.int*100)+' %';
+  bankPrev(); $('bkCode').value=bankCode(); try{ localStorage.setItem('animadome.bank',JSON.stringify(b)); }catch(e){} }
+/* éditeur de dégradé : une ligne par couleur (sélecteur de couleur + position), on peut en ajouter et en retirer */
+function bankRows(){ const box=document.getElementById('bkStops'), S=BANKSTATE; S.stops.sort((x,y)=>x.p-y.p); box.innerHTML='';
+  S.stops.forEach((s,i)=>{ const r=document.createElement('div'); r.className='bk-stop';
+    r.innerHTML='<input type="color" value="'+s.c+'"><input type="range" min="0" max="1" step="0.01" value="'+s.p+'"><span class="bk-val">'+Math.round(s.p*100)+' %</span><button class="chip" title="Retirer cette couleur">×</button>';
+    const [ci,pi,pv,x]=[r.children[0],r.children[1],r.children[2],r.children[3]];
+    ci.oninput=()=>{ s.c=ci.value; bankRefresh(); }; pi.oninput=()=>{ s.p=+pi.value; pv.textContent=Math.round(s.p*100)+' %'; bankRefresh(); }; pi.onchange=()=>bankRows();
+    x.onclick=()=>{ if(S.stops.length>2){ S.stops.splice(i,1); bankRows(); bankRefresh(); } }; box.appendChild(r); }); }(function buildBank(){ const side=document.querySelector('.side'); if(!side) return;
+  try{ const s=JSON.parse(localStorage.getItem('animadome.bank')||'null'); if(s&&BANK[s.eff]&&Array.isArray(s.stops)&&s.stops.length>=2) Object.assign(BANKSTATE,s); }catch(e){}
+  const tabs=document.createElement('div'); tabs.className='tabs'; tabs.innerHTML='<button class="tab on" id="tabDesc">DESCRIPTIF</button><button class="tab" id="tabBank">EFFECTS BANK</button><button class="tab" id="tabEvent">EVENT BANK</button>'; side.insertBefore(tabs,side.firstChild);
+  const bt=document.createElement('div'); bt.id='bankTools'; bt.hidden=true;
+  bt.innerHTML='<div class="bk-l">Effet (animation seule, sans couleur)</div><select id="bkEff">'+Object.keys(BANK).map(k=>'<option>'+k+'</option>').join('')+'</select><p class="bk-d" id="bkDesc"></p>'
+   +'<div class="bk-l">Dégradé (blanc par défaut) : position 0 % = animation au plus bas, 100 % = au plus haut</div><div id="bkPrev"></div><div id="bkStops"></div><div class="bk-row"><button class="chip" id="bkAdd">+ Couleur</button><button class="chip" id="bkWhite">Remettre en blanc</button></div>'
+   +'<div class="bk-l">Vitesse</div><div class="bk-row"><input type="range" id="bkSpeed" min="0.1" max="4" step="0.05"><span class="bk-val" id="bkSpeedV"></span></div>'
+   +'<div class="bk-l">Intensité</div><div class="bk-row"><input type="range" id="bkInt" min="0" max="1" step="0.01"><span class="bk-val" id="bkIntV"></span></div>'
+   +'<div class="bk-l">Code d\'effet à me donner (avec le contexte : phase, instant, ce que tu veux)</div><textarea id="bkCode" rows="4" readonly></textarea><div class="bk-row"><button class="chip" id="bkCopy">Copier</button></div>'
+   +'<div class="bk-l">Recharger un code</div><input id="bkLoad" placeholder="BANK Montée | dégradé=Lave | vitesse=1.00 | intensité=0.80"><div class="bk-row"><button class="chip" id="bkApply">Charger</button><span id="bkErr" class="gt-hint"></span></div>';
+  side.appendChild(bt);
+  const $=id=>document.getElementById(id), S=BANKSTATE;
+  $('tabDesc').onclick=()=>{ bankSetView(false); eventSetView(false); }; $('tabBank').onclick=()=>bankSetView(true); $('tabEvent').onclick=()=>eventSetView(true);
+  $('bkEff').onchange=e=>{ S.eff=e.target.value; bankRefresh(); };
+  $('bkAdd').onclick=()=>{ const st=gradStops(bankGradKey(S)); let bi=0,bg=-1; for(let i=1;i<st.length;i++){ const g=st[i].p-st[i-1].p; if(g>bg){ bg=g; bi=i; } } const p=(st[bi-1].p+st[bi].p)/2, c=gradColor(st,p), hx='#'+c.map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join(''); S.stops.push({c:hx,p:+p.toFixed(2)}); bankRows(); bankRefresh(); };
+  $('bkWhite').onclick=()=>{ S.stops=[{c:'#000000',p:0},{c:'#ffffff',p:1}]; bankRows(); bankRefresh(); };
+  $('bkSpeed').oninput=e=>{ S.speed=+e.target.value; bankRefresh(); }; $('bkInt').oninput=e=>{ S.int=+e.target.value; bankRefresh(); };
+  $('bkCopy').onclick=()=>{ if(navigator.clipboard) navigator.clipboard.writeText($('bkCode').value).catch(()=>{}); $('bkCopy').textContent='Copié ✓'; setTimeout(()=>$('bkCopy').textContent='Copier',1500); };
+  $('bkApply').onclick=()=>{ const m=$('bkLoad').value.match(/BANK\s+(.+?)\s*\|\s*dégradé=(\S+)\s*\|\s*vitesse=([\d.]+)\s*\|\s*intensité=([\d.]+)/); if(!m||!BANK[m[1]]){ $('bkErr').textContent='code non reconnu'; return; }
+    S.eff=m[1]; S.stops=gradStops(m[2]).map(s=>({c:'#'+s.c.map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join(''),p:+s.p.toFixed(2)}));
+    S.speed=Math.min(4,Math.max(.1,+m[3])); S.int=Math.min(1,Math.max(0,+m[4])); $('bkErr').textContent=''; bankRows(); bankRefresh(); };
+  $('bkLoad').addEventListener('keydown',e=>{ if(e.key==='Enter') $('bkApply').click(); });
+  bankRows(); bankRefresh(); })();
+/* ---------- Rendu du dôme ---------- */
+let showNum=false, lastFx='';
+function renderDome(t){
+  if(geoView){ ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H+OFF); ctx.save(); ctx.translate(GDX,OFF); ctx.translate(CENTER.x,CENTER.y); ctx.scale(VIEW_SCALE*GZ,VIEW_SCALE*GZ); ctx.translate(-CENTER.x,-CENTER.y); drawGeoView(); ctx.restore(); drawGeoBanner(); return; }
+  const i=phaseAt(t), f=feat(t), act=bankView?[]:activeFx(t,i); buf.fill(0);
+  if(bankView) bankFill(performance.now()/1000);   /* onglet EFFECTS BANK : le dôme montre l'effet choisi, indépendamment du mix */
+  else { GAIN=1; if(gradeSkip.length!==LED.length) gradeSkip=new Uint8Array(LED.length); else gradeSkip.fill(0); for(const a of act){ const fn=FX[a.fx.n]; if(fn) fn(t,a.w,a.fx,a.fx.slow?featSlow(t):f); }
+  if(GAIN<.9999) for(let k=0;k<buf.length;k++) buf[k]*=GAIN;
+  { const gc=gradeAt(t); if(gc<.999) applyGrade(gc); } }
+  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H+OFF); ctx.lineCap='round';
+  ctx.save(); ctx.translate(0,OFF); ctx.translate(CENTER.x,CENTER.y); ctx.scale(VIEW_SCALE,VIEW_SCALE); ctx.translate(-CENTER.x,-CENTER.y);
+  for(const b of bars){ if(geoVisible&&!geoVisible.has(b.id)) continue; ctx.beginPath(); ctx.moveTo(b.pa[0],b.pa[1]); ctx.lineTo(b.pb[0],b.pb[1]);
+    if(b.contour){ctx.strokeStyle='#3a3a44';ctx.lineWidth=3;ctx.setLineDash([6,5]);}
+    else if(b.outer){ctx.strokeStyle='#2c2c36';ctx.lineWidth=2;ctx.setLineDash([4,6]);}
+    else{ctx.strokeStyle='#1c1c26';ctx.lineWidth=2;ctx.setLineDash([]);} ctx.stroke(); }
+  ctx.setLineDash([]);
+  for(const L of LED){ if(geoVisible&&!geoVisible.has(L.bar.id)) continue; const r=buf[3*L.id], g=buf[3*L.id+1], b=buf[3*L.id+2], m=Math.max(r,g,b,1), k=m>1?1/m:1;
+    const bb=L.bar, ang=Math.atan2(bb.pb[1]-bb.pa[1],bb.pb[0]-bb.pa[0]), len=Math.hypot(bb.pb[0]-bb.pa[0],bb.pb[1]-bb.pa[1]);
+    ctx.fillStyle = (r+g+b)<.02 ? '#15151c' : `rgb(${Math.round(255*clamp(r*k))},${Math.round(255*clamp(g*k))},${Math.round(255*clamp(b*k))})`;
+    ctx.beginPath(); ctx.ellipse(L.x,L.y,Math.max(2,len*(1-2*DEAD_END)/LEDS_PER_BAR*.36),2.3,ang,0,6.2832); ctx.fill(); }
+  drawGeoLabels();
+  if(showNum){ ctx.fillStyle='#fff'; ctx.font='10px system-ui'; ctx.textAlign='center'; for(const b of addr) ctx.fillText(b.id,(b.pa[0]+b.pb[0])/2,(b.pa[1]+b.pb[1])/2-7); }
+  ctx.restore();
+  // ligne des effets : validés ✓ / proposés en italique ; évènements *mm:ss* ; "+" entre effets simultanés
+  const seen=new Set(), items=[];
+  for(const a of act){ if(a.w<=.02) continue; const id=(a.ev?'*'+mmss(a.ev.t)+'* ':'')+a.fx.n; if(seen.has(id)) continue; seen.add(id); items.push({id,a}); }
+  // bandeau du haut : phase en petit, effets en grand (même couleurs que la ligne HTML)
+  const ph=PH[i]; ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  if(bankView){ ctx.font='700 28px system-ui'; ctx.fillStyle='#e8e8f0'; ctx.fillText('Effects bank · '+BANKSTATE.eff,22,56); }
+  else if(items.length){ let size=30; const part=(x,n)=>(x.a.fx.ok?'✓ ':'')+x.id, sep=' + ';
+    const style=x=>(x.a.ev?'700 ':x.a.fx.ok?'700 ':'italic 500 ');
+    const total=sz=>{ let wd=0; items.forEach((x,n)=>{ ctx.font=style(x)+sz+'px system-ui'; wd+=ctx.measureText(part(x,n)).width+(n?ctx.measureText(sep).width:0); }); return wd; };
+    while(size>16 && total(size)>W-200) size-=2;
+    let x0=22; ctx.textAlign='left';
+    items.forEach((x,n)=>{ if(n){ ctx.font='400 '+size+'px system-ui'; ctx.fillStyle='#8a8a9a'; ctx.fillText(sep,x0,56); x0+=ctx.measureText(sep).width; }
+      ctx.font=style(x)+size+'px system-ui'; ctx.fillStyle=x.a.ev?'#7fd4ff':phaseColor(ph); ctx.fillText(part(x,n),x0,56); x0+=ctx.measureText(part(x,n)).width; }); }
+}
+
+/* ---------- Texte lié à la timeline ---------- */
+let shownPhase=-1, shownSub=null, shownEv=null;
+function updateText(t){
+  if(!PH.length || editing) return; const i=phaseAt(t), p=PH[i];
+  if(i!==shownPhase){ shownPhase=i;
+    document.getElementById('phRange').textContent=`[${mmss(p.start)} => ${mmss(p.end)}]`; document.getElementById('phMixTxt').textContent=`DESCRIPTIF PHASE n°${i+1}`; document.getElementById('phTime').style.color=phaseColor(p); document.getElementById('phText').style.color=phaseColor(p);
+    document.getElementById('phProv').hidden=!p.prov;
+    document.getElementById('phTech').textContent=p.tech; renderTechView(p.tech); document.getElementById('phText').textContent=p.title; document.getElementById('phSon').textContent=p.audio; shownSub=null; cleanRefresh(); }
+  const sub=p.sub.find(s=>t>=s.start&&t<s.end); const st=sub?`[${mmss(sub.start)} => ${mmss(sub.end)}] ${sub.text}`:'';
+  if(st!==shownSub){ shownSub=st; const el=document.getElementById('phSub'); el.hidden=!st; el.textContent=st; }
+  const ev=EV.find(e=>t>=e.on && t<e.on+e.txtDur); /* texte affiché pendant la durée de l'event, 2 s minimum */ const es=ev?`*${mmss(ev.t)}* ${ev.text}`:'';
+  if(es!==shownEv){ shownEv=es; const el=document.getElementById('phEv'); el.hidden=!es; el.textContent=es; }
+}
+
+/* ---------- Frise ---------- */
+const PALCOL = { sun:'#c99a2e', violet:'#6d3b9e', ember:'#8c2f1a', lava:'#b5471a', fire:'#d9791f', blue:'#2b6fb0', dark:'#222' };
+let curve=null;
+const stemOn={k:false,d:false,b:false,o:false,v:false,h:false}, stemAny=()=>stemOn.k||stemOn.d||stemOn.b||stemOn.o||stemOn.v||stemOn.h;   /* couches de la timeline : kicks (événements), batterie (piste), basse, médiums (piste « other ») */
+let phaseView=false, VW0=0, VW1=1, zoomWin=null, phOverride=null, phOverrideFrom=-1;   /* zoomWin = fenêtre libre [début,fin] (molette) ; phOverride = phase affichée en Vue Phase quand on y est entré par zoom ailleurs que sur la phase en lecture */   // fenêtre visible de la timeline (secondes) : piste entière ou phase en cours
+function updateView(t){ let a=0,b=DUR; if(phOverride!==null&&phaseAt(t)!==phOverrideFrom) phOverride=null;   /* la lecture change de phase : la vue la suit de nouveau */
+  if(phaseView&&PH.length){ const p=PH[phOverride!==null?phOverride:phaseAt(t)]; a=p.start; b=Math.min(DUR,p.end); } else if(zoomWin){ a=zoomWin[0]; b=zoomWin[1]; } if(b-a<1) b=a+1; if(a!==VW0||b!==VW1){ VW0=a; VW1=b; curve=null; } }
+function buildCurve(){ const w=tl.width, c=new Float32Array(w), d=new Float32Array(w), sp=VW1-VW0;
+  for(let x=0;x<w;x++){ const a=Math.floor((VW0+x/w*sp)/DUR*NF), b=Math.max(a+1,Math.floor((VW0+(x+1)/w*sp)/DUR*NF)); let m=0,h=0; for(let i=a;i<b&&i<NF;i++){ m=Math.max(m,E.rms[i]); h=Math.max(h,E.flux[i]); } c[x]=m; d[x]=h; } curve={c,d};
+  /* pistes séparées : niveau max par colonne (batterie, basse, synthés) + densité de kicks pondérée par leur force (kick = ce qui doit se voir le plus) */
+  const sd=new Float32Array(w), sb=new Float32Array(w), so=new Float32Array(w), sk=new Float32Array(w), sv=new Float32Array(w), sh=new Float32Array(w), cd=sp/w;
+  for(let x=0;x<w;x++){ const a=Math.floor((VW0+x/w*sp)/DUR*NF), b=Math.max(a+1,Math.floor((VW0+(x+1)/w*sp)/DUR*NF)); let md=0,mb=0,mo=0,mv=0,mh=0; for(let i=a;i<b&&i<NF;i++){ md=Math.max(md,E.drums[i]); mb=Math.max(mb,E.bassS[i]); mo=Math.max(mo,E.other[i]); mv=Math.max(mv,E.vocals[i]); mh=Math.max(mh,E.high[i]); } sd[x]=md; sb[x]=mb; so[x]=mo; sv[x]=mv||0; sh[x]=mh||0; }
+  for(let i=0;i<BT.kick.length;i++){ const tk=BT.kick[i]; if(tk<VW0||tk>=VW1) continue; const x=Math.min(w-1,Math.floor((tk-VW0)/sp*w)); sk[x]+=Math.min(9,BT.kickS[i]||3); }
+  for(let x=0;x<w;x++) sk[x]=Math.min(1,sk[x]/cd/7.5);
+  curve.s={sd,sb,so,sk,sv,sh}; }
+function drawTL(t){
+  updateView(t); const w=tl.width,h=tl.height; if(!curve) buildCurve();
+  tctx.clearRect(0,0,w,h); tctx.fillStyle='#0f0f16'; tctx.fillRect(0,0,w,h);
+  const X=s=>(s-VW0)/(VW1-VW0)*w, top=34, base=h-6-(phaseView?34:0);   /* en Vue Phase : bande de 34 px SOUS l'onde pour les poignées et les noms des events */
+  PH.forEach((p,i)=>{ const x0=X(p.start),x1=X(p.end); tctx.fillStyle=barColor(p); tctx.globalAlpha=.7; tctx.fillRect(x0,18,x1-x0-1,12); tctx.globalAlpha=.10; tctx.fillRect(x0,top,x1-x0-1,base-top); tctx.globalAlpha=1;
+    if(i===phaseAt(t)){ tctx.strokeStyle='#fff'; tctx.globalAlpha=.8; tctx.strokeRect(x0+.5,18.5,x1-x0-2,11); tctx.globalAlpha=1; }
+    if(Math.min(x1,w)-Math.max(x0,0)>26){ tctx.fillStyle='#fff'; tctx.font='bold 13px system-ui'; tctx.textAlign='left'; tctx.fillText(String(i+1),Math.max(x0,0)+4,14); } });
+  if(stemAny()&&curve.s){   /* pistes superposées en transparence : synthés (bleu), basse (violet), batterie (orange), et par-dessus les KICKS en jaune clair, bien plus opaques */
+    const lay=(a,col,al)=>{ tctx.beginPath(); tctx.moveTo(0,base); for(let x=0;x<w;x++) tctx.lineTo(x,base-a[x]*(base-top)); tctx.lineTo(w,base); tctx.closePath(); tctx.globalAlpha=al; tctx.fillStyle=col; tctx.fill(); tctx.globalAlpha=1; };
+    if(stemOn.o) lay(curve.s.so,'#4aa3ff',.40); if(stemOn.v) lay(curve.s.sv,'#6fe28a',.42); if(stemOn.b) lay(curve.s.sb,'#b86bff',.45); if(stemOn.h) lay(curve.s.sh,'#e86fc0',.40); if(stemOn.d) lay(curve.s.sd,'#ff9a4a',.40);
+    if(stemOn.k){ tctx.beginPath(); tctx.moveTo(0,base); for(let x=0;x<w;x++) tctx.lineTo(x,base-curve.s.sk[x]*(base-top)); tctx.lineTo(w,base); tctx.closePath(); tctx.fillStyle='#f3e2bd'; tctx.globalAlpha=.8; tctx.fill(); tctx.globalAlpha=1; }   /* kicks : couche à part, dessinée par-dessus les pistes */
+    
+  } else {
+  tctx.beginPath(); tctx.moveTo(0,base); for(let x=0;x<w;x++) tctx.lineTo(x,base-curve.c[x]*(base-top)); tctx.lineTo(w,base); tctx.closePath(); tctx.fillStyle='#d8d8e866'; tctx.fill();
+  tctx.beginPath(); for(let x=0;x<w;x++){ const y=base-curve.d[x]*(base-top)*.9; x?tctx.lineTo(x,y):tctx.moveTo(x,y); } tctx.strokeStyle='#ff9a4a'; tctx.lineWidth=1; tctx.stroke(); }
+  tctx.fillStyle='#8a8a9a'; tctx.font='11px system-ui'; tctx.textAlign='left'; { const step=[5,10,15,30,60,120,300,600].find(s=>(VW1-VW0)/s<=12)||600; for(let m=Math.ceil(VW0/step)*step;m<=VW1;m+=step){ tctx.fillText(fmt(m),X(m)+3,phaseView?base-3:h-8); tctx.fillStyle='#ffffff18'; tctx.fillRect(X(m),top,1,base-top); tctx.fillStyle='#8a8a9a'; } }
+  EV.forEach(e=>{ const x=X(e.on); if(x<-20||x>w+20) return; tctx.fillStyle='#7fd4ff';
+    if(e.span){ tctx.globalAlpha=.22; tctx.fillRect(x,24,Math.max(2,X(e.on+e.span)-x),(phaseView?base+4:base)-24); tctx.globalAlpha=1; }   /* événement à durée : bande de sa longueur */
+    if(!phaseView){ tctx.fillRect(x-1,24,2,base-24); return; }   /* Vue Piste : seulement la barre (ni nom ni poignée, non déplaçable) */
+    tctx.fillRect(x-1,24,2,base+4-24);   /* Vue Phase : barre + poignée (tirette) en bas + nom court */
+    { const gy=base+4; tctx.beginPath(); tctx.roundRect?tctx.roundRect(x-7,gy,14,11,3):tctx.rect(x-7,gy,14,11); tctx.fillStyle=(dragEv===e)?'#ffffff':'#7fd4ff'; tctx.fill(); tctx.fillStyle='#0f0f16'; tctx.fillRect(x-3,gy+3,6,1); tctx.fillRect(x-3,gy+7,6,1); }
+    tctx.font='bold 10px system-ui'; tctx.textBaseline='alphabetic'; const lb=e.name+(dragEv===e?'  '+Math.floor(e.on/60)+':'+(e.on%60).toFixed(2).padStart(5,'0'):''), tw=tctx.measureText(lb).width, lx=Math.min(Math.max(x,tw/2+3),w-tw/2-3);
+    tctx.fillStyle='#0f0f16cc'; tctx.fillRect(lx-tw/2-2,h-20,tw+4,12); tctx.fillStyle='#7fd4ff'; tctx.textAlign='center'; tctx.fillText(lb,lx,h-10); tctx.textAlign='left'; });
+  tctx.fillStyle='#ff3b30'; tctx.fillRect(X(t)-1,0,2,h);
+}
+function seekFromEvent(ev){ const r=tl.getBoundingClientRect(); au.currentTime=VW0+clamp((ev.clientX-r.left)/r.width)*(VW1-VW0); }
+let dragging=false;
+/* les barres bleues des events se déplacent à la main (précision 0,05 s) ; l'instant est enregistré dans events-timing.json */
+/* molette : zoom / dézoom autour du curseur ; assez de zoom => Vue Phase (de la phase sous le curseur) ; dézoom depuis la Vue Phase => fenêtre libre puis piste entière */
+tl.addEventListener('wheel',ev=>{ ev.preventDefault(); if(!PH.length) return; const r=tl.getBoundingClientRect(), fr=Math.min(1,Math.max(0,(ev.clientX-r.left)/r.width)), span=VW1-VW0, tc=VW0+fr*span, fac=Math.exp(Math.max(-300,Math.min(300,ev.deltaY))*.0015);
+  const place=ns=>{ let a=Math.max(0,Math.min(DUR-ns,tc-fr*ns)); return [a,a+ns]; };
+  if(phaseView){ if(ev.deltaY>0){ const ns=Math.min(DUR,span*1.6); setPhaseView(false); zoomWin=ns>=DUR*.92?null:place(ns); saveUI(); } return; }
+  const ns=Math.min(DUR,Math.max(4,span*fac));
+  if(ev.deltaY<0){ const pi=phaseAt(tc), P=PH[pi]; if(ns<=(P.end-P.start)*1.15){ setPhaseView(true,pi); return; } zoomWin=place(ns); }
+  else zoomWin=(ns>=DUR*.92)?null:place(ns);
+  saveUI(); },{passive:false});
+let dragEv=null;
+function evNear(ev){ if(!phaseView) return null;   /* pas de déplacement d'events en Vue Piste */
+  const r=tl.getBoundingClientRect(), cy=(ev.clientY-r.top)*(tl.height/r.height); if(cy<tl.height-38) return null;   /* seule la poignée (bas de la barre) saisit l'event ; ailleurs un clic positionne la lecture */
+  let best=null,bd=12; for(const e of EV){ const px=r.left+((e.on-VW0)/(VW1-VW0))*r.width, d=Math.abs(ev.clientX-px); if(d<=bd){ bd=d; best=e; } } return best; }   /* à égalité, le dernier (un doublon) est saisi */
+function saveEvt(){ const o={}; EV.forEach(e=>{ if(e.isDup) return; if(e.on!==e.t||EVT[e.k]!==undefined) o[e.k]=e.on; }); const dups=EV.filter(e=>e.isDup).map(e=>({k:e.k,on:e.on})); if(dups.length) o.__dups=dups; EVT=o; fetch('/api/event-time?dir='+encodeURIComponent(MIX.dir),{method:'POST',body:JSON.stringify(o)}).catch(()=>{}); if(eventView) eventBankRefresh(); }
+tl.addEventListener('pointerdown',ev=>{ const e=evNear(ev); tl.setPointerCapture(ev.pointerId);
+  if(e){ if(ev.altKey&&e.isDup){ EV.splice(EV.indexOf(e),1); saveEvt(); return; }   /* Alt+clic sur un doublon : le supprime */
+    if(ev.shiftKey){ const c=Object.assign({},e,{ isDup:true, fx:e.fx.map(f=>Object.assign({},f)) }); EV.push(c); dragEv=c; return; }   /* Maj+clic : duplique l'event et le laisse glisser à sa nouvelle place */
+    dragEv=e; return; }
+  dragging=true; seekFromEvent(ev); });
+tl.addEventListener('pointermove',ev=>{ if(dragEv){ const r=tl.getBoundingClientRect(), tt=VW0+Math.min(1,Math.max(0,(ev.clientX-r.left)/r.width))*(VW1-VW0); dragEv.on=Math.round(tt*20)/20; dragEv.fx.forEach(f=>f.t0=dragEv.on); return; } if(dragging){ seekFromEvent(ev); return; } tl.style.cursor=evNear(ev)?'ew-resize':'pointer'; });
+tl.addEventListener('pointerup',()=>{ dragging=false; if(dragEv){ dragEv=null; saveEvt(); } });
+
+/* ---------- Contrôles ---------- */
+const playBtn=document.getElementById('play');
+function toggle(){ if(au.paused) au.play().catch(()=>{}); else au.pause(); }
+playBtn.onclick=toggle; au.addEventListener('play',()=>playBtn.textContent='⏸ Pause'); au.addEventListener('pause',()=>playBtn.textContent='▶ Lecture');
+/* Flèches gauche/droite : ±5 s ; en mode Loop ou en Vue Phase on reste dans la phase en cours (butée au début et à la fin de la phase) */
+function seekRel(d){ const t=au.currentTime+d; if((loopOn||phaseView)&&PH.length){ const p=PH[phaseAt(au.currentTime)]; au.currentTime=Math.min(Math.max(t,p.start),p.end-.1); } else au.currentTime=t; }
+function gotoPhase(d){ if(!PH.length) return; const i=phaseAt(au.currentTime); let j=i+d; if(d<0 && au.currentTime-PH[i].start>2) j=i; au.currentTime=PH[clamp(j,0,PH.length-1)].start; }
+let loopOn=false; const loopBtn=document.getElementById('loopBtn'); function toggleLoop(){ loopOn=!loopOn; loopBtn.classList.toggle('on',loopOn); loopBtn.setAttribute('aria-pressed',loopOn); saveUI(); } loopBtn.onclick=toggleLoop;
+function syncStemChk(){ document.getElementById('stK').checked=stemOn.k; document.getElementById('stD').checked=stemOn.d; document.getElementById('stB').checked=stemOn.b; document.getElementById('stO').checked=stemOn.o; document.getElementById('stH').checked=stemOn.h; document.getElementById('stV').checked=stemOn.v; }
+function toggleStems(){ const v=!stemAny(); stemOn.k=stemOn.d=stemOn.b=stemOn.o=stemOn.h=stemOn.v=v; syncStemChk(); saveUI(); }   /* touche S : tout cocher / tout décocher */
+[['stK','k'],['stD','d'],['stB','b'],['stO','o'],['stH','h'],['stV','v']].forEach(([id,k])=>{ document.getElementById(id).onchange=e=>{ stemOn[k]=e.target.checked; saveUI(); }; });
+function togglePhaseView(){ document.getElementById('phaseBtn').click(); }
+function setPhaseView(on,idx){ phaseView=!!on; zoomWin=null; phOverride=(on&&idx!==undefined)?idx:null; phOverrideFrom=phaseAt(au.currentTime||0); const pb=document.getElementById('phaseBtn'); tl.classList.toggle('ph',phaseView); pb.classList.toggle('on',phaseView); pb.setAttribute('aria-pressed',phaseView); pb.textContent=phaseView?'Vue Piste':'Vue Phase'; saveUI(); }
+document.getElementById('phaseBtn').onclick=()=>setPhaseView(!phaseView);
+document.getElementById('prev').onclick=()=>gotoPhase(-1); document.getElementById('next').onclick=()=>gotoPhase(1);
+const mixSel=document.getElementById('mixSel');
+MIXES.forEach(m=>{ const o=document.createElement('option'); o.value=m.slug; o.textContent=m.title; if(m===MIX) o.selected=true; mixSel.appendChild(o); });
+mixSel.onchange=e=>{ const u=new URL(location.href); u.searchParams.set('mix',e.target.value); location.href=u.toString(); };{ const nb=document.getElementById('showNumBtn'); nb.onclick=()=>{ showNum=!showNum; nb.classList.toggle('on',showNum); }; }
+document.getElementById('nled').onchange=e=>buildLEDs(+e.target.value);
+/* une case cochée ou un slider relâché ne garde pas le focus : les touches (Espace, flèches...) restent des raccourcis et ne re-cochent rien */
+addEventListener('change',e=>{ const x=e.target; if(x&&x.tagName==='INPUT'&&/^(checkbox|range)$/.test(x.type)) x.blur(); },true);
+addEventListener('keydown',e=>{ const tg=e.target; if((tg.tagName==='INPUT'&&!/^(checkbox|range|button)$/.test(tg.type))||tg.tagName==='SELECT'||tg.tagName==='TEXTAREA'||tg.isContentEditable) return;
+  if(e.code==='Space'){ e.preventDefault(); toggle(); } else if(e.key==='ArrowRight'||e.key==='ArrowLeft'){ e.preventDefault(); const st=e.shiftKey?.1:e.ctrlKey?.5:5;   /* flèche : 5 s ; Ctrl+flèche : 0,5 s ; Shift+flèche : 0,1 s */ seekRel(e.key==='ArrowRight'?st:-st); }
+  else if(e.ctrlKey||e.metaKey||e.altKey) return; else if(e.key==='l'||e.key==='L') toggleLoop(); else if(e.key==='p'||e.key==='P') togglePhaseView(); else if(e.key==='s'||e.key==='S') toggleStems();
+  else if(e.key==='[') gotoPhase(-1); else if(e.key===']') gotoPhase(1);
+  else if(e.key==='Enter'){ e.preventDefault(); pIn.focus(); }   // Entrée = aller écrire dans le prompt
+  else if(e.key==='ArrowUp'){ e.preventDefault(); gotoPhase(1); } else if(e.key==='ArrowDown'){ e.preventDefault(); gotoPhase(-1); } });
+
+/* ---------- Édition du texte de la phase -> enregistré dans descriptif-pyrobeats.txt ---------- */
+let editing=false, editStart=null, editEl=null, editKind=null, saveTimer=null, dirty=false;
+const saveState=document.getElementById('saveState');
+function setSave(msg,cls){ saveState.textContent=msg; saveState.className='save '+(cls||''); }
+function savePhaseText(){ clearTimeout(saveTimer); if(!dirty||editStart===null||!editEl) return Promise.resolve(); dirty=false;
+  setSave('enregistrement…');
+  return fetch('/api/phase-text?dir='+encodeURIComponent(MIX.dir)+'&txt='+encodeURIComponent(MIX.descriptif),{method:'POST',body:editStart+'\n'+editKind+'\n'+editEl.textContent.replace(/\n{2,}/g,'\n').trim()})
+    .then(r=>r.text()).then(res=>{ if(res==='ok'){ setSave('✓ enregistré dans descriptif-pyrobeats.txt','ok'); setTimeout(()=>{ if(!dirty) setSave(''); },3500); }
+      else setSave('⚠ '+res,'err'); })
+    .catch(()=>setSave('⚠ serveur injoignable (ouvrir via lancer-apercu.bat)','err')); }
+function beginEdit(el,kind){ editing=true; editEl=el; editKind=kind; editStart=PH[phaseAt(au.currentTime)]?.start ?? null; }
+function wireEditable(el,kind){
+  el.addEventListener('focus',()=>{ beginEdit(el,kind); dirty=false; });
+  el.addEventListener('input',()=>{ if(!editing||editEl!==el) beginEdit(el,kind); dirty=true; setSave('modifié…'); clearTimeout(saveTimer); saveTimer=setTimeout(savePhaseText,1200); });
+  el.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); el.blur(); } if(e.key==='Escape'){ dirty=false; el.blur(); } });
+  el.addEventListener('blur',()=>{ savePhaseText().then(()=>{ editing=false; editEl=null; shownPhase=-1; lastTxt=''; loadDescriptif(); }); }); }
+addEventListener('pagehide',()=>{ if(dirty&&editEl&&editStart!==null){ try{ navigator.sendBeacon('/api/phase-text?dir='+encodeURIComponent(MIX.dir)+'&txt='+encodeURIComponent(MIX.descriptif), editStart+'\n'+editKind+'\n'+editEl.textContent.replace(/\n{2,}/g,'\n').trim()); }catch(e){} } });
+wireEditable(document.getElementById('phTech'),'tech');
+function renderTechView(txt){ const v=document.getElementById('phTechView'), esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  v.innerHTML=String(txt||'').split('\n').map(l=>{ const s=esc(l); return /^\s*▸/.test(l)?'<div class="th">'+s+'</div>':/^\s*•/.test(l)?'<div class="tb">'+s+'</div>':'<div class="tp">'+s+'</div>'; }).join(''); }
+(function(){ const v=document.getElementById('phTechView'), e=document.getElementById('phTech');
+  v.addEventListener('click',()=>{ e.classList.add('editing'); v.hidden=true; e.focus(); const r=document.createRange(); r.selectNodeContents(e); r.collapse(false); const s=getSelection(); s.removeAllRanges(); s.addRange(r); });
+  e.addEventListener('blur',()=>{ e.classList.remove('editing'); v.hidden=false; renderTechView(e.textContent); }); })();   /* la description (titre) et le son ne sont plus affichés ni modifiables ici ; ils restent dans le descriptif et sont pris en compte *//* ---------- Ordres à la volée pour la phase en cours (prompts.jsonl, lu par Claude) ---------- */
+{ const s=document.getElementById('avl'), v=document.getElementById('avlV'); const show=()=>{ v.textContent=(AVL>0?'+':'')+Math.round(AVL*1000)+' ms'; }; s.value=Math.round(AVL*1000); show(); s.addEventListener('input',()=>{ AVL=+s.value/1000; show(); try{ localStorage.setItem('animadome.avl',String(+s.value)); }catch(e){} }); s.addEventListener('dblclick',()=>{ s.value=0; s.dispatchEvent(new Event('input')); }); }
+const pIn=document.getElementById('promptIn'), pState=document.getElementById('promptState');
+// Brouillon du prompt conservé (même si la page est rechargée) : effacé seulement à l'envoi
+const draftKey='animadomeDraft:'+MIX.slug;
+try{ const dr=localStorage.getItem(draftKey); if(dr) pIn.value=dr; }catch(e){}
+pIn.addEventListener('input',()=>{ try{ localStorage.setItem(draftKey,pIn.value); }catch(e){} });
+pIn.addEventListener('keydown',e=>{ if(e.key==='Escape'){ e.preventDefault(); pIn.blur(); } });   // Échap = quitter le champ (le brouillon est conservé) : les raccourcis clavier redeviennent actifs
+function sendPrompt(){ const text=pIn.value.trim(); if(!text) return; const ph=PH[phaseAt(au.currentTime)]; if(!ph) return;
+  const item={ mix:MIX.slug, id:Date.now(), ts:new Date().toISOString(), phaseStart:ph.start, phaseEnd:ph.end, phaseTitle:ph.title, t:Math.round(au.currentTime*10)/10, text };
+  pState.textContent='envoi…'; pState.className='save';
+  fetch('/api/prompt?dir='+encodeURIComponent(MIX.dir),{method:'POST',body:JSON.stringify(item)}).then(r=>r.text()).then(res=>{
+    if(res==='ok'){ pIn.value=''; try{ localStorage.removeItem(draftKey); }catch(e){} pState.textContent='✓ envoyé — Claude met à jour l\'effet'; pState.className='save ok'; setTimeout(()=>{ pState.textContent=''; },4000); }
+    else { pState.textContent='⚠ '+res; pState.className='save err'; } })
+  .catch(()=>{ pState.textContent='⚠ serveur injoignable (ouvrir via lancer-apercu.bat)'; pState.className='save err'; }); }
+pIn.addEventListener('keydown',e=>{ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendPrompt(); } });
+
+/* ---------- Texte du panneau : quand il y a trop de texte, c'est la police qui diminue (la fenêtre ne change jamais de taille) ---------- */
+(function(){ const tb=document.getElementById('textBlock'); if(!tb) return; let q=false;
+  function fit(){ q=false; tb.style.fontSize=''; }   /* police fixe : le texte long défile (barre à droite) au lieu de rétrécir */
+  window.fitText=()=>{ if(!q){ q=true; requestAnimationFrame(fit); } };
+  new MutationObserver(window.fitText).observe(tb,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['hidden']});
+  addEventListener('resize',window.fitText); if(document.fonts&&document.fonts.ready) document.fonts.ready.then(window.fitText); window.fitText(); })();
+/* ---------- Ctrl+Espace : insère le temps de lecture actuel (ex. « 2:20.1 ») à l'endroit où l'on écrit (prompt, ou champ de texte actif) ---------- */
+function insertTime(){ const tt=au.currentTime||0, txt=fmt(tt)+'.'+Math.floor((tt%1)*10); let el=document.activeElement;
+  const isField=el&&((el.tagName==='TEXTAREA')||(el.tagName==='INPUT'&&/^(text|search|)$/.test(el.type||'')));
+  if(isField){ const a=el.selectionStart, b=el.selectionEnd; el.setRangeText(txt,a,b,'end'); el.dispatchEvent(new Event('input',{bubbles:true})); return; }
+  if(el&&el.isContentEditable){ document.execCommand('insertText',false,txt); return; }
+  pIn.focus(); const v=pIn.value, sp=(v&&!/\s$/.test(v))?' ':''; pIn.setRangeText(sp+txt,v.length,v.length,'end'); pIn.dispatchEvent(new Event('input',{bubbles:true})); }
+addEventListener('keydown',e=>{ if(e.ctrlKey&&!e.altKey&&e.code==='Space'){ e.preventDefault(); e.stopImmediatePropagation(); insertTime(); } },true);/* ---------- Boucle ---------- */
+function frame(){
+  const cw=tl.clientWidth, ch=tl.clientHeight; if(cw>0 && (tl.width!==cw || tl.height!==ch)){ tl.width=cw; tl.height=ch; curve=null; }
+  let t=au.currentTime||0;
+    if(loopOn&&PH.length){ const p=PH[phaseAt(t)]; if(t>=p.end-.05){ au.currentTime=p.start; t=p.start; } }
+  if(PH.length){
+    if(eventView&&evPrev){ const keep=EV; EV=[evPrev.ev]; try{ renderDome(evPreviewTime()); } finally { EV=keep; } } else renderDome(t);   /* aperçu EVENT BANK : le dôme montre l'event choisi, seul */
+    updateText(t); drawTL(t);
+    document.getElementById('bigtime').innerHTML=`${fmt(t)}<span style="font-size:.6em;color:inherit;font-weight:700">.${Math.floor((t%1)*10)}</span> <span>/ ${fmt(DUR)}</span>`; }
+  requestAnimationFrame(frame); }
+/* ---------- Reprise de lecture après un rechargement de la page (position + lecture/pause mémorisées par mix) ---------- */
+const posKey='animadomePos:'+MIX.slug;
+function savePos(){ try{ if(au.currentTime>0.2||!au.paused){ const ph=(loopOn&&PH.length)?PH[phaseAt(au.currentTime)]:null; localStorage.setItem(posKey,JSON.stringify({t:au.currentTime,playing:!au.paused,ts:Date.now(),lp:ph?[ph.start,ph.end]:null})); } }catch(e){} }
+setInterval(savePos,400); addEventListener('pagehide',savePos); au.addEventListener('pause',savePos); au.addEventListener('play',savePos);
+(function(){ let s=null; try{ s=JSON.parse(localStorage.getItem(posKey)||'null'); }catch(e){} if(!s) return;
+  const go=()=>{ let tt=s.t; if(s.playing) tt+=Math.min(4,(Date.now()-s.ts)/1000); if(s.lp&&tt>=s.lp[1]-.1) tt=s.lp[0]+((tt-s.lp[0])%(s.lp[1]-s.lp[0]));   /* en mode Loop : on reste dans la phase mémorisée */
+    au.currentTime=Math.min(tt,(au.duration||tt)-.1); if(s.playing) au.play().catch(()=>{}); };
+  if(au.readyState>=1) go(); else au.addEventListener('loadedmetadata',go,{once:true}); })();
+/* ---------- « Nettoyer l'anim de la phase » : 1) mesures objectives dans la page + demande à Claude ; 2) Claude écrit clean/phase-<début>.json (status 'proposed' : liste des problèmes et correctifs prévus) ;
+   3) l'utilisateur confirme (« Corriger ») ou ignore ; 4) après application (sauvegarde dans clean/backups/<id>/), « Annuler ce nettoyage » restaure descriptif + fxmap.js + events-timing.json. ---------- */
+const clKey='animadome.clean:'+MIX.slug;
+const clLoad=()=>{ try{ return JSON.parse(localStorage.getItem(clKey)||'{}'); }catch(e){ return {}; } }, clSave=o=>{ try{ localStorage.setItem(clKey,JSON.stringify(o)); }catch(e){} };
+function cleanMeasure(i){ const p=PH[i], fam=h=>h<20||h>=345?'rouge':h<42?'orange':h<70?'jaune':h<200?'vert/cyan':h<262?'bleu':'violet', agg={}; let tot=0, sat=0, nfx=[];
+  for(const u of [.2,.5,.8]){ const t=p.start+u*(p.end-p.start), f=feat(t), act=activeFx(t,i); buf.fill(0); GAIN=1; if(gradeSkip.length!==LED.length) gradeSkip=new Uint8Array(LED.length); else gradeSkip.fill(0); for(const a of act){ const fn=FX[a.fx.n]; if(fn) fn(t,a.w,a.fx,a.fx.slow?featSlow(t):f); } { const gc=gradeAt(t); if(gc<.999) applyGrade(gc); } nfx.push(act.filter(a=>a.w>.05).length);
+    for(let id=0;id<LED.length;id++){ const r=buf[3*id]*GAIN,g=buf[3*id+1]*GAIN,b=buf[3*id+2]*GAIN, mx=Math.max(r,g,b), mn=Math.min(r,g,b); if(mx<.08) continue; tot++; if(mx>.95) sat++; const d=mx-mn; if(d<.06){ agg['neutre']=(agg['neutre']||0)+1; continue; } let h=mx===r?((g-b)/d+(g<b?6:0)):mx===g?((b-r)/d+2):((r-g)/d+4); h*=60; const k=fam(h); agg[k]=(agg[k]||0)+1; } }
+  const fams={}; Object.keys(agg).forEach(k=>{ fams[k]=Math.round(100*agg[k]/Math.max(1,tot)); }); return { phase:i+1, familles:fams, saturees_pct:Math.round(100*sat/Math.max(1,tot)), effets_simultanes:nfx, effets:p.fx.map(x=>x.n), events:EV.filter(e=>e.on>=p.start&&e.on<p.end).map(e=>e.name+'@'+e.on.toFixed(1)) }; }
+function cleanPost(kind,text,extra){ const ph=PH[phaseAt(au.currentTime)]; if(!ph) return Promise.resolve('no phase'); const item=Object.assign({ mix:MIX.slug, id:Date.now(), ts:new Date().toISOString(), phaseStart:ph.start, phaseEnd:ph.end, phaseTitle:ph.title, t:Math.round(au.currentTime*10)/10, kind, text }, extra||{});
+  return fetch('/api/prompt?dir='+encodeURIComponent(MIX.dir),{method:'POST',body:JSON.stringify(item)}).then(r=>r.text()); }
+function cleanSetReport(ph,rep){ return fetch('/api/clean-report?dir='+encodeURIComponent(MIX.dir)+'&phase='+ph,{method:'POST',body:JSON.stringify(rep)}).then(r=>r.text()); }
+let _clBusy=false;
+async function cleanRefresh(){ if(_clBusy) return; const i=phaseAt(au.currentTime), ph=PH[i], box=document.getElementById('cleanBox'); if(!ph||!box) return; _clBusy=true;
+  try{ const key=String(ph.start), loc=clLoad()[key]||null; let rep=null; try{ const r=await fetch(mixPath('clean/phase-'+ph.start+'.json')+'?'+Date.now(),{cache:'no-store'}); if(r.ok) rep=await r.json(); }catch(e){}
+    const st=clLoad(), pend=st[key]; if(pend&&(Date.now()-pend.ts>15*60*1000||(rep&&Date.parse(rep.created||0)>=pend.ts-5000&&pend.kind==='clean')||(rep&&pend.kind==='apply'&&rep.status==='applied'))){ delete st[key]; clSave(st); }
+    const pending=clLoad()[key], esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;'), list=f=>'<ul>'+(f||[]).map(x=>'<li><b>'+esc(x.type||'problème')+'</b> '+esc(x.text)+(x.fix?' <i>→ '+esc(x.fix)+'</i>':'')+'</li>').join('')+'</ul>';
+    let html='';
+    if(pending&&pending.kind==='clean') html='<h4>Analyse en cours…</h4><div class="mut">Je vérifie les contradictions du descriptif, les couleurs et les effets de cette phase ; la liste des problèmes apparaît ici dans un instant (il faut que ma session soit ouverte).</div>';
+    else if(pending&&pending.kind==='apply') html='<h4>Application des corrections…</h4><div class="mut">Sauvegarde puis modification en cours ; le rapport final remplace ce message.</div>';
+    else if(rep&&rep.status==='proposed') html='<h4>Problèmes trouvés dans cette phase ('+(rep.findings||[]).length+') — confirmation demandée</h4>'+list(rep.findings)+'<div class="row"><button class="chip" id="clOk">Corriger</button><button class="chip" id="clNo">Ignorer</button></div><div class="mut" style="margin-top:5px">Rien n\'est modifié tant que tu ne confirmes pas ; après correction, tu pourras annuler.</div>';
+    else if(rep&&rep.status==='applied') html='<h4>Nettoyage appliqué ('+(rep.findings||[]).length+' correction'+((rep.findings||[]).length>1?'s':'')+')</h4>'+list(rep.findings)+'<div class="row"><button class="chip" id="clUndo">Annuler ce nettoyage</button><button class="chip" id="clHide">Masquer</button></div>';
+    box.hidden=!html; box.innerHTML=html; box.dataset.key=key;
+    const b=id=>document.getElementById(id);
+    if(b('clOk')) b('clOk').onclick=()=>{ const s=clLoad(); s[key]={kind:'apply',ts:Date.now()}; clSave(s); cleanPost('clean-apply','[CLEAN-APPLY] Confirmation reçue : applique les corrections proposées pour cette phase (sauvegarde dans clean/backups/ avant, rapport après).',{reportId:rep.id}).then(()=>cleanRefresh()); };
+    if(b('clNo')) b('clNo').onclick=()=>{ rep.status='dismissed'; cleanSetReport(ph.start,rep).then(()=>cleanRefresh()); };
+    if(b('clHide')) b('clHide').onclick=()=>{ rep.status='archived'; cleanSetReport(ph.start,rep).then(()=>cleanRefresh()); };
+    if(b('clUndo')) b('clUndo').onclick=()=>{ b('clUndo').disabled=true; fetch('/api/clean-undo?dir='+encodeURIComponent(MIX.dir)+'&id='+encodeURIComponent(rep.backup||'')+'&txt='+encodeURIComponent(MIX.descriptif),{method:'POST',body:'{}'}).then(r=>r.text()).then(res=>{ if(res==='ok'){ rep.status='undone'; return cleanSetReport(ph.start,rep).then(()=>{ try{ saveUI(); savePos(); }catch(e){} location.reload(); }); } box.insertAdjacentHTML('beforeend','<div class="mut">⚠ annulation impossible : '+esc(res)+'</div>'); }); };
+  } finally { _clBusy=false; } }
+document.getElementById('cleanBtn').onclick=()=>{ const i=phaseAt(au.currentTime), ph=PH[i]; if(!ph) return; const s=clLoad(); s[String(ph.start)]={kind:'clean',ts:Date.now()}; clSave(s); let chk={}; try{ chk=cleanMeasure(i); }catch(e){ chk={erreur:String(e.message)}; }
+  cleanPost('clean','[CLEAN] Nettoyer l\'anim de la phase : cherche contradictions/illogismes dans le descriptif, effets qui se gênent, trop de couleurs ; écris la liste des problèmes (clean/phase-'+ph.start+'.json, status proposed) et demande-moi confirmation AVANT de corriger.',{check:chk}).then(()=>cleanRefresh()); cleanRefresh(); };
+setInterval(cleanRefresh,3000);
+/* ---------- États des boutons mémorisés par mix : un rechargement de la page ne change rien (Loop, Vue Phase, onglet, Vue Géo, listes actives, sélection, numéros) ---------- */
+const uiKey='animadomeUI:'+MIX.slug;
+function saveUI(){ try{ localStorage.setItem(uiKey,JSON.stringify({ event:eventView, zoom:zoomWin, loop:loopOn, stems:[stemOn.d,stemOn.b,stemOn.o,stemOn.k,stemOn.h,stemOn.v], phaseView, bank:bankView, geo:geoView, showNum, geoNums, geoOn:[...geoOn], par:geoParity, sel:[...barSel] })); }catch(e){} }
+(function(){ let s=null; try{ s=JSON.parse(localStorage.getItem(uiKey)||'null'); }catch(e){} if(!s) return;
+  try{ if(Array.isArray(s.zoom)&&s.zoom.length===2) zoomWin=s.zoom; if(s.loop&&!loopOn) toggleLoop(); if(s.stems){ const a=Array.isArray(s.stems)?s.stems:[true,true,true,true]; stemOn.d=!!a[0]; stemOn.b=!!a[1]; stemOn.o=!!a[2]; stemOn.k=a.length>3?!!a[3]:!!a[0]; stemOn.h=a.length>4?!!a[4]:false; stemOn.v=a.length>5?!!a[5]:false; syncStemChk(); } if(s.phaseView&&!phaseView) document.getElementById('phaseBtn').click();
+    if(s.showNum&&!showNum) document.getElementById('showNumBtn').click(); if(s.geoNums===false&&geoNums) document.getElementById('geoNumBtn').click();
+    (s.sel||[]).forEach(id=>barSel.add(id)); (s.geoOn||[]).forEach(k=>{ if(GEO.lists[k]) geoOn.add(k); });
+    if(s.par){ const b=[...document.querySelectorAll('.par')].find(x=>x.textContent.indexOf(s.par==='even'?'Pairs':'Impairs')===0); if(b) b.click(); }
+    if(s.geo) geoSetView(true); else if(s.bank) bankSetView(true); else if(s.event) eventSetView(true); geoSyncChips(); geoRecompute(); geoUpdateFormula(); }catch(e){} })();
+setInterval(saveUI,500); addEventListener('pagehide',saveUI);
+document.getElementById('nled').value='42'; buildLEDs(42);
+loadDescriptif().then(()=>requestAnimationFrame(frame));
+setInterval(loadDescriptif, 2500);
+</script>
+</body>
+</html>
