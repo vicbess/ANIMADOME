@@ -166,6 +166,10 @@ public static class Srv {
       string repo = RepoRoot(root); int c; var log = new StringBuilder();
       if (OfficialRemote(repo) == null) return "KO dépôt distant inattendu";
       string br = Git(repo, "rev-parse --abbrev-ref HEAD", out c); if (c != 0 || br == "HEAD") return "KO HEAD détaché : revenir sur une branche avant de publier";
+      try {   // contrôle léger : show.html doit être la page générée à partir du template actuel
+        string tpl = File.ReadAllText(Path.Combine(root, "show.template.html"), Encoding.UTF8), geo = File.ReadAllText(Path.Combine(root, "dome-geometry.json"), Encoding.UTF8), pg = File.ReadAllText(Path.Combine(root, "show.html"), Encoding.UTF8);
+        if (tpl.Replace("\r\n", "\n").Replace("/*DOME_JSON*/", geo.Replace("\r\n", "\n")) != pg.Replace("\r\n", "\n")) return "KO show.html n'est pas à jour par rapport à show.template.html : lance dome-preview\\build.ps1 puis recommence.";
+      } catch (Exception ex1) { return "KO contrôle de la page impossible : " + ex1.Message; }
       string ex = Git(repo, "ls-remote --tags origin refs/tags/v" + ver, out c); if (c != 0) return "KO connexion à GitHub impossible :\n" + ex; if (ex.Length > 0) return "KO la version v" + ver + " existe déjà sur GitHub";
       Git(repo, "tag -d v" + ver, out c);   // étiquette locale restée d'un essai précédent
       string date = DateTime.Now.ToString("yyyy-MM-dd");
@@ -199,8 +203,11 @@ public static class Srv {
       if (st.Length > 0) return "KO des modifications locales de l'outil ne sont pas publiées : publie-les ou annule-les avant de changer de version.\n" + st;
       string f = Git(repo, "fetch origin --tags --force --quiet", out c); if (c != 0) return "KO connexion à GitHub impossible :\n" + f;
       Git(repo, "rev-parse -q --verify refs/tags/v" + ver, out c); if (c != 0) return "KO version v" + ver + " introuvable";
+      string oldHead = Git(repo, "rev-parse HEAD", out c);
       string o = Git(repo, "switch --detach v" + ver, out c); log.AppendLine(o);
       if (c != 0) return "KO\n" + log;
+      bool okFiles = File.Exists(Path.Combine(root, "serve.ps1")) && File.Exists(Path.Combine(root, "version.json")) && File.Exists(Path.Combine(root, "show.html")) && File.ReadAllText(Path.Combine(root, "show.html"), Encoding.UTF8).Contains("<!doctype html>");
+      if (!okFiles && oldHead.Length >= 7) { Git(repo, "switch --detach " + oldHead, out c); return "KO la version v" + ver + " est incomplète : l'ancienne version a été rétablie."; }
       log.AppendLine("Version v" + ver + " installée. Relance le serveur (ferme sa fenêtre puis lancer-apercu.bat) et recharge la page.");
       return "OK\n" + log;
     }
@@ -237,10 +244,6 @@ public static class Srv {
     if (!Regex.IsMatch(mix ?? "", @"^[A-Za-z0-9_-]{1,40}$")) return "{\"error\":\"mix invalide\"}";
     lock (Lock) {
       string mixes = Path.Combine(root, "mixes"), dir = Path.Combine(mixes, mix, "publish"); int c; string log = "";
-      if (pull == "2") {   // synchronisation discrète : récupère les publications des autres SANS toucher à tes fichiers en cours d'édition (avance rapide seulement ; sans effet s'il y a un conflit)
-        string rem2 = Git(mixes, "remote get-url origin", out c);
-        if (c == 0 && Regex.IsMatch(rem2, @"vicbess/MIX_Animadome(\.git)?$")) { Git(mixes, "fetch origin main --quiet", out c); if (c == 0) Git(mixes, "merge --ff-only origin/main --quiet", out c); }
-      }
       if (pull == "1") {
         string rem = Git(mixes, "remote get-url origin", out c); if (c != 0 || !Regex.IsMatch(rem, @"vicbess/MIX_Animadome(\.git)?$")) return "{\"error\":\"dépôt des mix inattendu\"}";
         log = Git(mixes, "pull --rebase --autostash origin main", out c); if (c != 0) return "{\"error\":\"git pull impossible\",\"log\":" + Json(log) + "}";
@@ -296,16 +299,41 @@ public static class Srv {
       return _rJson.Substring(0, _rJson.Length - 1) + ",\"ctx\":" + CtxJson(mixes, mix) + "}";
     }
   }
+  // ---------- Fusion du CONTEXT.md d'un mix lors de la mise à jour d'une phase (fusion à 3 voies ; jamais d'écrasement silencieux) ----------
+  static string Norm(string s) { return (s ?? "").Replace("\r\n", "\n").Trim(); }
+  static string MergeContext(string root, string mix) {
+    if (!Regex.IsMatch(mix ?? "", @"^[A-Za-z0-9_-]{1,40}$")) return "KO mix invalide";
+    lock (Lock) {
+      string mixes = Path.Combine(root, "mixes"); int c; string rem = Git(mixes, "remote get-url origin", out c);
+      if (c != 0 || !Regex.IsMatch(rem, @"vicbess/MIX_Animadome(\.git)?$")) return "KO dépôt des mix inattendu";
+      string rp = mix + "/CONTEXT.md", lp = Path.Combine(mixes, mix, "CONTEXT.md");
+      string theirs = Git(mixes, "show \"origin/main:" + rp + "\"", out c); if (c != 0) return "OK pas de contexte publié par d'autres";
+      if (!File.Exists(lp)) { File.WriteAllText(lp, theirs + "\n", new UTF8Encoding(false)); return "OK contexte récupéré"; }
+      string ours = File.ReadAllText(lp, Encoding.UTF8), bv = ""; string mb = Git(mixes, "merge-base HEAD origin/main", out c);
+      if (c == 0 && mb.Length >= 7) { string b = Git(mixes, "show \"" + mb + ":" + rp + "\"", out c); if (c == 0) bv = b; }
+      if (Norm(ours) == Norm(theirs)) return "OK contexte déjà à jour";
+      if (Norm(ours) == Norm(bv)) { File.WriteAllText(lp, theirs + "\n", new UTF8Encoding(false)); return "OK contexte mis à jour"; }
+      if (Norm(theirs) == Norm(bv)) return "OK ton contexte est plus récent que celui des autres";
+      string tmp = Path.Combine(Path.GetTempPath(), "animadome-ctx-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(tmp);
+      try {
+        File.WriteAllText(Path.Combine(tmp, "ours.md"), Norm(ours) + "\n", new UTF8Encoding(false)); File.WriteAllText(Path.Combine(tmp, "base.md"), Norm(bv) + "\n", new UTF8Encoding(false)); File.WriteAllText(Path.Combine(tmp, "theirs.md"), Norm(theirs) + "\n", new UTF8Encoding(false));
+        string merged = Git(mixes, "merge-file -p \"" + Path.Combine(tmp, "ours.md") + "\" \"" + Path.Combine(tmp, "base.md") + "\" \"" + Path.Combine(tmp, "theirs.md") + "\"", out c);
+        if (c == 0) { File.WriteAllText(lp, merged + "\n", new UTF8Encoding(false)); return "OK contexte fusionné avec celui des autres"; }
+        File.WriteAllText(Path.Combine(mixes, mix, "CONTEXT.theirs.md"), theirs + "\n", new UTF8Encoding(false));
+        return "CONFLIT : ton CONTEXT.md et celui des autres ont changé aux mêmes endroits. Le tien est conservé ; leur version est enregistrée dans CONTEXT.theirs.md : fusionne-les à la main.";
+      } finally { try { Directory.Delete(tmp, true); } catch { } }
+    }
+  }
   static void Handle(HttpListenerContext c, string root) {
     try {
       string ap = c.Request.Url.AbsolutePath;
-      if (ap == "/api/versions" || ap == "/api/publish" || ap == "/api/update" || ap == "/api/whoami" || ap == "/api/publish-phases" || ap == "/api/publish-list" || ap == "/api/save-mixfile" || ap == "/api/publish-remote") {
+      if (ap == "/api/versions" || ap == "/api/publish" || ap == "/api/update" || ap == "/api/whoami" || ap == "/api/publish-phases" || ap == "/api/publish-list" || ap == "/api/save-mixfile" || ap == "/api/publish-remote" || ap == "/api/merge-context") {
         // opérations Git : en-tête personnalisé exigé (une page web tierce ne peut pas l'envoyer sans autorisation du navigateur)
         string rs;
         if (c.Request.Headers["X-Animadome"] != "1") rs = "KO requête refusée";
         else {
           string bd = ""; if (c.Request.HttpMethod == "POST") using (var sr0 = new StreamReader(c.Request.InputStream, Encoding.UTF8)) bd = sr0.ReadToEnd();
-          try { rs = ap == "/api/versions" ? Versions(root) : ap == "/api/publish" ? Publish(bd, root) : ap == "/api/whoami" ? WhoAmI(root) : ap == "/api/publish-phases" ? PublishPhases(bd, root, c.Request.QueryString["mix"]) : ap == "/api/publish-list" ? PublishList(root, c.Request.QueryString["mix"], c.Request.QueryString["pull"]) : ap == "/api/publish-remote" ? PublishRemote(root, c.Request.QueryString["mix"], c.Request.QueryString["known"], c.Request.QueryString["force"] == "1") : ap == "/api/save-mixfile" ? SaveMixFile(bd, root, c.Request.QueryString["mix"], c.Request.QueryString["name"], c.Request.QueryString["backup"]) : Update(bd, root); } catch (Exception ex0) { rs = "KO erreur : " + ex0.Message; }
+          try { rs = ap == "/api/versions" ? Versions(root) : ap == "/api/publish" ? Publish(bd, root) : ap == "/api/whoami" ? WhoAmI(root) : ap == "/api/publish-phases" ? PublishPhases(bd, root, c.Request.QueryString["mix"]) : ap == "/api/publish-list" ? PublishList(root, c.Request.QueryString["mix"], c.Request.QueryString["pull"]) : ap == "/api/publish-remote" ? PublishRemote(root, c.Request.QueryString["mix"], c.Request.QueryString["known"], c.Request.QueryString["force"] == "1") : ap == "/api/merge-context" ? MergeContext(root, c.Request.QueryString["mix"]) : ap == "/api/save-mixfile" ? SaveMixFile(bd, root, c.Request.QueryString["mix"], c.Request.QueryString["name"], c.Request.QueryString["backup"]) : Update(bd, root); } catch (Exception ex0) { rs = "KO erreur : " + ex0.Message; }
         }
         byte[] rb0 = Encoding.UTF8.GetBytes(rs); c.Response.ContentType = (ap == "/api/versions" ? "application/json" : "text/plain") + "; charset=utf-8"; c.Response.ContentLength64 = rb0.Length;
         c.Response.OutputStream.Write(rb0, 0, rb0.Length); c.Response.Close(); return;

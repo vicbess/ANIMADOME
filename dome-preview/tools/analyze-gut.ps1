@@ -1,4 +1,4 @@
-# Détecte la « progression » d'un son guttural / glitché (bande 150-1500 Hz, hors grosse caisse) : flux spectral relatif, 50 images/s.
+﻿# Détecte la « progression » d'un son guttural / glitché (bande 150-1500 Hz, hors grosse caisse) : flux spectral relatif, 50 images/s.
 # Sert à faire avancer les coulées de lave par à-coups EN SUIVANT CE SON (et pas le beat).
 param([Parameter(Mandatory)][string]$raw, [Parameter(Mandatory)][string]$out)
 Add-Type -TypeDefinition @'

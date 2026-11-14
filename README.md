@@ -36,7 +36,7 @@ Lire et utiliser l'outil ne demande aucun compte. **Publier** (une version de l'
 - **Vue 3D** (visualisation seule) : caméras *Top*, *Free* (le dôme tourne à la souris, on peut passer dessous) et *Centre* (point de vue du public, à hauteur d'yeux, molette = zoom) ; halo des LEDs et ciel étoilé.
 - **GéoLists** : visualiseur de formes géométriques du dôme (triangles, pentagones, cercles, lignes…), avec sélection par barres et une formule réutilisable pour décrire une sélection.
 - **Timeline** : un mix découpé en phases ; chaque phase combine des effets continus et des **events** ponctuels (posés, déplacés, étirés, dupliqués sur la timeline). Un clic sur la barre colorée d'une phase ouvre son menu.
-- **Journal des events** : un encart par effet ou event actif (bleu pour les events) ; la description détaillée apparaît au survol.
+- **Journal des effets** : un encart par effet ou event actif (bleu pour les events) ; la description détaillée apparaît au survol.
 - **Event Bank** : catalogue d'events classés en *Volcano*, *Geometric* et *Basics*.
 - **Descriptif** : un fichier texte par mix décrit chaque phase et ses events `*mm:ss*` ; l'outil le relit à chaque modification.
 

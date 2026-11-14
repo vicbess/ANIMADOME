@@ -54,7 +54,7 @@ Pour un prompt :
 Les boutons « Éditer la description » et « Nettoyer l'anim de la phase » envoient aussi des prompts (`[EDIT]`, `[CLEAN]`) : relis la phase, applique, et pour `[CLEAN]` écris le rapport dans `clean/` en demandant confirmation.
 
 ## Règles à respecter
-- **Events** : un nom d'event est unique (18 caractères max). Catégories de la banque : *Volcano*, *Geometric*, *Basics*. Les descriptions de la banque (`eventTypes`) ne contiennent **ni timing ni couleur**.
+- **Events** : le nom d'un **type** d'event est unique (18 caractères max) ; plusieurs occurrences d'un même type partagent ce nom (par exemple les « Ruée »). Catégories de la banque : *Volcano*, *Geometric*, *Basics*. Les descriptions de la banque (`eventTypes`) ne contiennent **ni timing ni couleur**.
 - **Ajouter / déplacer un event sur la timeline** : passe par la page (variables `EV`, `evLibEvent`, puis `saveEvt()` depuis la console du navigateur), **jamais en éditant `events-timing.json` pendant que la page est ouverte** (elle le réécrit).
 - Un effet ajouté dans `FX` doit rester léger (viser moins de 2 ms par image, à mesurer) et fonctionner pour 4 à 60 LEDs par barre.
 - Phases : ≤ 3 familles de couleurs par phase sauf intention contraire ; ne supprime jamais en silence ce que l'utilisateur a demandé.

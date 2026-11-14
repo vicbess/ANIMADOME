@@ -1,4 +1,4 @@
-# Attend une demande destinée à Claude, puis se termine (ce qui le réveille) :
+﻿# Attend une demande destinée à Claude, puis se termine (ce qui le réveille) :
 #  - un nouveau prompt saisi dans la page, pour n'importe quel mix (prompts.jsonl, pas encore dans prompts-done.json) ;
 #  - ou une modification d'un descriptif-<mix>.txt suivie de SettleSec secondes de calme (le temps que tu finisses d'écrire).
 param([string]$Root = $PSScriptRoot, [int]$SettleSec = 60)

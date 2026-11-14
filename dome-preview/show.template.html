@@ -50,7 +50,7 @@
   #bigtime span { color:var(--mut); font-weight:400; font-size:.6em; } #bigtime .durbox { display:inline-block; text-align:center; line-height:1.05; } #bigtime .durbox i { display:block; font-style:normal; font-size:.24em; letter-spacing:1.2px; color:#7a7a8c; font-weight:600; margin-bottom:1px; }
   .side { font-size:clamp(14px,1.05vw,20px); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px; min-height:0; flex:1; overflow:hidden; display:flex; flex-direction:column; }
   .side > * { flex:none; } .side > #textBlock { flex:1 1 auto; max-height:none; min-height:0; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; scrollbar-color:#4a4a62 transparent; padding-right:6px; font-size:clamp(11px,.78vw,14.5px); }   /* texte long : barre de défilement, la police ne rétrécit plus */
-  .ph-time { display:flex; justify-content:center; align-items:baseline; gap:.9em; flex-wrap:wrap; } .ph-time .rangeRow { display:block; margin:0; } .ph-time .rangeRow > span { display:none; }   /* minuteur de phase et nom de phase sur une seule ligne */
+  .ph-time { display:flex; justify-content:center; align-items:baseline; gap:.9em; flex-wrap:wrap; }   /* minuteur de phase et nom de phase sur une seule ligne */
   #liveLines { flex:none; height:5.2em; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#4a4a62 transparent; } #evSep { display:none; height:2px; margin:8px 0 8px; background:#8a8aa8; border-radius:1px; } #evTitle { color:var(--ev); font-weight:700; font-size:.85em; margin:0 0 2px; } #liveLines p { margin:4px 0 0; }
   /* texte technique : vue lisible (titres ▸ en gras, le reste en normal) ; un clic bascule en édition du texte brut */
   .ph-techview { white-space:pre-wrap; line-height:1.55; cursor:text; padding:3px 5px; margin:0 0 1.15em -5px; border:1px dashed transparent; border-radius:5px; } .ph-techview:hover { border-color:#3a3a50; }
@@ -60,7 +60,6 @@
   #cleanBox { border:1px solid #6a5a2a; background:#1a1710; border-radius:8px; padding:8px 10px; margin:0 0 .8em; font-size:12.5px; line-height:1.4; max-height:34vh; overflow:auto; scrollbar-width:thin; scrollbar-color:#4a4a62 transparent; } #cleanBox[hidden] { display:none; }
   #cleanBox h4 { margin:0 0 5px; font-size:12px; color:#ffd84d; letter-spacing:.3px; } #cleanBox ul { margin:0 0 8px; padding-left:16px; } #cleanBox li { margin:0 0 5px; color:#d8d8e4; } #cleanBox li i { color:#aab0c4; } #cleanBox li b { color:#ffb86b; font-weight:600; } #cleanBox .row { display:flex; gap:8px; flex-wrap:wrap; } #cleanBox .row .chip { --c:#ffd84d; } #cleanBox .mut { color:var(--mut); }
   .ph-son { display:none; } #phText { margin:0 0 .75em; font-size:1.02em; font-weight:600; line-height:1.3; text-align:center; }
-  .rangeRow { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; margin-bottom:.2em; } #phRange { margin:0; }
   .mixsel { justify-self:start; display:flex; gap:6px; align-items:center; font-size:12px; font-weight:400; color:var(--mut); letter-spacing:0; } .mixsel select { font-weight:600; }
   .domewrap { position:relative; flex:none; display:block; line-height:0; }
   .geoOv { position:absolute; top:2.5%; right:1.5%; width:20%; bottom:2%; display:flex; flex-direction:column; gap:10px; align-items:stretch; pointer-events:none; line-height:1.4; }
@@ -74,7 +73,7 @@
   .mixTop { position:absolute; left:0; top:50%; transform:translateY(-50%); font-size:18px; color:var(--fg); } .mixTop select { font-size:19px; font-weight:700; padding:6px 12px; }
   .chip { font:600 11px system-ui; padding:3px 9px; border-radius:12px; border:1px solid var(--line); background:#14141c; color:var(--mut); cursor:pointer; letter-spacing:.2px; }
   .chip:hover { border-color:#5a5a80; } .chip.on { color:#0b0b10; background:var(--c,#e8e8f0); border-color:var(--c,#e8e8f0); } .chip.par { --c:#ffffff; } .chip.vue { --c:#ffffff; font-size:14px; padding:6px 14px; border-color:#6a6a86; color:var(--fg); }
-  .side.geomode #phTitleRow, .side.geomode #cleanBox, .side.geomode #liveLines, .side.geomode #phText, .side.geomode #textBlock, .side.geomode .promptbox, .side.geomode .ph-time, .side.geomode .mixrow { display:none; }
+  .side.geomode #phTitleRow, .side.geomode #cleanBox, .side.geomode #liveLines, .side.geomode #phText, .side.geomode #textBlock, .side.geomode .promptbox, .side.geomode .ph-time { display:none; }
   #geoTools { flex:1 1 auto; min-height:0; overflow:auto; font-size:13px; display:flex; flex-direction:column; gap:7px; }
   .tabs { display:flex; gap:6px; margin:-4px 0 10px; border-bottom:1px solid var(--line); } .tabs .tab { border:0; border-bottom:2px solid transparent; border-radius:0; background:none; color:var(--mut); font:700 12px system-ui; letter-spacing:.6px; padding:6px 14px; cursor:pointer; } .tabs .tab.on { color:var(--fg); border-bottom-color:var(--acc); } .side.geomode .tabs { display:none; }
   .side.eventmode > :not(.tabs):not(#eventTools) { display:none !important; }
@@ -86,13 +85,10 @@
   .evd { color:#aab0c4; font-size:12.5px; line-height:1.4; margin:5px 0; } .evo { display:flex; flex-wrap:wrap; gap:5px; margin:6px 0 8px; } .evo .chip, .evadd { --c:#7fd4ff; } .evc { cursor:pointer; } .evh { align-items:center; } .evh b { flex:1; } .evx { position:static; flex:none; } .evs { width:110px; accent-color:#7a7a8c; opacity:.75; flex:none; margin:0; } .evsv { color:var(--mut); font-size:11px; min-width:32px; flex:none; } .evadd { padding:2px 8px; font-size:11.5px; flex:none; }
   #geoTools[hidden] { display:none; } .gt-row { display:flex; flex-wrap:wrap; align-items:center; gap:6px; } .gt-l { color:var(--mut); font-size:12px; margin-right:4px; }
   .gt-hint { color:var(--mut); font-size:12px; line-height:1.35; } .gt-words { color:var(--mut); font-size:12px; }
-  #gtFormula, #gtInput { width:100%; background:#0f0f16; color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:6px 8px; font:12px ui-monospace,Consolas,monospace; }
+  #gtFormula { width:100%; background:#0f0f16; color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:6px 8px; font:12px ui-monospace,Consolas,monospace; }
   #gtFormula { resize:none; } #geoTools .chip { --c:#e8e8f0; }
-  .mixrow { margin-bottom:10px; display:flex; align-items:center; flex-wrap:wrap; gap:8px 18px; } .mixrow select { font-weight:600; letter-spacing:.3px; }
   .ph-time { color:var(--acc); font-variant-numeric:tabular-nums; font-size:1.35em; font-weight:700; letter-spacing:.2px; text-align:center; margin-bottom:.2em; }
-  #phRange { margin-bottom:.2em; }
   .ph-title { font-size:1.2em; font-weight:600; margin:0 0 1.1em; text-align:center; }
-  .prov { font-size:11px; color:var(--mut); border:1px solid var(--line); border-radius:4px; padding:0 5px; margin-left:6px; vertical-align:middle; font-weight:400; }
   .ph-tech { font-weight:700; white-space:pre-wrap; line-height:1.55; }   /* le texte technique garde ses retours à la ligne : sections ▸ et puces • */
   .ph-son { font-style:italic; color:#aab0c4; font-size:.92em; }
   .ph-edit:empty:before { content:attr(data-ph); color:#4a4a5a; font-weight:400; font-style:italic; }
@@ -103,14 +99,10 @@
   #promptIn:placeholder-shown { text-align:center; }
   #promptIn:focus { outline:none; border-color:var(--ev); }
   .save { font-size:11px; color:var(--mut); min-height:14px; margin-bottom:4px; } .save.ok { color:#6fe28a; } .save.err { color:#ff6b6b; }
-  .ph-sub { color:var(--mut); font-size:.8em; border-left:2px solid var(--acc); padding-left:8px; margin:6px 0 0; }
-  .ph-ev { color:var(--ev); font-size:.8em; border-left:2px solid var(--ev); padding-left:8px; margin:6px 0 0; }
-  .ph-audio { color:#6a6a7a; font-size:12px; margin:8px 0 0; }
   .fx { margin-top:8px; padding:8px 12px; background:var(--panel); border:1px solid var(--line); border-radius:8px; font-weight:600; }
   .fx small { color:var(--mut); font-weight:400; margin-right:8px; }
   .fx .prop { font-weight:400; font-style:italic; color:#c8c8d4; }
   .fx .ok { color:#6fe28a; }
-  .fx .evn { color:var(--ev); }
   .bar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:center; margin-top:8px; }
   button, select { background:var(--panel); color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:6px 12px; font:inherit; cursor:pointer; }
   button:hover { border-color:#5a5a80; }
@@ -125,7 +117,6 @@
   .hint { color:var(--mut); font-size:12px; margin-top:6px; text-align:center; }
   .keys { color:#6a6a7a; font-size:clamp(9px,.72vw,12px); margin-top:6px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .keys b { color:#aab0c4; font-weight:600; }
   .stemChk { display:flex; gap:14px; align-items:center; font-size:12px; color:var(--mut); } .stemChk label { cursor:pointer; gap:5px; color:#aab0c4; } .stemChk input { accent-color:var(--c); margin:0; } .stemChk i { width:9px; height:9px; border-radius:2px; display:inline-block; }
-  .pkeys { color:#6a6a7a; font-size:10px; margin-top:4px; line-height:1.5; } .pkeys b { color:#aab0c4; font-weight:600; }
 </style>
 </head>
 <body>
@@ -689,7 +680,7 @@ Object.assign(FX, {
   // Lever de soleil (phase 34) : plus de lave ; l'eau reste bleue. Le soleil se lève à l'EST du dôme (côté droit du plan par défaut), apparaît en `delay` secondes,
   // puis monte lentement vers le SOMMET (centre) en éclairant de plus en plus l'eau, qui s'éclaircit.
   'Lever de soleil': (t,w,p,f) => {
-    const t0=p.t0, t1=p.t1, dl=p.delay??5, ss=x=>x<=0?0:x>=1?1:x*x*(3-2*x), appear=ss((t-t0)/dl), s=ss((t-t0-dl)/Math.max(1,t1-t0-dl)), e=s, ea=(p.eastDeg??0)*Math.PI/180;
+    const t0=p.t0, t1=p.t1??(p.t0+(p.span??20)), dl=p.delay??5, ss=x=>x<=0?0:x>=1?1:x*x*(3-2*x), appear=ss((t-t0)/dl), s=ss((t-t0-dl)/Math.max(1,t1-t0-dl)), e=s, ea=(p.eastDeg??0)*Math.PI/180;
     let maxR=0; for(const L of LED) if(L.r>maxR) maxR=L.r; const RH=maxR*R_PLAN, dist=(1-s)*(RH*1.02), Sx=CENTER.x+Math.cos(ea)*dist, Sy=CENTER.y+Math.sin(ea)*dist;
     for(const L of LED){ const d=Math.hypot(L.x-Sx,L.y-Sy)/R_PLAN, core=Math.exp(-Math.pow(d/.075,2)), halo=Math.exp(-Math.pow(d/(.22+.12*e),2)), lit=(.4+.6*e)*Math.exp(-Math.pow(d/lerp(.5,1.1,e),2));
       const warm=clamp((core*1.1+halo*.55)*appear)*w; if(warm>.01) add(L.id, hsv(lerp(22,46,e), lerp(.95,.3,Math.min(1,core*1.3+e*.4)), warm));
@@ -1073,21 +1064,26 @@ const evDurMap={};
 /* Étirer / raccourcir un event (poignée de fin sur la timeline en Vue Phase) : nouvelle durée ns (s). Le « reste » après la durée (retombée, queue) est conservé tel quel ; tous les effets de l'event qui ont une durée (fx.span) la suivent ; un noir « Rien » (Noir) allonge/raccourcit son temps de noir. */
 function evSetSpan(e,ns){ const old=e.span||0, tail=Math.max(0,(e.dur||old)-old); e.span=ns; e.dur=ns+tail; e.fx.forEach(f=>{ if('span' in f) f.span=ns; if(f.n==='Noir') f.hold=Math.max(.05,ns-.05); }); }
 /* Bibliothèque d'events issue de la bibliothèque BANK : chaque animation est un TYPE d'event (nom UNIQUE = nom de l'animation, appelable par ce nom dans un prompt), rangé dans une catégorie (FXMAP.eventCategory : Volcano / Geometric / Basics). Un type de bibliothèque n'existe sur la timeline qu'une fois ajouté avec « + Ajouter ». */
-const LIBALIAS={ 'Pulsation':'PulseSlow' };   /* anciens noms d'events de bibliothèque -> nouveaux (copies déjà enregistrées) */
-function evLibEvent(name,on,span){ name=LIBALIAS[name]||name; const def=(window.FXMAP&&FXMAP.eventLib&&FXMAP.eventLib[name]); if(def){ const sp=span||def.span||2; return { k:'lib:'+name, t:on, on, name, text:name+' : '+def.d, dur:sp+.3, span:sp, txtDur:Math.max(2,sp), isLib:true, fx:[Object.assign({},def.fx,{span:sp,t0:on})] }; } const b=BANK[name]; if(!b) return null; const sp=span||4; return { k:'lib:'+name, t:on, on, name, text:name+' : '+b.d, dur:sp+.3, span:sp, txtDur:Math.max(2,sp), isLib:true, fx:[{ n:'Bank', eff:name, grad:'Blanc', speed:1, level:1, span:sp, t0:on }] }; }
-const evCatOf=name=>((EVT&&EVT.__cats)||{})[name]||(window.FXMAP&&FXMAP.eventCategory&&FXMAP.eventCategory[name])||'Basics';   /* rangement choisi à la souris (EVT.__cats, enregistré dans events-timing.json) > catégorie par défaut de fxmap.js > Basics */
+const LIBALIAS={ 'Pulsation':'PulseSlow' };
+/* Events de bibliothèque propres à l'outil (disponibles dans tous les mix) : rangés dans leurs listes de l'Event Bank */
+const TOOL_LIB={
+  'LeverDeSoleil':{ cat:'Nature', span:20, d:"Un soleil apparaît du côté est du dôme puis monte lentement vers le sommet en éclairant de plus en plus l'eau, qui s'éclaircit.", fx:{ n:'Lever de soleil', delay:5, eastDeg:0 } },
+  'EauDeNuit':{ cat:'Water', span:10, d:"Fond uniforme et sombre sur tout le dôme, sans vague ; seule une autre source de lumière (comme le soleil) en modifie les teintes.", fx:{ n:'Eau de nuit' } } };
+const libDef=name=>(window.FXMAP&&FXMAP.eventLib&&FXMAP.eventLib[name])||TOOL_LIB[name];   /* anciens noms d'events de bibliothèque -> nouveaux (copies déjà enregistrées) */
+function evLibEvent(name,on,span){ name=LIBALIAS[name]||name; const def=libDef(name); if(def){ const sp=span||def.span||2; return { k:'lib:'+name, t:on, on, name, text:name+' : '+def.d, dur:sp+.3, span:sp, txtDur:Math.max(2,sp), isLib:true, fx:[Object.assign({},def.fx,{span:sp,t0:on})] }; } const b=BANK[name]; if(!b) return null; const sp=span||4; return { k:'lib:'+name, t:on, on, name, text:name+' : '+b.d, dur:sp+.3, span:sp, txtDur:Math.max(2,sp), isLib:true, fx:[{ n:'Bank', eff:name, grad:'Blanc', speed:1, level:1, span:sp, t0:on }] }; }
+const evCatOf=name=>((EVT&&EVT.__cats)||{})[name]||(window.FXMAP&&FXMAP.eventCategory&&FXMAP.eventCategory[name])||(TOOL_LIB[name]&&TOOL_LIB[name].cat)||'Basics';   /* rangement choisi à la souris (EVT.__cats, enregistré dans events-timing.json) > catégorie par défaut de fxmap.js > Basics */
 function evScaled(s,d){ const k=(s.span||0)>0?d/s.span:1; return Object.assign({},s,{span:(s.span?d:s.span),dur:(s.dur?s.dur*k:d),fx:(s.fx||[]).map(f=>Object.assign({},f,('span' in f)?{span:d}:{}))}); }
 function evPreviewStart(src){ const d=Math.max(src.dur||0,src.span||0,1); evPrev={ ev:src, name:src.name, tStart:Math.max(0,src.on-1.5), tEnd:src.on+d+2, wall:performance.now() }; }
 function evPreviewTime(){ const w=evPrev.tEnd-evPrev.tStart, x=((performance.now()-evPrev.wall)/1000)%(w+.8); return evPrev.tStart+Math.min(x,w); }
 function eventBankRefresh(){ const box=document.getElementById('eventList'); if(!box) return; const groups=new Map(), hidden=evHidden();
   EV.slice().sort((a,b)=>a.on-b.on).forEach(e=>{ if(!groups.has(e.name)) groups.set(e.name,{name:e.name,src:null,items:[]}); const g=groups.get(e.name); if(!e.isDup&&!g.src) g.src=e; g.items.push(e); });
   for(const e of EVREM){ let g=groups.get(e.name); if(!g){ g={name:e.name,src:e,items:[]}; groups.set(e.name,g); } else if(!g.src) g.src=e; }
-  for(const nm of Object.keys(BANK).concat(Object.keys((window.FXMAP&&FXMAP.eventLib)||{}))){ let g=groups.get(nm); if(!g){ g={name:nm,src:null,items:[]}; groups.set(nm,g); } if(!g.src&&!g.items.length) g.src=evLibEvent(nm,200); else if(!g.src&&g.items.some(x=>x.isLib)) g.src=evLibEvent(nm,200); }
+  for(const nm of Object.keys(BANK).concat(Object.keys((window.FXMAP&&FXMAP.eventLib)||{}),Object.keys(TOOL_LIB))){ let g=groups.get(nm); if(!g){ g={name:nm,src:null,items:[]}; groups.set(nm,g); } if(!g.src&&!g.items.length) g.src=evLibEvent(nm,200); else if(!g.src&&g.items.some(x=>x.isLib)) g.src=evLibEvent(nm,200); }
   { const seen={}; for(const e of EV){ if(e.isLib||e.isDup) continue; seen[e.name]=1; } const dupN=Object.keys(BANK).filter(n=>seen[n]); if(dupN.length) console.warn('Noms d\'events en double (un nom doit rester unique) :',dupN); }
-  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'), nf=x=>x.toFixed(1).replace('.',','); box.innerHTML=''; let shown=0, nHidden=0; const cats={ Volcano:[], Geometric:[], Basics:[] };
+  const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'), nf=x=>x.toFixed(1).replace('.',','); box.innerHTML=''; let shown=0, nHidden=0; const cats={ Volcano:[], Geometric:[], Basics:[], Nature:[], Water:[] };
   groups.forEach(g=>{ if(hidden.has(g.name)){ nHidden++; return; } const src=g.src||g.items[0], i=src.text.indexOf(':'), rawDesc=i>0?src.text.slice(i+1).trim():src.text, desc=((window.FXMAP&&FXMAP.eventTypes&&FXMAP.eventTypes[g.name])||rawDesc.replace(/(\b(de|à|vers|environ|jusqu'à)\s+)*\d{1,2}:\d{2}([,.]\d+)?/g,'').replace(/\(\s*\)/g,'').replace(/\s{2,}/g,' ').replace(/\s+([,;.)])/g,'$1').trim()), kind=(src.fx&&src.fx[0]&&src.fx[0].n)||'',
       sp=g.items.map(e=>e.span).filter(Boolean), dur=sp.length?(Math.min(...sp)===Math.max(...sp)?nf(sp[0])+' s':nf(Math.min(...sp))+'–'+nf(Math.max(...sp))+' s'):'ponctuel', active=evPrev&&evPrev.name===g.name;
-    const card=document.createElement('div'); card.className='evc'+(active?' act':''); card.draggable=true; card.title='Glisser vers un menu (Volcano / Geometric / Basics) pour ranger cet event';
+    const card=document.createElement('div'); card.className='evc'+(active?' act':''); card.draggable=true; card.title='Glisser vers un menu (Volcano / Geometric / Basics / Nature / Water) pour ranger cet event';
     card.addEventListener('dragstart',ev=>{ ev.dataTransfer.setData('text/plain',g.name); ev.dataTransfer.effectAllowed='move'; card.classList.add('evdrag'); }); card.addEventListener('dragend',()=>{ card.classList.remove('evdrag'); document.querySelectorAll('.evcat.evover').forEach(x=>x.classList.remove('evover')); });
     const d0=src.span||src.dur||1, dv=Math.round((evDurMap[g.name]!=null?evDurMap[g.name]:d0)*10)/10, dmax=Math.max(12,Math.ceil(d0*2));
     card.innerHTML='<div class="evh"><b>'+esc(g.name)+'</b><input type="range" class="evs" min="0.2" max="'+dmax+'" step="0.1" value="'+dv+'" title="Durée de l\'effet"><span class="evsv">'+nf(dv)+' s</span><button class="chip evadd" title="Ajouter à la position de lecture">+ Ajouter</button><button class="evx" title="Retirer de la banque (l\'event existe toujours, il n\'est juste plus listé ici)">×</button></div><p class="evd">'+esc(desc)+'</p>';
@@ -1226,7 +1222,7 @@ function draw3D(){ if(!init3D()) return; if(G3.led!==LED) build3D();
   const end=()=>{ drag=null; }; c3.addEventListener('pointerup',end); c3.addEventListener('pointercancel',end);
   c3.addEventListener('wheel',ev=>{ if(cam3==='free'){ ev.preventDefault(); dist3=Math.max(1.8,Math.min(7,dist3*(ev.deltaY>0?1.08:1/1.08))); return; } if(cam3!=='centre') return; ev.preventDefault(); fov3=Math.max(35,Math.min(90,fov3*(ev.deltaY>0?1.08:1/1.08))); },{passive:false}); }
 function sync3UI(){ const g=(typeof geoView!=='undefined')&&geoView; document.getElementById('b2d').classList.toggle('on',!view3d&&!g); document.getElementById('b3d').classList.toggle('on',view3d&&!g); document.getElementById('geoViewBtn').classList.toggle('on',g);
-  document.getElementById('vsub').hidden=!(view3d&&!g); const vg=document.getElementById('vgeo'); if(vg) vg.hidden=!g;   /* Géo : « Tout désélectionner » prend la place des boutons de caméra */
+  document.getElementById('vsub').hidden=!(view3d&&!g); 
   document.getElementById('vsub').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.c===cam3)); c3.style.cursor=(view3d&&cam3!=='top')?'grab':'default'; }
 const save3=()=>{ try{ localStorage.setItem('animadome.view3d',view3d?'1':'0'); }catch(e){} };
 document.getElementById('b2d').onclick=()=>{ view3d=false; save3(); if(geoView) geoSetView(false); sync3UI(); };
@@ -1340,10 +1336,9 @@ sync3UI();
       const pubs=[]; for(const [f,txt] of Object.entries(r.files||{})){ try{ const j=JSON.parse(txt); pubs.push({ file:f, user:j.user||f.replace(/_phases\.json$/,''), data:j }); }catch(e){} } remote={ sha:r.sha, pubs, ctx:r.ctx }; return pubs; }catch(e){ return null; } }
   async function getPubs(force){ const p=await getRemote(force); if(p) return { pubs:p, src:'GitHub' }; const lf=await listFiles(false); return { pubs:lf.files?await loadPubs(lf.files):[], src:'local' }; }
   async function recompute(pubs){ const u=await whoami(); await refreshLocal(); const s=new Set(); pubs.filter(x=>x.user!==u).forEach(pb=>(pb.data.phases||[]).forEach(p=>{ const l=localPh[p.id]; if(l&&l.hash!==p.hash) s.add(p.id); })); window.PHMARKED=s; }
-  function updateCtxBadge(){ const c=remote.ctx; let b=document.getElementById('ctxBadge'); const upd=c&&c.remote&&c.remote!==c.head&&c.local===c.head, mod=c&&c.local&&c.local!==c.head;
-    if(!upd&&!mod){ if(b) b.remove(); return; } if(!b){ b=document.createElement('button'); b.id='ctxBadge'; b.className='chip'; document.getElementById('btnPubPhases').after(b); }
-    if(upd){ b.disabled=false; b.textContent='● contexte mis à jour : récupérer'; b.style.color='#ffe14a'; b.title='Un collaborateur a publié une nouvelle version de CONTEXT.md (le contexte de ce mix pour Claude). Clique pour la récupérer.'; b.onclick=async()=>{ b.disabled=true; b.textContent='récupération…'; await api('/api/publish-list?mix='+encodeURIComponent(MIX.slug)+'&pull=1'); await refreshMarks(true); }; }
-    else { b.disabled=false; b.textContent='contexte modifié (publié avec les phases)'; b.style.color='var(--mut)'; b.title='Ton CONTEXT.md a changé : il sera envoyé avec « publish phases ».'; b.onclick=null; } }
+  function updateCtxBadge(){ const c=remote.ctx; let b=document.getElementById('ctxBadge'); const upd=c&&c.remote&&c.remote!==c.head&&c.local===c.head;
+    if(!upd){ if(b) b.remove(); return; } if(!b){ b=document.createElement('button'); b.id='ctxBadge'; b.className='chip'; document.getElementById('btnPubPhases').after(b); }
+    if(upd){ b.disabled=false; b.textContent='● contexte mis à jour : récupérer'; b.style.color='#ffe14a'; b.title='Un collaborateur a publié une nouvelle version de CONTEXT.md (le contexte de ce mix pour Claude). Clique pour la récupérer.'; b.onclick=async()=>{ b.disabled=true; b.textContent='récupération…'; await api('/api/publish-list?mix='+encodeURIComponent(MIX.slug)+'&pull=1'); await refreshMarks(true); }; } }
   async function refreshMarks(force){ try{ const g=await getPubs(!!force); await recompute(g.pubs); updateCtxBadge(); return g.src; }catch(e){ return 'erreur'; } }
   window.aniRefreshMarks=refreshMarks; setTimeout(()=>refreshMarks(),3000); setInterval(()=>refreshMarks(),180000);   /* toutes les 3 min : un simple test sur GitHub (ls-remote) ; téléchargement seulement s'il y a du neuf */
   setInterval(()=>{ if(remote.pubs) recompute(remote.pubs).catch(()=>{}); },30000);   /* relecture locale des marqueurs quand tu modifies une phase */
@@ -1405,8 +1400,13 @@ sync3UI();
     const getTxt=async n=>{ const r=await fetch(mixPath(n)+'?'+Date.now()); if(!r.ok) throw new Error('lecture de '+n+' impossible'); return r.text(); };
     const fx2=editFxmap(await getTxt('fxmap.js'),pk,rmKeys), ds2=editDescriptif(await getTxt(MIX.descriptif),P,pk,rmKeys), tm2=editTiming(P,pk,rmKeys,pkgBase);
     const save=async(name,txt)=>{ const r=await api('/api/save-mixfile?mix='+encodeURIComponent(MIX.slug)+'&name='+encodeURIComponent(name)+'&backup='+bid,txt); if(!r.startsWith('OK')) throw new Error(name+' : '+r); };
+    /* garde-fous : on n'écrit rien si un des fichiers calculés est invalide */
+    try{ new Function(fx2.replace('window.FXMAP','var FXMAP')); }catch(e){ throw new Error('fxmap.js obtenu invalide (' + e.message + '), rien n\'a été modifié'); }
+    try{ JSON.parse(tm2); }catch(e){ throw new Error('events-timing.json obtenu invalide, rien n\'a été modifié'); }
+    const nh=s=>(s.match(/^\[\d{1,2}:\d{2}\s*=>/gm)||[]).length; if(nh(ds2)!==nh(await getTxt(MIX.descriptif))) throw new Error('le nombre de phases du descriptif changerait, rien n\'a été modifié');
     await save('fxmap.js',fx2); await save(MIX.descriptif,ds2); await save('events-timing.json',tm2);
-    const log=m.querySelector('#vmLog'); log.textContent='OK\nPhase '+(i+1)+' mise à jour depuis '+c.user+' (v'+c.p.version+').\nSauvegarde : clean/backups/'+bid+'\n'+pk.events.length+' events appliqués ; '+localBase.length+' anciens events remplacés.';
+    let ctxMsg=''; try{ ctxMsg=(await api('/api/merge-context?mix='+encodeURIComponent(MIX.slug),'')).replace(/^OK\s*/,''); }catch(e){}
+    const log=m.querySelector('#vmLog'); log.textContent='OK\nPhase '+(i+1)+' mise à jour depuis '+c.user+' (v'+c.p.version+').\nSauvegarde : clean/backups/'+bid+'\n'+pk.events.length+' events appliqués ; '+localBase.length+' anciens events remplacés.'+(ctxMsg?'\nContexte du mix : '+ctxMsg:'');
     const r=m.querySelector('.vm-r'); r.innerHTML='<button class="chip" id="vmUndo">Annuler</button><button class="chip" id="vmReload">Recharger la page</button>';
     r.querySelector('#vmReload').onclick=()=>location.reload();
     r.querySelector('#vmUndo').onclick=async()=>{ const u=await api('/api/clean-undo?dir='+encodeURIComponent(MIX.dir)+'&id='+bid+'&txt='+encodeURIComponent(MIX.descriptif),''); log.textContent=u==='ok'?'Version précédente restaurée. Recharge la page.':'Annulation : '+u; };
@@ -1420,8 +1420,22 @@ sync3UI();
   const align=()=>{ const s=document.getElementById('mixSel'), c=btn.parentElement; if(s&&c) btn.style.marginLeft=Math.max(0,Math.round(s.getBoundingClientRect().left-c.getBoundingClientRect().left))+'px'; }; align(); addEventListener('resize',align); setTimeout(align,300);   /* le bouton se place sous le sélecteur de mix, pas sous le mot « Mix » */
   btn.onclick=()=>inp.click();
   inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(!f) return; const wasPlaying=!au.paused, t0=au.currentTime||0; const url=URL.createObjectURL(f); au.src=url; au.load(); btn.classList.remove('warn'); btn.title='Audio : '+f.name+' (cliquer pour changer)';
-    au.addEventListener('loadedmetadata',function once(){ au.removeEventListener('loadedmetadata',once); if(isFinite(au.duration)&&typeof DUR!=='undefined'&&Math.abs(au.duration-DUR)>1.5) alert('Attention : ce fichier dure '+fmt(au.duration)+' alors que l\'analyse de ce mix a été faite sur '+fmt(DUR)+'.\nLes animations risquent d\'être décalées : vérifie que c\'est bien le bon fichier.'); try{ au.currentTime=Math.min(t0,au.duration||t0); }catch(e){} if(wasPlaying) au.play().catch(()=>{}); }); };
-  au.addEventListener('error',()=>{ if(!au.src||au.src.startsWith('blob:')) return; btn.classList.add('warn'); btn.title='Fichier audio introuvable : clique pour le sélectionner sur ton ordinateur'; }); })();function renderDome(t){ show3D(view3d&&!geoView);
+    au.addEventListener('loadedmetadata',function once(){ au.removeEventListener('loadedmetadata',once); if(typeof runSelfCheck==='function') runSelfCheck(isFinite(au.duration)&&typeof DUR!=='undefined'&&Math.abs(au.duration-DUR)>1.5?['Le fichier audio dure '+fmt(au.duration)+' alors que l\'analyse dure '+fmt(DUR)+' : les animations risquent d\'être décalées.']:[]); if(isFinite(au.duration)&&typeof DUR!=='undefined'&&Math.abs(au.duration-DUR)>1.5) alert('Attention : ce fichier dure '+fmt(au.duration)+' alors que l\'analyse de ce mix a été faite sur '+fmt(DUR)+'.\nLes animations risquent d\'être décalées : vérifie que c\'est bien le bon fichier.'); try{ au.currentTime=Math.min(t0,au.duration||t0); }catch(e){} if(wasPlaying) au.play().catch(()=>{}); }); };
+  au.addEventListener('error',()=>{ if(!au.src||au.src.startsWith('blob:')) return; btn.classList.add('warn'); btn.title='Fichier audio introuvable : clique pour le sélectionner sur ton ordinateur'; }); })();/* ---------- Auto-vérifications légères : au chargement, après une mise à jour de phase (rechargement) et à l'ouverture d'un fichier audio. Silencieux s'il n'y a rien ; sinon une pastille ⚠ liste les points à voir ---------- */
+function selfCheck(){ const pb=[]; try{
+  const names=new Set(); Object.values(FXMAP.phases||{}).forEach(p=>(p.fx||[]).forEach(f=>names.add(f.n))); Object.values(FXMAP.events||{}).forEach(e=>(Array.isArray(e.fx)?e.fx:[e.fx]).forEach(f=>names.add(f.n))); (EV||[]).forEach(e=>(e.fx||[]).forEach(f=>names.add(f.n)));
+  [...names].filter(n=>!FX[n]).forEach(n=>pb.push('Effet « '+n+' » appelé par le mix mais absent de l\'outil (ignoré).'));
+  PH.forEach((p,i)=>{ if(i>0&&Math.abs(PH[i-1].end-p.start)>.01) pb.push('Phase '+(i+1)+' : trou ou chevauchement avec la précédente.'); if(!(p.end>p.start)) pb.push('Phase '+(i+1)+' : durée nulle.'); });
+  if(PH.length&&Math.abs(PH[PH.length-1].end-DUR)>3) pb.push('La dernière phase finit à '+Math.round(PH[PH.length-1].end)+' s alors que l\'analyse dure '+Math.round(DUR)+' s.');
+  const base=EV.filter(e=>!e.isDup&&!e.isLib), keys=new Set(base.map(e=>e.k)); Object.keys(FXMAP.events||{}).forEach(k=>{ if(!keys.has(k)&&!(EVT.__removed||[]).includes(k)) pb.push('Event « '+k+' » réglé dans fxmap.js mais absent du descriptif.'); });
+  base.forEach(e=>{ if(!(FXMAP.events||{})[e.k]) pb.push('Event « '+e.k+' » décrit dans le descriptif mais sans réglage dans fxmap.js.'); });
+  (EVT.__dups||[]).forEach(d=>{ if(!String(d.k).startsWith('lib:')&&!keys.has(d.k)) pb.push('Copie d\'event orpheline : '+d.k+' à '+d.on+' s.'); });
+  if(typeof SD==='undefined'||!SD) pb.push('Analyse du son (stems) absente.'); if(typeof BT==='undefined'||!BT) pb.push('Analyse des kicks (beats) absente.'); }catch(e){ pb.push('Auto-vérification interrompue : '+e.message); }
+  return pb; }
+let _chk=[]; function runSelfCheck(extra){ _chk=selfCheck().concat(extra||[]); let b=document.getElementById('chkBadge'); if(!_chk.length){ if(b) b.remove(); return; } console.warn('Auto-vérification :\n- '+_chk.join('\n- '));
+  if(!b){ b=document.createElement('button'); b.id='chkBadge'; b.className='chip'; b.style.color='#ffb36b'; b.onclick=()=>{ const m=document.createElement('div'); m.id='verModal'; m.innerHTML='<div class="vm-box"><div class="vm-h"><b>Points à vérifier</b><button class="chip vm-x">×</button></div><div class="vm-b"><div class="vm-t">'+_chk.map(x=>'• '+String(x).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))).join('<br>')+'</div></div></div>'; const old=document.getElementById('verModal'); if(old) old.remove(); document.body.appendChild(m); m.querySelector('.vm-x').onclick=()=>m.remove(); m.addEventListener('pointerdown',ev=>{ if(ev.target===m) m.remove(); }); }; document.getElementById('btnAudio').parentElement.after(b); }
+  b.textContent='⚠ '+_chk.length+' point'+(_chk.length>1?'s':'')+' à vérifier'; b.title='Contrôles automatiques de l\'outil : clique pour le détail'; }
+function renderDome(t){ show3D(view3d&&!geoView);
   if(geoView){ ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H+OFF); ctx.save(); ctx.translate(GDX,OFF); ctx.translate(CENTER.x,CENTER.y); ctx.scale(VIEW_SCALE*GZ,VIEW_SCALE*GZ); ctx.translate(-CENTER.x,-CENTER.y); drawGeoView(); ctx.restore(); drawGeoBanner(); return; }
   const i=phaseAt(t), f=feat(t), act=activeFx(t,i); buf.fill(0);
   { GAIN=1; GNOIR=1; HOLEKEEP=false; NOIRKEEP=false; if(slowKeep.length!==LED.length) slowKeep=new Uint8Array(LED.length); else slowKeep.fill(0); if(gradeSkip.length!==LED.length) gradeSkip=new Uint8Array(LED.length); else gradeSkip.fill(0); runFx(t,act,f);
@@ -1448,8 +1462,6 @@ sync3UI();
   // titre des effets en cours : bas à gauche du dôme (élément HTML : reste visible en 2D, 3D et GéoLists)
   setJournalChips(act, PH[i]);
 }
-function setFxBanner(list,ph){ const el=document.getElementById('fxBanner'); if(!el) return; const col=ph?phaseColor(ph):'#e8e8f0'; const key=col+'|'+list.map(x=>(x.ev?'e':x.ok?'o':'p')+x.t).join('\u0001'); if(el._k===key) return; el._k=key; el.textContent='';
-  list.forEach((x,n)=>{ if(n){ const s=document.createElement('span'); s.textContent=' + '; s.style.cssText='color:#8a8a9a;font-weight:400'; el.appendChild(s); } const s=document.createElement('span'); s.textContent=x.t; s.style.color=x.ev?'#7fd4ff':col; s.style.fontWeight=(x.ev||x.ok)?'700':'500'; if(!x.ev&&!x.ok) s.style.fontStyle='italic'; el.appendChild(s); }); }
 
 /* ---------- Journal des events : un encart par effet de phase (couleur de la phase) et par event (bleu) ; la description détaillée apparaît au survol ---------- */
 function descForFx(name,p){ const L=String(p.tech||'').split(/\r?\n/).map(l=>l.replace(/^\*\*|\*\*$/g,'').trim()); const nl=String(name).toLowerCase(); let on=false; const out=[];
@@ -1716,7 +1728,7 @@ function saveUI(){ try{ localStorage.setItem(uiKey,JSON.stringify({ event:eventV
     if(s.geo) geoSetView(true); else if(s.event) eventSetView(true); geoSyncChips(); geoRecompute(); geoUpdateFormula(); }catch(e){} })();
 setInterval(saveUI,500); addEventListener('pagehide',saveUI);
 document.getElementById('nled').value='24'; buildLEDs(24);   /* défaut léger pour les ordinateurs moins rapides ; vue 2D par défaut aussi */
-loadDescriptif().then(()=>requestAnimationFrame(frame));
+loadDescriptif().then(()=>{ requestAnimationFrame(frame); setTimeout(()=>runSelfCheck(),900); });
 setInterval(loadDescriptif, 2500);
 </script>
 </body>

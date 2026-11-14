@@ -1,4 +1,4 @@
-# Régénère beats.js (kick/kickS/hit/hitS) à partir de stems.js — à lancer après analyze-stems.py / analyze-extra.py
+﻿# Régénère beats.js (kick/kickS/hit/hitS) à partir de stems.js — à lancer après analyze-stems.py / analyze-extra.py
 # Usage : powershell -ExecutionPolicy Bypass -File tools\stems-to-beats.ps1 -Dir mixes\<mix>
 param([Parameter(Mandatory)][string]$Dir)   # dossier du mix, ex. mixes\pyrobeats
 $root = if ([System.IO.Path]::IsPathRooted($Dir)) { $Dir } else { Join-Path (Split-Path -Parent $PSScriptRoot) $Dir }
