@@ -13,6 +13,10 @@ Chaque mix a un fichier **`dome-preview/mixes/<mix>/CONTEXT.md`** : intention ar
 - **Mets-le à jour** dès que l'utilisateur donne une consigne durable (une règle, un choix, une préférence qui vaut pour la suite). Chaque collaborateur écrit ses notes sous `### Notes de <utilisateur>` ; la partie principale est tenue par le propriétaire du mix.
 - **Avant toute publication** (`publish phases`), vérifie que `CONTEXT.md` reflète bien les décisions de la session : il est envoyé avec les phases, c'est ainsi que le collaborateur suivant en hérite. La page signale (« ● contexte mis à jour ») quand un autre a publié un nouveau contexte : récupère-le avant de continuer.
 - Ce fichier ne contient jamais d'information personnelle (adresse, identifiants, chemins de ta machine).
+## Goût de l'auteur (valable pour tous les mix)
+- **Pas de passages abrupts** d'une animation à l'autre, sauf demande explicite (ex. un « Rien » voulu). Une animation doit **se transformer** en la suivante (morph des paramètres : palette, densité, vitesse, direction) plutôt que d'être simplement superposée à elle ; si deux animations se recouvrent, fondu à puissance constante et couleurs mélangées sans passer par du gris, et si possible une **anticipation** (la suivante apparaît discrètement avant d'arriver) ou un **front qui balaie** le dôme dans le sens naturel de la lave.
+- Chaque mix a un look très différent : ne pas transposer les couleurs ou les effets d'un mix à l'autre ; le `CONTEXT.md` du mix fait foi.
+- Le rythme des mix est souvent peu conventionnel (sons non standard, bruitages, petits sons séparés) : ne pas supposer un beat régulier ; quand les pistes séparées d'un mix sont disponibles, **analyser chaque piste à part** plutôt que le mélange.
 ## Connaissances son et lumière
 Le skill **nimadome-son-lumiere** (.claude/skills/animadome-son-lumiere/SKILL.md) rassemble ce qu'un technicien son et lumière doit savoir ici : pilotage sACN/DMX, alimentation, gamma et couleur, photosensibilité, synchronisation, analyse audio, ambisonie. Consulte-le avant de régler un effet destiné au dôme réel ou de parler d'export.
 
