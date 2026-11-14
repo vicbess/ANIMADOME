@@ -160,7 +160,8 @@ function Write-Mixes {
   $mp = Join-Path $root 'mixes.js'
   if (-not (Test-Path $mp) -or [System.IO.File]::ReadAllText($mp) -ne $js) { [System.IO.File]::WriteAllText($mp, $js, (New-Object System.Text.UTF8Encoding($false))) }
 }
-Write-Mixes[Srv]::Start($root, $Port)
+Write-Mixes
+[Srv]::Start($root, $Port)
 function Get-Mixes { $t = [System.IO.File]::ReadAllText((Join-Path $root 'mixes.js'), [System.Text.Encoding]::UTF8); $m = [regex]::Match($t, '(\[.*\])', 'Singleline'); return ($m.Value | ConvertFrom-Json) }
 $parser = Join-Path $root 'parse-descriptif.ps1'
 $last = @{}
