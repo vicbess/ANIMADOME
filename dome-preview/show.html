@@ -1444,7 +1444,7 @@ function updateText(t){
   if(i!==shownPhase){ shownPhase=i;
     document.getElementById('phMixTxt').textContent=`PHASE ${i+1}`; document.getElementById('phTime').style.color=phaseColor(p); document.getElementById('phText').style.color=phaseColor(p);
     
-    document.getElementById('phTech').textContent=p.tech; renderTechView(p.tech); document.getElementById('phText').textContent=`[${mmss(p.start)} => ${mmss(p.end)}] ${p.title}`; document.getElementById('phSon').textContent=p.audio; shownSub=null; cleanRefresh(); }
+    document.getElementById('phTech').textContent=p.tech; renderTechView(p.tech); document.getElementById('phText').textContent=`${mmss(p.start)} => ${mmss(p.end)} ${p.title}`; document.getElementById('phSon').textContent=p.audio; shownSub=null; cleanRefresh(); }
   const sub=p.sub.find(s=>t>=s.start&&t<s.end); const st=sub?`[${mmss(sub.start)} => ${mmss(sub.end)}] ${sub.text}`:'';
   if(st!==shownSub){ shownSub=st; const el=document.getElementById('phSub'); el.hidden=!st; el.textContent=st; }
   const ev=EV.find(e=>t>=e.on && t<e.on+e.txtDur); /* texte affiché pendant la durée de l'event, 2 s minimum */ const es=ev?`*${mmss(ev.t)}* ${ev.text}`:'';
