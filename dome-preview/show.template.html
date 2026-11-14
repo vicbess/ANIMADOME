@@ -1297,6 +1297,7 @@ sync3UI();
   function modal(title,html){ const old=document.getElementById('verModal'); if(old) old.remove(); const m=document.createElement('div'); m.id='verModal';
     m.innerHTML='<div class="vm-box"><div class="vm-h"><b>'+title+'</b><button class="chip vm-x">×</button></div><div class="vm-b">'+html+'</div></div>'; document.body.appendChild(m);
     m.querySelector('.vm-x').onclick=()=>m.remove(); m.addEventListener('pointerdown',ev=>{ if(ev.target===m) m.remove(); }); return m; }
+  window.aniBuildPhases=buildPackage;   /* utilisé par la mise à jour de phase */
   const rng=a=>a.length?a.join(', '):'—';
   document.getElementById('btnPubPhases').onclick=async()=>{
     const m=modal('Publier les phases de '+esc(MIX.title||MIX.slug),'<div class="vm-t">Préparation…</div>');
@@ -1313,6 +1314,85 @@ sync3UI();
       m.querySelector('#vmGo').onclick=async()=>{ const go=m.querySelector('#vmGo'), log=m.querySelector('#vmLog'); go.disabled=true; log.textContent='Publication en cours…'; try{ localStorage.setItem('animadome.user',u); }catch(e){}
         const res=await api('/api/publish-phases?mix='+encodeURIComponent(MIX.slug),u+'\n'+JSON.stringify(built.pack,null,1)); log.textContent=res; if(res.startsWith('OK')){ go.textContent='Publié ✓'; } else go.disabled=false; }; };
     render(); };
+})();
+
+/* ---------- Mise à jour (PULL) d'UNE phase depuis les publications des collaborateurs ; marqueurs jaune strié de rouge sur la barre colorée ---------- */
+(function(){
+  const api=(p,body)=>fetch(p,{ method:body===undefined?'GET':'POST', headers:{ 'X-Animadome':'1' }, body }).then(r=>r.text());
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const ID=s=>'p'+String(Math.round(s)).padStart(5,'0');
+  const meLocal=()=>{ try{ return localStorage.getItem('animadome.user')||''; }catch(e){ return ''; } };
+  async function whoami(){ let u=meLocal(); if(!u){ const w=(await api('/api/whoami')).trim(); u=/^KO/.test(w)?'':w; } return u; }
+  async function listFiles(pull){ try{ return JSON.parse(await api('/api/publish-list?mix='+encodeURIComponent(MIX.slug)+(pull?'&pull=1':''))); }catch(e){ return { error:'serveur injoignable' }; } }
+  async function loadPubs(files){ const out=[]; for(const f of files){ try{ const r=await fetch(mixPath('publish/'+f)+'?'+Date.now()); if(!r.ok) continue; const j=await r.json(); out.push({ file:f, user:j.user||f.replace(/_phases\.json$/,''), data:j }); }catch(e){} } return out; }
+  let localPh={}; async function refreshLocal(){ const b=await window.aniBuildPhases(''); localPh={}; b.pack.phases.forEach(p=>{ localPh[p.id]=p; }); return localPh; }
+  /* marqueurs : une phase est marquée quand la publication d'un AUTRE utilisateur diffère de ta version */
+  window.PHMARKED=new Set();
+  async function refreshMarks(){ try{ const lf=await listFiles(false); if(lf.error||!lf.files) return; const u=await whoami(); await refreshLocal(); const s=new Set();
+      (await loadPubs(lf.files)).filter(x=>x.user!==u).forEach(pb=>(pb.data.phases||[]).forEach(p=>{ const l=localPh[p.id]; if(l&&l.hash!==p.hash) s.add(p.id); })); window.PHMARKED=s; }catch(e){} }
+  window.aniRefreshMarks=refreshMarks; setTimeout(refreshMarks,3000); setInterval(refreshMarks,60000);
+  function modal(title,html){ const old=document.getElementById('verModal'); if(old) old.remove(); const m=document.createElement('div'); m.id='verModal';
+    m.innerHTML='<div class="vm-box"><div class="vm-h"><b>'+title+'</b><button class="chip vm-x">×</button></div><div class="vm-b">'+html+'</div></div>'; document.body.appendChild(m);
+    m.querySelector('.vm-x').onclick=()=>m.remove(); m.addEventListener('pointerdown',ev=>{ if(ev.target===m) m.remove(); }); return m; }
+  /* petit menu au clic sur la barre colorée d'une phase */
+  window.openPhaseMenu=(ev,i)=>{ const old=document.getElementById('phMenu'); if(old) old.remove(); if(i<0||!PH[i]) return;
+    const m=document.createElement('div'); m.id='phMenu'; m.style.cssText='position:fixed;left:'+Math.min(ev.clientX,innerWidth-190)+'px;top:'+(ev.clientY+12)+'px;z-index:90;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px;box-shadow:0 8px 24px #000a';
+    const marked=window.PHMARKED&&window.PHMARKED.has(ID(PH[i].start)); m.innerHTML='<button class="chip" style="width:100%">updater phase '+(i+1)+(marked?' ●':'')+'</button>'; document.body.appendChild(m);
+    const close=e2=>{ if(m.contains(e2.target)&&e2.type==='pointerdown'){ return; } m.remove(); document.removeEventListener('pointerdown',close,true); };
+    setTimeout(()=>document.addEventListener('pointerdown',close,true),0); m.querySelector('button').onclick=()=>{ m.remove(); document.removeEventListener('pointerdown',close,true); openPull(i); }; };
+  /* ----- modifications de fichiers (calculées dans la page, enregistrées par le serveur avec sauvegarde) ----- */
+  const blockRe=/^\*(\d{2}:\d{2})\*/, hdrRe=/^\[(\d{1,2}):(\d{2})\s*=>/;
+  const endOfRegion=(lines,e)=>{ while(e<lines.length&&!hdrRe.test(lines[e])&&!/^=+\s*$/.test(lines[e])&&!lines[e].startsWith('Questions')&&!lines[e].startsWith('**CHAPITRE')&&!/PARTIR D.ICI/.test(lines[e])) e++; return e; };
+  function editDescriptif(txt,P,pk,rmKeys){
+    const nl=txt.includes('\r\n')?'\r\n':'\n'; const lines=txt.split(/\r?\n/), out=[];
+    for(let i=0;i<lines.length;i++){ const m=blockRe.exec(lines[i]); if(m&&rmKeys.includes(m[1])){ while(i+1<lines.length&&lines[i+1].trim()!=='') i++; if(i+1<lines.length) i++; continue; } out.push(lines[i]); }   /* blocs d'events remplacés : retirés */
+    let h=-1; for(let i=0;i<out.length;i++){ const m=hdrRe.exec(out[i]); if(m&&(+m[1])*60+(+m[2])===P.start){ h=i; break; } } if(h<0) throw new Error('phase introuvable dans le descriptif');
+    const e=endOfRegion(out,h+1), evLines=[]; let inEv=false;
+    for(let i=h+1;i<e;i++){ const l=out[i]; if(l.trim()===''){ if(inEv) evLines.push(l); inEv=false; continue; } if(/^\*\d{1,2}:\d{2}/.test(l)){ inEv=true; evLines.push(l); continue; } if(inEv) evLines.push(l); }
+    const region=pk.descriptif.split(/\r?\n/).concat(['']).concat(evLines.length?evLines.concat(['']):[]); out.splice(h,e-h,...region);
+    const add=[]; pk.events.filter(x=>!x.dup&&!x.lib).forEach(x=>{ add.push('*'+x.k+'*'); add.push(x.text||''); add.push(''); });
+    if(add.length){ let j=out.findIndex((l,i)=>/^=+\s*$/.test(l)&&/PARTIR D.ICI/.test(out[i+1]||'')); if(j<0) j=out.length; out.splice(j,0,...add); }
+    let res=out.join(nl); const a=res.search(/^\*\d{2}:\d{2}\*/m), mk=res.search(/^=+\r?\nÀ PARTIR D.ICI/m);   /* blocs d'events remis dans l'ordre chronologique */
+    if(a>=0&&mk>a){ const zone=res.slice(a,mk), bl=zone.match(/\*\d{2}:\d{2}\*\r?\n[\s\S]*?(?:\r?\n){2}/g)||[]; if(bl.join('').length===zone.length){ bl.sort((x,y)=>x.slice(1,6)<y.slice(1,6)?-1:x.slice(1,6)>y.slice(1,6)?1:0); res=res.slice(0,a)+bl.join('')+res.slice(mk); } }
+    return res; }
+  function editFxmap(txt,pk,rmKeys){ txt=txt.replace(/\r\n/g,'\n');
+    const A='\n  phases: {\n', B='\n  events: {\n', ps=txt.indexOf(A), pe=txt.indexOf('\n  },\n',ps), es=txt.indexOf(B), ee=txt.indexOf('\n  },\n};',es); if(ps<0||pe<0||es<0||ee<0) throw new Error('structure de fxmap.js inattendue');
+    let phases=txt.slice(ps+A.length,pe), events=txt.slice(es+B.length,ee); const key=P0=>P0;
+    if(pk.fx){ const k=pk.__key, re=new RegExp('^\\s*"'+k+'": \\{.*$','m'); if(re.test(phases)) phases=phases.replace(re,()=>'    "'+k+'": '+JSON.stringify(pk.fx)+','); }
+    const ev=events.split('\n').filter(l=>{ const m=/^\s*"(\d{2}:\d{2})": \{/.exec(l); return !(m&&rmKeys.includes(m[1])); });
+    pk.events.filter(x=>!x.dup&&!x.lib&&x.def).forEach(x=>{ ev.push('    "'+x.k+'": '+JSON.stringify(x.def)+','); });
+    return txt.slice(0,ps+A.length)+phases+txt.slice(pe,es+B.length)+ev.join('\n')+txt.slice(ee); }
+  function editTiming(P,pk,rmKeys,pkgBase){
+    const o=JSON.parse(JSON.stringify(EVT||{})), lo=P.start-1e-6, hi=P.end-1e-6;
+    rmKeys.forEach(k=>{ delete o[k]; if(o.__spans) delete o.__spans[k]; }); o.__dups=(o.__dups||[]).filter(d=>!(d.on>=lo&&d.on<hi));
+    pk.events.forEach(e=>{ if(e.dup||e.lib){ const d={ k:e.k, on:e.on }; if(e.span!==undefined) d.span=e.span; if(e.ov) d.ov=e.ov; o.__dups.push(d); }
+      else { o[e.k]=e.on; if(e.span&&e.def&&e.def.span&&Math.abs(e.span-e.def.span)>.001){ o.__spans=o.__spans||{}; o.__spans[e.k]=e.span; } } });
+    if(!o.__dups.length) delete o.__dups; if(o.__spans&&!Object.keys(o.__spans).length) delete o.__spans; if(o.__removed){ o.__removed=o.__removed.filter(k=>!pkgBase.includes(k)); if(!o.__removed.length) delete o.__removed; }
+    return JSON.stringify(o); }
+  async function openPull(i){
+    const P=PH[i], id=ID(P.start), m=modal('Mettre à jour la phase '+(i+1),'<div class="vm-t">Récupération des publications sur GitHub…</div>'), body=m.querySelector('.vm-b');
+    const lf=await listFiles(true); if(lf.error||!lf.files){ body.innerHTML='<div class="vm-t vm-w">'+esc(lf.error||'réponse inattendue')+'</div><pre class="vm-log">'+esc(lf.log||'')+'</pre>'; return; }
+    const pubs=await loadPubs(lf.files); await refreshLocal(); const L=localPh[id], cands=[];
+    pubs.forEach(pb=>{ const p=(pb.data.phases||[]).find(x=>x.id===id); if(p) cands.push({ user:pb.user, p, at:pb.data.publishedAt||'', same:!!L&&L.hash===p.hash, bornes:Math.abs(p.start-P.start)>.5||Math.abs(p.end-P.end)>.5 }); });
+    cands.sort((a,b)=>String(b.at).localeCompare(String(a.at)));
+    body.innerHTML='<div class="vm-t">Phase <b>'+(i+1)+'</b> — '+esc(P.title)+'. Choisis la version à récupérer : elle remplace le texte, les réglages et les events de cette phase (une sauvegarde est faite, tu pourras annuler).</div>'
+      +(cands.length?'<div class="vm-list">'+cands.map((c,k)=>'<label class="vm-i"><input type="radio" name="vmPh" value="'+k+'"'+(c.bornes?' disabled':'')+'> <b>'+esc(c.user)+'</b> <span class="vm-d">v'+c.p.version+' · '+esc(String(c.at).slice(0,10))+' · '+c.p.events.length+' events</span>'+(c.same?' <i>(identique à ta version)</i>':'')+(c.bornes?' <b class="vm-w">bornes différentes : '+c.p.start+'→'+c.p.end+' s (non géré)</b>':'')+'</label>').join('')+'</div>':'<div class="vm-t">Aucune publication ne contient cette phase.</div>')
+      +'<div class="vm-r"><button class="chip" id="vmGo">Récupérer cette version</button><button class="chip" id="vmClose">Fermer</button></div><pre id="vmLog" class="vm-log"></pre>';
+    m.querySelector('#vmClose').onclick=()=>m.remove();
+    m.querySelector('#vmGo').onclick=async()=>{ const sel=m.querySelector('input[name=vmPh]:checked'), log=m.querySelector('#vmLog'); if(!sel){ log.textContent='Choisis une version dans la liste.'; return; }
+      const go=m.querySelector('#vmGo'); go.disabled=true; log.textContent='Mise à jour en cours…'; try{ log.textContent=await applyPull(i,cands[+sel.value],m); }catch(e){ log.textContent='KO '+e.message; go.disabled=false; } }; }
+  async function applyPull(i,c,m){
+    const P=PH[i], pk=Object.assign({},c.p,{ __key:mmss(P.start) }), lo=P.start-1e-6, hi=P.end-1e-6, bid='pull-'+new Date().toISOString().replace(/\D/g,'').slice(0,14);
+    const localBase=EV.filter(e=>!e.isDup&&!e.isLib&&e.on>=lo&&e.on<hi).map(e=>e.k), pkgBase=pk.events.filter(x=>!x.dup&&!x.lib).map(x=>x.k), rmKeys=[...new Set(localBase.concat(pkgBase))];
+    const getTxt=async n=>{ const r=await fetch(mixPath(n)+'?'+Date.now()); if(!r.ok) throw new Error('lecture de '+n+' impossible'); return r.text(); };
+    const fx2=editFxmap(await getTxt('fxmap.js'),pk,rmKeys), ds2=editDescriptif(await getTxt(MIX.descriptif),P,pk,rmKeys), tm2=editTiming(P,pk,rmKeys,pkgBase);
+    const save=async(name,txt)=>{ const r=await api('/api/save-mixfile?mix='+encodeURIComponent(MIX.slug)+'&name='+encodeURIComponent(name)+'&backup='+bid,txt); if(!r.startsWith('OK')) throw new Error(name+' : '+r); };
+    await save('fxmap.js',fx2); await save(MIX.descriptif,ds2); await save('events-timing.json',tm2);
+    const log=m.querySelector('#vmLog'); log.textContent='OK\nPhase '+(i+1)+' mise à jour depuis '+c.user+' (v'+c.p.version+').\nSauvegarde : clean/backups/'+bid+'\n'+pk.events.length+' events appliqués ; '+localBase.length+' anciens events remplacés.';
+    const r=m.querySelector('.vm-r'); r.innerHTML='<button class="chip" id="vmUndo">Annuler</button><button class="chip" id="vmReload">Recharger la page</button>';
+    r.querySelector('#vmReload').onclick=()=>location.reload();
+    r.querySelector('#vmUndo').onclick=async()=>{ const u=await api('/api/clean-undo?dir='+encodeURIComponent(MIX.dir)+'&id='+bid+'&txt='+encodeURIComponent(MIX.descriptif),''); log.textContent=u==='ok'?'Version précédente restaurée. Recharge la page.':'Annulation : '+u; };
+    return log.textContent; }
 })();
 
 function renderDome(t){ show3D(view3d&&!geoView);
@@ -1379,9 +1459,10 @@ function drawTL(t){
   updateView(t); const w=tl.width,h=tl.height; if(!curve) buildCurve();
   tctx.clearRect(0,0,w,h); tctx.fillStyle='#0f0f16'; tctx.fillRect(0,0,w,h);
   const X=s=>(s-VW0)/(VW1-VW0)*w, top=34, base=h-6-(phaseView?59:0);   /* en Vue Phase : bande de 59 px SOUS l'onde pour les poignées et TROIS rangées de noms d'events (un nom qui en chevauche un autre passe sur la rangée du dessus) */
-  PH.forEach((p,i)=>{ const x0=X(p.start),x1=X(p.end); tctx.fillStyle=barColor(p); tctx.globalAlpha=.7; tctx.fillRect(x0,18,x1-x0-1,12); tctx.globalAlpha=.10; tctx.fillRect(x0,top,x1-x0-1,base-top); tctx.globalAlpha=1;
+  if(!window.__stripe){ const sc=document.createElement("canvas"); sc.width=sc.height=10; const sx=sc.getContext("2d"); sx.fillStyle="#ffd21a"; sx.fillRect(0,0,10,10); sx.strokeStyle="#e0241b"; sx.lineWidth=3.2; sx.beginPath(); for(let k=-10;k<=20;k+=10){ sx.moveTo(k,10); sx.lineTo(k+10,0); } sx.stroke(); window.__stripe=tctx.createPattern(sc,"repeat"); }
+  PH.forEach((p,i)=>{ const x0=X(p.start),x1=X(p.end), mk=!!(window.PHMARKED&&window.PHMARKED.has("p"+String(Math.round(p.start)).padStart(5,"0"))); tctx.fillStyle=mk?window.__stripe:barColor(p); tctx.globalAlpha=mk?1:.7; tctx.fillRect(x0,18,x1-x0-1,12); tctx.globalAlpha=.10; tctx.fillRect(x0,top,x1-x0-1,base-top); tctx.globalAlpha=1;
     if(i===phaseAt(t)){ tctx.strokeStyle='#fff'; tctx.globalAlpha=.8; tctx.strokeRect(x0+.5,18.5,x1-x0-2,11); tctx.globalAlpha=1; }
-    if(Math.min(x1,w)-Math.max(x0,0)>26){ tctx.fillStyle='#fff'; tctx.font='bold 13px system-ui'; tctx.textAlign='left'; tctx.fillText(String(i+1),Math.max(x0,0)+4,14); } });
+    if(Math.min(x1,w)-Math.max(x0,0)>26){ tctx.font='bold 13px system-ui'; tctx.textAlign='left'; if(mk){ tctx.lineWidth=3; tctx.strokeStyle='#b3150f'; tctx.strokeText(String(i+1),Math.max(x0,0)+4,14); tctx.fillStyle='#ffe14a'; } else tctx.fillStyle='#fff'; tctx.fillText(String(i+1),Math.max(x0,0)+4,14); } });
   if(stemAny()&&curve.s){   /* pistes superposées en transparence : synthés (bleu), basse (violet), batterie (orange), et par-dessus les KICKS en jaune clair, bien plus opaques */
     const lay=(a,col,al)=>{ tctx.beginPath(); tctx.moveTo(0,base); for(let x=0;x<w;x++) tctx.lineTo(x,base-a[x]*(base-top)); tctx.lineTo(w,base); tctx.closePath(); tctx.globalAlpha=al; tctx.fillStyle=col; tctx.fill(); tctx.globalAlpha=1; };
     if(stemOn.o) lay(curve.s.so,'#4aa3ff',.40); if(stemOn.v) lay(curve.s.sv,'#6fe28a',.42); if(stemOn.b) lay(curve.s.sb,'#b86bff',.45); if(stemOn.h) lay(curve.s.sh,'#e86fc0',.40); if(stemOn.d) lay(curve.s.sd,'#ff9a4a',.40);
@@ -1392,9 +1473,9 @@ function drawTL(t){
   tctx.beginPath(); for(let x=0;x<w;x++){ const y=base-curve.d[x]*(base-top)*.9; x?tctx.lineTo(x,y):tctx.moveTo(x,y); } tctx.strokeStyle='#ff9a4a'; tctx.lineWidth=1; tctx.stroke(); }
   tctx.fillStyle='#8a8a9a'; tctx.font='11px system-ui'; tctx.textAlign='left'; { const step=[5,10,15,30,60,120,300,600].find(s=>(VW1-VW0)/s<=12)||600; for(let m=Math.ceil(VW0/step)*step;m<=VW1;m+=step){ tctx.fillText(fmt(m),X(m)+3,phaseView?base-3:h-8); tctx.fillStyle='#ffffff18'; tctx.fillRect(X(m),top,1,base-top); tctx.fillStyle='#8a8a9a'; } }
   lbRects=[]; const lbRow=new Map(); if(phaseView){ tctx.font='bold 10px system-ui'; const rowEnd=[-1e9,-1e9,-1e9]; EV.filter(e=>{ const x=X(e.on); return x>=-20&&x<=w+20; }).sort((a,b)=>a.on-b.on).forEach(e=>{ const x=X(e.on), lb=((window.FXMAP&&FXMAP.eventLabels&&FXMAP.eventLabels[e.name])||e.name)+(dragEv===e?'  00:00.00':''), tw=tctx.measureText(lb).width; let lx=Math.min(Math.max(x,tw/2+3),w-tw/2-3), r=rowEnd.findIndex(en=>lx-tw/2-3>=en); if(r<0){ r=rowEnd.indexOf(Math.min(...rowEnd)); lx=rowEnd[r]+tw/2+3; } rowEnd[r]=lx+tw/2+3; lbRow.set(e,{r,lx}); }); }   /* noms : rangée 0 juste sous la tirette, sinon 1 puis 2 plus bas s'ils se chevauchent ; si les 3 sont prises, le nom est décalé à droite sur la rangée libérée le plus tôt */  EV.forEach(e=>{ const x=X(e.on); if(x<-20||x>w+20) return; const sel=(selEv===e); tctx.fillStyle=sel?'#34e08a':'#7fd4ff';
-    if(e.span){ tctx.globalAlpha=sel?.38:.22; tctx.fillRect(x,24,Math.max(2,X(e.on+e.span)-x),(phaseView?base+4:base)-24); tctx.globalAlpha=1; }   /* événement à durée : bande de sa longueur */
-    if(!phaseView){ tctx.fillRect(x-1,24,2,base-24); return; }   /* Vue Piste : seulement la barre (ni nom ni poignée, non déplaçable) */
-    tctx.fillRect(x-(sel?1.5:1),24,sel?3:2,base+4-24);   /* Vue Phase : barre ; tirette (poignée de début) et poignée de fin seulement pour l'event SÉLECTIONNÉ (vert) ; les autres : plage cyan sans tirette */
+    if(e.span){ tctx.globalAlpha=sel?.38:.22; tctx.fillRect(x,top,Math.max(2,X(e.on+e.span)-x),(phaseView?base+4:base)-top); tctx.globalAlpha=1; }   /* événement à durée : bande de sa longueur */
+    if(!phaseView){ tctx.fillRect(x-1,top,2,base-top); return; }   /* Vue Piste : seulement la barre (ni nom ni poignée, non déplaçable) */
+    tctx.fillRect(x-(sel?1.5:1),top,sel?3:2,base+4-top);   /* Vue Phase : barre ; tirette (poignée de début) et poignée de fin seulement pour l'event SÉLECTIONNÉ (vert) ; les autres : plage cyan sans tirette */
     if(sel){ const gy=base+4; tctx.beginPath(); tctx.roundRect?tctx.roundRect(x-7,gy,14,11,3):tctx.rect(x-7,gy,14,11); tctx.fillStyle=(dragEv===e)?'#ffffff':'#34e08a'; tctx.fill(); tctx.fillStyle='#0f0f16'; tctx.fillRect(x-3,gy+3,6,1); tctx.fillRect(x-3,gy+7,6,1); }
     if(e.span&&selEv===e){ const xe=X(e.on+e.span), gy2=base+4; tctx.beginPath(); tctx.roundRect?tctx.roundRect(xe-4,gy2,8,11,3):tctx.rect(xe-4,gy2,8,11); tctx.fillStyle=(resizeEv===e)?'#ffffff':'#7dffc0'; tctx.fill(); tctx.fillStyle='#0f0f16'; tctx.fillRect(xe-1,gy2+2,2,7); }   /* poignée de FIN : étire / raccourcit l'event */
     tctx.font='bold 10px system-ui'; tctx.textBaseline='alphabetic'; const lb=((window.FXMAP&&FXMAP.eventLabels&&FXMAP.eventLabels[e.name])||e.name)+(dragEv===e?'  '+Math.floor(e.on/60)+':'+(e.on%60).toFixed(2).padStart(5,'0'):''), tw=tctx.measureText(lb).width, lx=Math.min(Math.max(x,tw/2+3),w-tw/2-3);
@@ -1430,7 +1511,8 @@ function evEndNear(ev){ const e=selEv; if(!phaseView||!e||!e.span||EV.indexOf(e)
 function evRemove(e){ const i=EV.indexOf(e); if(i<0) return; if(!e.isDup){ EVT.__removed=(EVT.__removed||[]).concat(e.k); EVREM.push(e); } EV.splice(i,1); if(selEv===e) selEv=null; saveEvt(); }   /* copie : supprimée ; event d'origine : caché (EVT.__removed) mais gardé comme modèle dans la banque */
 addEventListener('keydown',ev=>{ if((ev.key==='Delete'||ev.key==='Backspace')&&selEv&&!ev.ctrlKey&&!ev.metaKey&&!/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||'')&&!(document.activeElement&&document.activeElement.isContentEditable)){ ev.preventDefault(); evRemove(selEv); } });
 function saveEvt(){ const o={}, cats=EVT.__cats, sp={}, rem=EVT.__removed; EV.forEach(e=>{ if(e.isDup) return; if(e.on!==e.t||EVT[e.k]!==undefined) o[e.k]=e.on; if(e.span&&e.span0&&Math.abs(e.span-e.span0)>.001) sp[e.k]=+e.span.toFixed(2); }); if(Object.keys(sp).length) o.__spans=sp; const dups=EV.filter(e=>e.isDup).map(e=>{ const o2={k:e.k,on:e.on,span:e.span}; if(e.ov) o2.ov=e.ov; return o2; }); if(dups.length) o.__dups=dups; if(cats&&Object.keys(cats).length) o.__cats=cats; if(rem&&rem.length) o.__removed=rem; EVT=o; fetch('/api/event-time?dir='+encodeURIComponent(MIX.dir),{method:'POST',body:JSON.stringify(o)}).catch(()=>{}); if(eventView) eventBankRefresh(); }
-tl.addEventListener('pointerdown',ev=>{ const e=evNear(ev), ee=evEndNear(ev); try{ tl.setPointerCapture(ev.pointerId); }catch(_){}
+tl.addEventListener('pointerdown',ev=>{ { const r0=tl.getBoundingClientRect(), cy0=(ev.clientY-r0.top)*tl.height/r0.height; if(ev.button===0&&cy0>=14&&cy0<=32&&!ev.altKey&&!ev.shiftKey&&window.openPhaseMenu){ ev.preventDefault(); window.openPhaseMenu(ev,phaseAt(VW0+clamp((ev.clientX-r0.left)/r0.width)*(VW1-VW0))); return; } }   /* clic sur la barre colorée d'une phase : menu « updater phase X » */
+  const e=evNear(ev), ee=evEndNear(ev); try{ tl.setPointerCapture(ev.pointerId); }catch(_){}
   if(phaseView){ const rr=tl.getBoundingClientRect(), cx=(ev.clientX-rr.left)*tl.width/rr.width, cy=(ev.clientY-rr.top)*tl.height/rr.height, hit=lbRects.slice().reverse().find(q=>cx>=q.x0&&cx<=q.x1&&cy>=q.y0&&cy<=q.y1); if(hit){ if(ev.altKey){ ev.preventDefault(); evRemove(hit.e); } else selEv=hit.e; return; } }   /* clic sur le NOM d'un event : le sélectionne (Alt+clic : le supprime) */
   if(e&&ev.altKey){ ev.preventDefault(); evRemove(e); return; }   /* Alt+clic sur la tirette : supprime l'event (copie : supprimée ; event d'origine : caché) */
   if(ee){ resizeEv=ee; return; }   /* poignée de fin de l'event sélectionné : étirement */
