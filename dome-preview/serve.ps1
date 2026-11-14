@@ -264,16 +264,40 @@ public static class Srv {
       File.WriteAllText(target, body, new UTF8Encoding(false)); return "OK";
     }
   }
+  // ---------- Publications des autres, lues sur GitHub SANS toucher au dossier de travail : ls-remote (très léger) puis, seulement s'il y a du neuf, fetch + lecture en mémoire ----------
+  static string _rSha = "", _rMix = "", _rJson = "";
+  static string PublishRemote(string root, string mix, string known, bool force) {
+    if (!Regex.IsMatch(mix ?? "", @"^[A-Za-z0-9_-]{1,40}$")) return "{\"error\":\"mix invalide\"}";
+    lock (Lock) {
+      string mixes = Path.Combine(root, "mixes"); int c;
+      string rem = Git(mixes, "remote get-url origin", out c); if (c != 0 || !Regex.IsMatch(rem, @"vicbess/MIX_Animadome(\.git)?$")) return "{\"error\":\"dépôt des mix inattendu\"}";
+      string ls = Git(mixes, "ls-remote origin refs/heads/main", out c); if (c != 0 || ls.Length < 40) return "{\"error\":\"GitHub injoignable\"}";
+      string sha = ls.Substring(0, 40);
+      if (!force && sha == (known ?? "")) return "{\"sha\":\"" + sha + "\",\"same\":true}";
+      if (sha != _rSha || mix != _rMix || force) {
+        string f = Git(mixes, "fetch origin main --quiet", out c); if (c != 0) return "{\"error\":\"fetch impossible\",\"log\":" + Json(f) + "}";
+        string names = Git(mixes, "ls-tree -r --name-only origin/main -- \"" + mix + "/publish/\"", out c);
+        var sb = new StringBuilder("{\"sha\":\"" + sha + "\",\"files\":{"); bool first = true;
+        foreach (var n in names.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries)) {
+          string nm = n.Trim(); if (!Regex.IsMatch(nm, @"^" + Regex.Escape(mix) + @"/publish/[A-Za-z0-9_-]+_phases\.json$")) continue;
+          string txt = Git(mixes, "show \"origin/main:" + nm + "\"", out c); if (c != 0 || !txt.TrimStart().StartsWith("{")) continue;
+          if (!first) sb.Append(","); first = false; sb.Append(Json(Path.GetFileName(nm)) + ":" + Json(txt));
+        }
+        sb.Append("}}"); _rSha = sha; _rMix = mix; _rJson = sb.ToString();
+      }
+      return _rJson;
+    }
+  }
   static void Handle(HttpListenerContext c, string root) {
     try {
       string ap = c.Request.Url.AbsolutePath;
-      if (ap == "/api/versions" || ap == "/api/publish" || ap == "/api/update" || ap == "/api/whoami" || ap == "/api/publish-phases" || ap == "/api/publish-list" || ap == "/api/save-mixfile") {
+      if (ap == "/api/versions" || ap == "/api/publish" || ap == "/api/update" || ap == "/api/whoami" || ap == "/api/publish-phases" || ap == "/api/publish-list" || ap == "/api/save-mixfile" || ap == "/api/publish-remote") {
         // opérations Git : en-tête personnalisé exigé (une page web tierce ne peut pas l'envoyer sans autorisation du navigateur)
         string rs;
         if (c.Request.Headers["X-Animadome"] != "1") rs = "KO requête refusée";
         else {
           string bd = ""; if (c.Request.HttpMethod == "POST") using (var sr0 = new StreamReader(c.Request.InputStream, Encoding.UTF8)) bd = sr0.ReadToEnd();
-          try { rs = ap == "/api/versions" ? Versions(root) : ap == "/api/publish" ? Publish(bd, root) : ap == "/api/whoami" ? WhoAmI(root) : ap == "/api/publish-phases" ? PublishPhases(bd, root, c.Request.QueryString["mix"]) : ap == "/api/publish-list" ? PublishList(root, c.Request.QueryString["mix"], c.Request.QueryString["pull"]) : ap == "/api/save-mixfile" ? SaveMixFile(bd, root, c.Request.QueryString["mix"], c.Request.QueryString["name"], c.Request.QueryString["backup"]) : Update(bd, root); } catch (Exception ex0) { rs = "KO erreur : " + ex0.Message; }
+          try { rs = ap == "/api/versions" ? Versions(root) : ap == "/api/publish" ? Publish(bd, root) : ap == "/api/whoami" ? WhoAmI(root) : ap == "/api/publish-phases" ? PublishPhases(bd, root, c.Request.QueryString["mix"]) : ap == "/api/publish-list" ? PublishList(root, c.Request.QueryString["mix"], c.Request.QueryString["pull"]) : ap == "/api/publish-remote" ? PublishRemote(root, c.Request.QueryString["mix"], c.Request.QueryString["known"], c.Request.QueryString["force"] == "1") : ap == "/api/save-mixfile" ? SaveMixFile(bd, root, c.Request.QueryString["mix"], c.Request.QueryString["name"], c.Request.QueryString["backup"]) : Update(bd, root); } catch (Exception ex0) { rs = "KO erreur : " + ex0.Message; }
         }
         byte[] rb0 = Encoding.UTF8.GetBytes(rs); c.Response.ContentType = (ap == "/api/versions" ? "application/json" : "text/plain") + "; charset=utf-8"; c.Response.ContentLength64 = rb0.Length;
         c.Response.OutputStream.Write(rb0, 0, rb0.Length); c.Response.Close(); return;

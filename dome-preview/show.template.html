@@ -1328,18 +1328,26 @@ sync3UI();
   let localPh={}; async function refreshLocal(){ const b=await window.aniBuildPhases(''); localPh={}; b.pack.phases.forEach(p=>{ localPh[p.id]=p; }); return localPh; }
   /* marqueurs : une phase est marquée quand la publication d'un AUTRE utilisateur diffère de ta version */
   window.PHMARKED=new Set();
-  async function refreshMarks(pull){ try{ const lf=await listFiles(pull||false); if(lf.error||!lf.files) return; const u=await whoami(); await refreshLocal(); const s=new Set();
-      (await loadPubs(lf.files)).filter(x=>x.user!==u).forEach(pb=>(pb.data.phases||[]).forEach(p=>{ const l=localPh[p.id]; if(l&&l.hash!==p.hash) s.add(p.id); })); window.PHMARKED=s; }catch(e){} }
-  window.aniRefreshMarks=refreshMarks; setTimeout(()=>refreshMarks(2),3000); setInterval(()=>refreshMarks(2),180000); setInterval(()=>refreshMarks(),30000);   /* toutes les 3 min : récupération discrète des publications des autres sur GitHub ; toutes les 30 s : relecture locale des marqueurs */
+  /* publications des autres : lues sur GitHub en mémoire (rien n'est écrit chez toi) ; repli sur les fichiers locaux si GitHub est injoignable */
+  let remote={ sha:'', pubs:null };
+  async function getRemote(force){ try{ const r=JSON.parse(await api('/api/publish-remote?mix='+encodeURIComponent(MIX.slug)+(force?'&force=1':'&known='+remote.sha))); if(r.error) return null; if(r.same&&remote.pubs) return remote.pubs;
+      const pubs=[]; for(const [f,txt] of Object.entries(r.files||{})){ try{ const j=JSON.parse(txt); pubs.push({ file:f, user:j.user||f.replace(/_phases\.json$/,''), data:j }); }catch(e){} } remote={ sha:r.sha, pubs }; return pubs; }catch(e){ return null; } }
+  async function getPubs(force){ const p=await getRemote(force); if(p) return { pubs:p, src:'GitHub' }; const lf=await listFiles(false); return { pubs:lf.files?await loadPubs(lf.files):[], src:'local' }; }
+  async function recompute(pubs){ const u=await whoami(); await refreshLocal(); const s=new Set(); pubs.filter(x=>x.user!==u).forEach(pb=>(pb.data.phases||[]).forEach(p=>{ const l=localPh[p.id]; if(l&&l.hash!==p.hash) s.add(p.id); })); window.PHMARKED=s; }
+  async function refreshMarks(force){ try{ const g=await getPubs(!!force); await recompute(g.pubs); return g.src; }catch(e){ return 'erreur'; } }
+  window.aniRefreshMarks=refreshMarks; setTimeout(()=>refreshMarks(),3000); setInterval(()=>refreshMarks(),180000);   /* toutes les 3 min : un simple test sur GitHub (ls-remote) ; téléchargement seulement s'il y a du neuf */
+  setInterval(()=>{ if(remote.pubs) recompute(remote.pubs).catch(()=>{}); },30000);   /* relecture locale des marqueurs quand tu modifies une phase */
   function modal(title,html){ const old=document.getElementById('verModal'); if(old) old.remove(); const m=document.createElement('div'); m.id='verModal';
     m.innerHTML='<div class="vm-box"><div class="vm-h"><b>'+title+'</b><button class="chip vm-x">×</button></div><div class="vm-b">'+html+'</div></div>'; document.body.appendChild(m);
     m.querySelector('.vm-x').onclick=()=>m.remove(); m.addEventListener('pointerdown',ev=>{ if(ev.target===m) m.remove(); }); return m; }
   /* petit menu au clic sur la barre colorée d'une phase */
   window.openPhaseMenu=(ev,i)=>{ const old=document.getElementById('phMenu'); if(old) old.remove(); if(i<0||!PH[i]) return;
     const m=document.createElement('div'); m.id='phMenu'; m.style.cssText='position:fixed;left:'+Math.min(ev.clientX,innerWidth-190)+'px;top:'+(ev.clientY+12)+'px;z-index:90;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px;box-shadow:0 8px 24px #000a';
-    const marked=window.PHMARKED&&window.PHMARKED.has(ID(PH[i].start)); m.innerHTML='<button class="chip" style="width:100%">updater phase '+(i+1)+(marked?' ●':'')+'</button>'; document.body.appendChild(m);
+    const marked=window.PHMARKED&&window.PHMARKED.has(ID(PH[i].start)); m.innerHTML='<div style="display:flex;flex-direction:column;gap:5px;min-width:175px"><button class="chip" id="phUp">updater phase '+(i+1)+(marked?' ●':'')+'</button><button class="chip" id="phChk">check for updates</button><div id="phChkMsg" style="font-size:11px;color:var(--mut);padding:0 4px"></div></div>'; document.body.appendChild(m);
     const close=e2=>{ if(m.contains(e2.target)&&e2.type==='pointerdown'){ return; } m.remove(); document.removeEventListener('pointerdown',close,true); };
-    setTimeout(()=>document.addEventListener('pointerdown',close,true),0); m.querySelector('button').onclick=()=>{ m.remove(); document.removeEventListener('pointerdown',close,true); openPull(i); }; };
+    setTimeout(()=>document.addEventListener('pointerdown',close,true),0); m.querySelector('#phUp').onclick=()=>{ m.remove(); document.removeEventListener('pointerdown',close,true); openPull(i); };
+    m.querySelector('#phChk').onclick=async()=>{ const msg=m.querySelector('#phChkMsg'); msg.textContent='Vérification sur GitHub…'; const src=await refreshMarks(true); const nums=PH.map((p,k)=>window.PHMARKED.has(ID(p.start))?k+1:0).filter(Boolean);
+      msg.textContent=(nums.length?'Mises à jour disponibles : phase'+(nums.length>1?'s ':' ')+nums.join(', '):'Tout est à jour.')+(src==='GitHub'?'':' (GitHub injoignable : fichiers locaux)'); }; };
   /* ----- modifications de fichiers (calculées dans la page, enregistrées par le serveur avec sauvegarde) ----- */
   const blockRe=/^\*(\d{2}:\d{2})\*/, hdrRe=/^\[(\d{1,2}):(\d{2})\s*=>/;
   const endOfRegion=(lines,e)=>{ while(e<lines.length&&!hdrRe.test(lines[e])&&!/^=+\s*$/.test(lines[e])&&!lines[e].startsWith('Questions')&&!lines[e].startsWith('**CHAPITRE')&&!/PARTIR D.ICI/.test(lines[e])) e++; return e; };
@@ -1371,8 +1379,7 @@ sync3UI();
     return JSON.stringify(o); }
   async function openPull(i){
     const P=PH[i], id=ID(P.start), m=modal('Mettre à jour la phase '+(i+1),'<div class="vm-t">Récupération des publications sur GitHub…</div>'), body=m.querySelector('.vm-b');
-    const lf=await listFiles(1); if(lf.error||!lf.files){ body.innerHTML='<div class="vm-t vm-w">'+esc(lf.error||'réponse inattendue')+'</div><pre class="vm-log">'+esc(lf.log||'')+'</pre>'; return; }
-    const pubs=await loadPubs(lf.files); await refreshLocal(); const L=localPh[id], cands=[];
+    const gp=await getPubs(true), pubs=gp.pubs; await refreshLocal(); const L=localPh[id], cands=[];
     pubs.forEach(pb=>{ const p=(pb.data.phases||[]).find(x=>x.id===id); if(p) cands.push({ user:pb.user, p, at:pb.data.publishedAt||'', same:!!L&&L.hash===p.hash, bornes:Math.abs(p.start-P.start)>.5||Math.abs(p.end-P.end)>.5 }); });
     cands.sort((a,b)=>String(b.at).localeCompare(String(a.at)));
     body.innerHTML='<div class="vm-t">Phase <b>'+(i+1)+'</b> — '+esc(P.title)+'. Choisis la version à récupérer : elle remplace le texte, les réglages et les events de cette phase (une sauvegarde est faite, tu pourras annuler).</div>'
