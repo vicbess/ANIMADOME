@@ -18,6 +18,7 @@
   .vsel { display:flex; gap:4px; align-items:center; } .vlab { color:var(--mut); font-size:11px; margin-right:4px; letter-spacing:.04em; min-width:30px; } .vsel[hidden] { display:none; }
   .fxBanner { position:absolute; left:2%; bottom:2%; max-width:76%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; z-index:2; pointer-events:none; line-height:1.3; font:700 17px system-ui; text-align:left; }
   .ovInfo { color:var(--mut); font-size:11px; line-height:1.3; position:absolute; right:1.5%; bottom:1.5%; z-index:2; text-align:right; pointer-events:none; }
+  .verbtns { display:flex; flex-direction:column; gap:4px; align-items:stretch; }
   .verbar { position:absolute; left:calc(50% + 21vw + 8px); top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:8px; }
   .ver { color:var(--mut); font-size:10px; letter-spacing:.08em; } .verbar .chip { font-size:11px; padding:3px 10px; white-space:nowrap; }
   #verModal { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:100; display:flex; align-items:flex-start; justify-content:center; padding-top:12vh; }
@@ -123,7 +124,7 @@
 </head>
 <body>
 <div class="wrap">
-  <header><h1 aria-label="ANIMADÔME"><span>A</span><span>N</span><span>I</span><span>M</span><span>A</span><span>D</span><span>Ô</span><span>M</span><span>E</span></h1><label class="mixsel mixTop">Mix <select id="mixSel"></select></label><button class="chip" id="btnPubPhases" title="Publier toutes les phases de ce mix (fichier préfixé par ton nom d'utilisateur)">publish phases</button><div class="verbar"><span class="ver" id="verLbl">V.1.0</span><button class="chip" id="btnPublish" title="Publier une nouvelle version de l'outil sur GitHub">publish tool version</button><button class="chip" id="btnUpdate" title="Choisir et installer une version de l'outil">update tool version</button></div></header>
+  <header><h1 aria-label="ANIMADÔME"><span>A</span><span>N</span><span>I</span><span>M</span><span>A</span><span>D</span><span>Ô</span><span>M</span><span>E</span></h1><label class="mixsel mixTop">Mix <select id="mixSel"></select></label><button class="chip" id="btnPubPhases" title="Publier toutes les phases de ce mix (fichier préfixé par ton nom d'utilisateur)">publish phases</button><div class="verbar"><span class="ver" id="verLbl">V.1.0</span><div class="verbtns"><button class="chip" id="btnPublish" title="Publier une nouvelle version de l'outil sur GitHub">publish tool version</button><button class="chip" id="btnUpdate" title="Choisir et installer une version de l'outil">update tool version</button></div></div></header>
 
   <div class="stage">
     <div class="domewrap"><canvas id="dome" width="874" height="836"></canvas><canvas id="dome3d" width="874" height="836"></canvas><div class="ovInfo" id="info"></div><div class="fxBanner" id="fxBanner"></div>
@@ -131,7 +132,7 @@
       <div class="geoOv" id="geoOv"><div class="geoMain" id="geoMain"><div class="geotop" id="geoTop"></div><div class="geotop" id="geoPar"></div></div><div class="geo" id="geoBar"></div></div></div>
     <div class="rightcol">
     <div class="side">
-      <div class="ph-time" id="phTime"><div class="rangeRow"><span></span><div id="phRange"></div><span></span></div><div id="phMix"><span id="phMixTxt"></span><span class="prov" id="phProv" hidden>proposition</span></div></div>
+      <div class="ph-time" id="phTime"><div id="phMix"><span id="phMixTxt" title="Cliquer : mettre à jour / vérifier les mises à jour de cette phase" style="cursor:pointer"></span></div></div>
       <div id="phTitleRow"><p class="ph-title" id="phText" title="Titre de la phase (résumé, non modifiable ; il est défini dans le descriptif)"></p><div id="phBtns"><button class="chip" id="editBtn" title="Modifier le texte technique de cette phase (Entrée = valider, Maj+Entrée = nouvelle ligne, Échap = annuler)">Éditer la description</button><button class="chip" id="cleanBtn" title="Vérifie cette phase (contradictions du descriptif, couleurs, effets qui se gênent), liste les problèmes trouvés et te demande confirmation avant de corriger. Annulable.">Nettoyer l'anim de la phase</button></div></div>
       <div id="cleanBox" hidden></div>
       <div id="textBlock">
@@ -1344,9 +1345,10 @@ sync3UI();
   /* petit menu au clic sur la barre colorée d'une phase */
   window.openPhaseMenu=(ev,i)=>{ const old=document.getElementById('phMenu'); if(old) old.remove(); if(i<0||!PH[i]) return;
     const m=document.createElement('div'); m.id='phMenu'; m.style.cssText='position:fixed;left:'+Math.min(ev.clientX,innerWidth-190)+'px;top:'+(ev.clientY+12)+'px;z-index:90;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px;box-shadow:0 8px 24px #000a';
-    const marked=window.PHMARKED&&window.PHMARKED.has(ID(PH[i].start)); m.innerHTML='<div style="display:flex;flex-direction:column;gap:5px;min-width:175px"><button class="chip" id="phUp">updater phase '+(i+1)+(marked?' ●':'')+'</button><button class="chip" id="phChk">check for updates</button><div id="phChkMsg" style="font-size:11px;color:var(--mut);padding:0 4px"></div></div>'; document.body.appendChild(m);
+    const marked=window.PHMARKED&&window.PHMARKED.has(ID(PH[i].start)); m.innerHTML='<div style="display:flex;flex-direction:column;gap:5px;min-width:175px"><button class="chip" id="phUp">updater phase '+(i+1)+(marked?' ●':'')+'</button><button class="chip" id="phChk">check for updates</button><button class="chip" id="phPub">publish phases</button><div id="phChkMsg" style="font-size:11px;color:var(--mut);padding:0 4px"></div></div>'; document.body.appendChild(m);
     const close=e2=>{ if(m.contains(e2.target)&&e2.type==='pointerdown'){ return; } m.remove(); document.removeEventListener('pointerdown',close,true); };
     setTimeout(()=>document.addEventListener('pointerdown',close,true),0); m.querySelector('#phUp').onclick=()=>{ m.remove(); document.removeEventListener('pointerdown',close,true); openPull(i); };
+    m.querySelector('#phPub').onclick=()=>{ m.remove(); document.removeEventListener('pointerdown',close,true); const b=document.getElementById('btnPubPhases'); if(b) b.click(); };
     m.querySelector('#phChk').onclick=async()=>{ const msg=m.querySelector('#phChkMsg'); msg.textContent='Vérification sur GitHub…'; const src=await refreshMarks(true); const nums=PH.map((p,k)=>window.PHMARKED.has(ID(p.start))?k+1:0).filter(Boolean);
       msg.textContent=(nums.length?'Mises à jour disponibles : phase'+(nums.length>1?'s ':' ')+nums.join(', '):'Tout est à jour.')+(src==='GitHub'?'':' (GitHub injoignable : fichiers locaux)'); }; };
   /* ----- modifications de fichiers (calculées dans la page, enregistrées par le serveur avec sauvegarde) ----- */
@@ -1403,6 +1405,8 @@ sync3UI();
     return log.textContent; }
 })();
 
+/* clic sur « PHASE X » ou sur le titre de la phase : même menu que sur la barre colorée */
+['phMixTxt','phText'].forEach(id=>{ const el=document.getElementById(id); if(!el) return; el.style.cursor='pointer'; el.addEventListener('click',ev=>{ if(typeof shownPhase!=='undefined'&&shownPhase>=0&&window.openPhaseMenu) window.openPhaseMenu(ev,shownPhase); }); });
 function renderDome(t){ show3D(view3d&&!geoView);
   if(geoView){ ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H+OFF); ctx.save(); ctx.translate(GDX,OFF); ctx.translate(CENTER.x,CENTER.y); ctx.scale(VIEW_SCALE*GZ,VIEW_SCALE*GZ); ctx.translate(-CENTER.x,-CENTER.y); drawGeoView(); ctx.restore(); drawGeoBanner(); return; }
   const i=phaseAt(t), f=feat(t), act=activeFx(t,i); buf.fill(0);
@@ -1438,9 +1442,9 @@ let shownPhase=-1, shownSub=null, shownEv=null;
 function updateText(t){
   if(!PH.length || editing) return; const i=phaseAt(t), p=PH[i];
   if(i!==shownPhase){ shownPhase=i;
-    document.getElementById('phRange').textContent=`[${mmss(p.start)} => ${mmss(p.end)}]`; document.getElementById('phMixTxt').textContent=`PHASE ${i+1}`; document.getElementById('phTime').style.color=phaseColor(p); document.getElementById('phText').style.color=phaseColor(p);
-    document.getElementById('phProv').hidden=!p.prov;
-    document.getElementById('phTech').textContent=p.tech; renderTechView(p.tech); document.getElementById('phText').textContent=p.title; document.getElementById('phSon').textContent=p.audio; shownSub=null; cleanRefresh(); }
+    document.getElementById('phMixTxt').textContent=`PHASE ${i+1}`; document.getElementById('phTime').style.color=phaseColor(p); document.getElementById('phText').style.color=phaseColor(p);
+    
+    document.getElementById('phTech').textContent=p.tech; renderTechView(p.tech); document.getElementById('phText').textContent=`[${mmss(p.start)} => ${mmss(p.end)}] ${p.title}`; document.getElementById('phSon').textContent=p.audio; shownSub=null; cleanRefresh(); }
   const sub=p.sub.find(s=>t>=s.start&&t<s.end); const st=sub?`[${mmss(sub.start)} => ${mmss(sub.end)}] ${sub.text}`:'';
   if(st!==shownSub){ shownSub=st; const el=document.getElementById('phSub'); el.hidden=!st; el.textContent=st; }
   const ev=EV.find(e=>t>=e.on && t<e.on+e.txtDur); /* texte affiché pendant la durée de l'event, 2 s minimum */ const es=ev?`*${mmss(ev.t)}* ${ev.text}`:'';
