@@ -18,10 +18,11 @@
   .vsel { display:flex; gap:4px; align-items:center; } .vlab { color:var(--mut); font-size:11px; margin-right:4px; letter-spacing:.04em; min-width:30px; } .vsel[hidden] { display:none; }
   .fxBanner { position:absolute; left:2%; bottom:2%; max-width:76%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; z-index:2; pointer-events:none; line-height:1.3; font:700 17px system-ui; text-align:left; }
   .ovInfo { color:var(--mut); font-size:11px; line-height:1.3; position:absolute; right:1.5%; bottom:1.5%; z-index:2; text-align:right; pointer-events:none; }
-  #evChips { display:flex; flex-wrap:wrap; gap:6px; padding-top:5px; }
+  #evChips { display:flex; flex-wrap:wrap; gap:6px; padding-top:11px; }
+  #evTitle { display:flex; justify-content:space-between; align-items:baseline; gap:12px; } #evHint { color:var(--mut); font-size:.78em; font-weight:400; text-align:right; }
   .evchip { border:1px solid currentColor; border-radius:7px; padding:2px 9px; font-size:.82em; font-weight:600; cursor:default; background:rgba(255,255,255,.04); white-space:nowrap; }
   #chipTip { position:fixed; z-index:95; display:none; max-width:440px; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 11px; font-size:12px; line-height:1.45; color:var(--fg); box-shadow:0 8px 24px #000a; pointer-events:none; white-space:pre-wrap; }
-  #textBlock #phText { text-align:right; margin:0 0 .5em; font-size:.95em; }
+  #textBlock #phText { text-align:left; margin:0 0 .5em; font-size:.95em; cursor:default; }
   .phTim { font-size:.62em; font-weight:500; opacity:.9; }  .verbtns { display:flex; flex-direction:column; gap:4px; align-items:stretch; }
   .verbar { position:absolute; left:calc(50% + 21vw + 8px); top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:8px; }
   .ver { color:var(--mut); font-size:10px; letter-spacing:.08em; } .verbar .chip { font-size:11px; padding:3px 10px; white-space:nowrap; }
@@ -145,12 +146,11 @@
       <p class="ph-edit ph-son" id="phSon" contenteditable="plaintext-only" spellcheck="false" data-ph="Son : analyse audio…" title="Partie son (italique) – cliquer pour modifier"></p>
       <div class="save" id="saveState"></div>
       </div>
-      <div id="liveLines"><div id="evSep"></div><div id="evTitle">Journal des events</div><div id="evChips"></div></div>   <!-- sous-étapes et events : toujours visibles, juste au-dessus du prompteur (hors de la zone qui défile) -->
+      <div id="liveLines"><div id="evSep"></div><div id="evTitle">Journal des effets<span id="evHint">passer la souris sur un effet ou un event pour voir sa description</span></div><div id="evChips"></div></div>   <!-- sous-étapes et events : toujours visibles, juste au-dessus du prompteur (hors de la zone qui défile) -->
       
       <div class="promptbox">
-        <textarea id="promptIn" rows="3" placeholder="prompt modificateur de phase"></textarea>
+        <textarea id="promptIn" rows="4" placeholder="prompt modificateur de phase&#10;&#10;Entrée écrire dans le prompt  |  Échap quitter le champ  |  Ctrl+Espace insérer le temps de lecture"></textarea>
         <div id="promptState" class="save"></div>
-        <div class="pkeys"><b>Entrée</b> écrire dans le prompt <span style="color:#3a3a50">&nbsp;|&nbsp;</span> <b>Échap</b> quitter le champ <span style="color:#3a3a50">&nbsp;|&nbsp;</span> <b>Ctrl+Espace</b> insérer le temps de lecture</div>
         
       </div>
     </div>
@@ -1409,8 +1409,8 @@ sync3UI();
     return log.textContent; }
 })();
 
-/* clic sur « PHASE X » ou sur le titre de la phase : même menu que sur la barre colorée */
-['phMixTxt','phText'].forEach(id=>{ const el=document.getElementById(id); if(!el) return; el.style.cursor='pointer'; el.addEventListener('click',ev=>{ if(typeof shownPhase!=='undefined'&&shownPhase>=0&&window.openPhaseMenu) window.openPhaseMenu(ev,shownPhase); }); });
+/* clic sur « PHASE X » (gros titre) : même menu que sur la barre colorée ; le titre secondaire n'a pas ce menu */
+['phMixTxt'].forEach(id=>{ const el=document.getElementById(id); if(!el) return; el.style.cursor='pointer'; el.addEventListener('click',ev=>{ if(typeof shownPhase!=='undefined'&&shownPhase>=0&&window.openPhaseMenu) window.openPhaseMenu(ev,shownPhase); }); });
 function renderDome(t){ show3D(view3d&&!geoView);
   if(geoView){ ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H+OFF); ctx.save(); ctx.translate(GDX,OFF); ctx.translate(CENTER.x,CENTER.y); ctx.scale(VIEW_SCALE*GZ,VIEW_SCALE*GZ); ctx.translate(-CENTER.x,-CENTER.y); drawGeoView(); ctx.restore(); drawGeoBanner(); return; }
   const i=phaseAt(t), f=feat(t), act=activeFx(t,i); buf.fill(0);
