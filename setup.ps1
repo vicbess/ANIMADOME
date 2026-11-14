@@ -39,7 +39,7 @@ $curMail = (git -C $repo config user.email)
 $mail = Read-Host ("Adresse de commit" + $(if ($curMail) { " [$curMail]" } else { "" }))
 if (-not $mail) { $mail = $curMail }
 if (-not $mail) { Say "Une adresse est nécessaire pour publier." Red; exit 1 }
-foreach ($r in @($repo, $mixes)) { git -C $r config user.name $name; git -C $r config user.email $mail; git -C $r config core.autocrlf false }
+foreach ($r in @($repo, $mixes)) { git -C $r config user.name $name; git -C $r config user.email $mail }
 Say "Identité réglée pour l'outil et pour les mix." Green
 
 # 5. Audio des mix (échangé hors GitHub)
