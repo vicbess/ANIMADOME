@@ -1,1 +1,0 @@
-window.FXMAP={phases:{},events:{}};

@@ -5,9 +5,6 @@ audio-analysis/
 *.flac
 *.m4a
 *.ogg
-# Historique des prompts (local à chaque utilisateur)
-dome-preview/prompts.jsonl
-dome-preview/prompts-done.json
 # Divers
 __pycache__/
 *.pyc
@@ -15,3 +12,8 @@ venv/
 .venv/
 *.log
 Thumbs.db
+
+# Les mix sont un dépôt séparé (dome-preview/mixes/ a son propre .git) ; registre généré ; sauvegardes locales
+dome-preview/mixes/
+dome-preview/mixes.js
+_local/

@@ -150,12 +150,23 @@ public static class Srv {
   }
 }
 '@
-[Srv]::Start($root, $Port)
+# Registre des mix : généré à partir de mixes\<nom>\mix.json (un dossier de mix = un projet ; mixes\ est son propre dépôt Git)
+function Write-Mixes {
+  $list = @()
+  Get-ChildItem (Join-Path $root 'mixes') -Directory -ErrorAction SilentlyContinue | Sort-Object Name | ForEach-Object {
+    $mj = Join-Path $_.FullName 'mix.json'
+    if (Test-Path $mj) { try { $o = [System.IO.File]::ReadAllText($mj, [System.Text.Encoding]::UTF8) | ConvertFrom-Json; $list += [ordered]@{ slug = $o.slug; title = $o.title; dir = ('mixes/' + $_.Name); audio = $o.audio; descriptif = $o.descriptif } } catch {} } }
+  $js = 'window.MIXES=' + (ConvertTo-Json -InputObject @($list) -Depth 4) + ';'
+  $mp = Join-Path $root 'mixes.js'
+  if (-not (Test-Path $mp) -or [System.IO.File]::ReadAllText($mp) -ne $js) { [System.IO.File]::WriteAllText($mp, $js, (New-Object System.Text.UTF8Encoding($false))) }
+}
+Write-Mixes[Srv]::Start($root, $Port)
 function Get-Mixes { $t = [System.IO.File]::ReadAllText((Join-Path $root 'mixes.js'), [System.Text.Encoding]::UTF8); $m = [regex]::Match($t, '(\[.*\])', 'Singleline'); return ($m.Value | ConvertFrom-Json) }
 $parser = Join-Path $root 'parse-descriptif.ps1'
 $last = @{}
 while ($true) {
   try {
+    Write-Mixes
     foreach ($mx in (Get-Mixes)) {
       $dir = if ($mx.dir -eq '.') { $root } else { Join-Path $root ($mx.dir -replace '/', '\') }
       if (-not (Test-Path (Join-Path $dir 'prompts.jsonl')) -and (Test-Path $dir)) { New-Item (Join-Path $dir 'prompts.jsonl') -ItemType File | Out-Null }
