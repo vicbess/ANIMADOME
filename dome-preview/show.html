@@ -18,7 +18,11 @@
   .vsel { display:flex; gap:4px; align-items:center; } .vlab { color:var(--mut); font-size:11px; margin-right:4px; letter-spacing:.04em; min-width:30px; } .vsel[hidden] { display:none; }
   .fxBanner { position:absolute; left:2%; bottom:2%; max-width:76%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; z-index:2; pointer-events:none; line-height:1.3; font:700 17px system-ui; text-align:left; }
   .ovInfo { color:var(--mut); font-size:11px; line-height:1.3; position:absolute; right:1.5%; bottom:1.5%; z-index:2; text-align:right; pointer-events:none; }
-  .verbtns { display:flex; flex-direction:column; gap:4px; align-items:stretch; }
+  #evChips { display:flex; flex-wrap:wrap; gap:6px; padding-top:5px; }
+  .evchip { border:1px solid currentColor; border-radius:7px; padding:2px 9px; font-size:.82em; font-weight:600; cursor:default; background:rgba(255,255,255,.04); white-space:nowrap; }
+  #chipTip { position:fixed; z-index:95; display:none; max-width:440px; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 11px; font-size:12px; line-height:1.45; color:var(--fg); box-shadow:0 8px 24px #000a; pointer-events:none; white-space:pre-wrap; }
+  #textBlock #phText { text-align:right; margin:0 0 .5em; font-size:.95em; }
+  .phTim { font-size:.62em; font-weight:500; opacity:.9; }  .verbtns { display:flex; flex-direction:column; gap:4px; align-items:stretch; }
   .verbar { position:absolute; left:calc(50% + 21vw + 8px); top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:8px; }
   .ver { color:var(--mut); font-size:10px; letter-spacing:.08em; } .verbar .chip { font-size:11px; padding:3px 10px; white-space:nowrap; }
   #verModal { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:100; display:flex; align-items:flex-start; justify-content:center; padding-top:12vh; }
@@ -133,15 +137,15 @@
     <div class="rightcol">
     <div class="side">
       <div class="ph-time" id="phTime"><div id="phMix"><span id="phMixTxt" title="Cliquer : mettre à jour / vérifier les mises à jour de cette phase" style="cursor:pointer"></span></div></div>
-      <div id="phTitleRow"><p class="ph-title" id="phText" title="Titre de la phase (résumé, non modifiable ; il est défini dans le descriptif)"></p><div id="phBtns"><button class="chip" id="editBtn" title="Modifier le texte technique de cette phase (Entrée = valider, Maj+Entrée = nouvelle ligne, Échap = annuler)">Éditer la description</button><button class="chip" id="cleanBtn" title="Vérifie cette phase (contradictions du descriptif, couleurs, effets qui se gênent), liste les problèmes trouvés et te demande confirmation avant de corriger. Annulable.">Nettoyer l'anim de la phase</button></div></div>
+      <div id="phTitleRow"><div id="phBtns"><button class="chip" id="editBtn" title="Modifier le texte technique de cette phase (Entrée = valider, Maj+Entrée = nouvelle ligne, Échap = annuler)">Éditer la description</button><button class="chip" id="cleanBtn" title="Vérifie cette phase (contradictions du descriptif, couleurs, effets qui se gênent), liste les problèmes trouvés et te demande confirmation avant de corriger. Annulable.">Nettoyer l'anim de la phase</button></div></div>
       <div id="cleanBox" hidden></div>
-      <div id="textBlock">
+      <div id="textBlock"><p class="ph-title" id="phText" title="Titre de la phase (résumé, non modifiable ; il est défini dans le descriptif)"></p>
       <div id="phTechView" class="ph-techview" title="Partie technique (bouton « Éditer la description » pour la modifier)"></div>
       <p class="ph-edit ph-tech" id="phTech" contenteditable="plaintext-only" spellcheck="false" data-ph="Technique : LEDs, barres, directions, intensité…" title="Partie technique (gras) – cliquer pour modifier"></p>
       <p class="ph-edit ph-son" id="phSon" contenteditable="plaintext-only" spellcheck="false" data-ph="Son : analyse audio…" title="Partie son (italique) – cliquer pour modifier"></p>
       <div class="save" id="saveState"></div>
       </div>
-      <div id="liveLines"><div id="evSep"></div><div id="evTitle">Journal des events</div><p class="ph-sub" id="phSub" hidden></p><p class="ph-ev" id="phEv" hidden></p></div>   <!-- sous-étapes et events : toujours visibles, juste au-dessus du prompteur (hors de la zone qui défile) -->
+      <div id="liveLines"><div id="evSep"></div><div id="evTitle">Journal des events</div><div id="evChips"></div></div>   <!-- sous-étapes et events : toujours visibles, juste au-dessus du prompteur (hors de la zone qui défile) -->
       
       <div class="promptbox">
         <textarea id="promptIn" rows="3" placeholder="prompt modificateur de phase"></textarea>
@@ -1010,7 +1014,7 @@ function drawGeoView(){
   if(geoHover){ const e=GEO.lists[geoHover.k][geoHover.i]; if(e){ ctx.strokeStyle='#fff'; ctx.lineWidth=2.5; ctx.setLineDash([6,5]); e.bars.forEach(id=>{ const b=bars[id]; ctx.beginPath(); ctx.moveTo(b.pa[0],b.pa[1]); ctx.lineTo(b.pb[0],b.pb[1]); ctx.stroke(); }); ctx.setLineDash([]); } }
   drawGeoLabels();
   if(showNum){ ctx.fillStyle='#fff'; ctx.font='10px system-ui'; ctx.textAlign='center'; ctx.textBaseline='alphabetic'; for(const b of addr) ctx.fillText(b.id,(b.pa[0]+b.pb[0])/2,(b.pa[1]+b.pb[1])/2-7); } }
-function drawGeoBanner(){ const names=GEO.keys.filter(k=>geoOn.has(k)); const el=document.getElementById('fxBanner'); if(!el) return; const txt='GéoLists'+(names.length?' · '+names.join(' + '):' · choisis une liste'); if(el._k===txt) return; el._k=txt; el.textContent=''; const s=document.createElement('span'); s.textContent=txt; s.style.color='#e8e8f0'; el.appendChild(s); }
+function drawGeoBanner(){ const names=GEO.keys.filter(k=>geoOn.has(k)); const el=document.getElementById('fxBanner'); if(!el) return; el.style.display=''; const txt='GéoLists'+(names.length?' · '+names.join(' + '):' · choisis une liste'); if(el._k===txt) return; el._k=txt; el.textContent=''; const s=document.createElement('span'); s.textContent=txt; s.style.color='#e8e8f0'; el.appendChild(s); }
 
 // --- formule : décrit la sélection avec anneau / secteur / pos ---
 function geoSynth(k){ const U=GEO.lists[k], sel=geoSel.get(k); if(!sel||!sel.size) return null; const inSel=U.map((e,i)=>sel.has(i)); if(inSel.every(Boolean)) return {js:'true',fr:'tous les éléments'};
@@ -1432,23 +1436,36 @@ function renderDome(t){ show3D(view3d&&!geoView);
   const seen=new Set(), items=[];
   for(const a of act){ if(a.w<=.02) continue; const id=(a.ev?'*'+mmss(a.ev.t)+'* ':'')+a.fx.n; if(seen.has(id)) continue; seen.add(id); items.push({id,a}); }
   // titre des effets en cours : bas à gauche du dôme (élément HTML : reste visible en 2D, 3D et GéoLists)
-  setFxBanner(items.map(x=>({ t:(x.a.fx.ok?'✓ ':'')+x.id, ev:!!x.a.ev, ok:!!x.a.fx.ok })), PH[i]);
+  setJournalChips(act, PH[i]);
 }
 function setFxBanner(list,ph){ const el=document.getElementById('fxBanner'); if(!el) return; const col=ph?phaseColor(ph):'#e8e8f0'; const key=col+'|'+list.map(x=>(x.ev?'e':x.ok?'o':'p')+x.t).join('\u0001'); if(el._k===key) return; el._k=key; el.textContent='';
   list.forEach((x,n)=>{ if(n){ const s=document.createElement('span'); s.textContent=' + '; s.style.cssText='color:#8a8a9a;font-weight:400'; el.appendChild(s); } const s=document.createElement('span'); s.textContent=x.t; s.style.color=x.ev?'#7fd4ff':col; s.style.fontWeight=(x.ev||x.ok)?'700':'500'; if(!x.ev&&!x.ok) s.style.fontStyle='italic'; el.appendChild(s); }); }
 
+/* ---------- Journal des events : un encart par effet de phase (couleur de la phase) et par event (bleu) ; la description détaillée apparaît au survol ---------- */
+function descForFx(name,p){ const L=String(p.tech||'').split(/\r?\n/).map(l=>l.replace(/^\*\*|\*\*$/g,'').trim()); const nl=String(name).toLowerCase(); let on=false; const out=[];
+  for(const l of L){ const h=/^▸\s*(.+)$/.exec(l); if(h){ if(on) break; const hl=h[1].toLowerCase(); on=hl.includes(nl)||nl.includes(hl); continue; } if(on&&l) out.push(l); }
+  return out.length?out.join('\n'):('Effet de phase « '+name+' » : réglé pour cette phase dans fxmap.js.'); }
+let _tip=null;
+function showTip(ev){ if(!_tip){ _tip=document.createElement('div'); _tip.id='chipTip'; document.body.appendChild(_tip); } _tip.textContent=ev.currentTarget._d||''; _tip.style.display='block'; moveTip(ev); }
+function moveTip(ev){ if(!_tip) return; const w=_tip.offsetWidth, h=_tip.offsetHeight; let x=Math.min(ev.clientX+14,innerWidth-w-10), y=ev.clientY-h-14; if(y<8) y=ev.clientY+18; _tip.style.left=Math.max(8,x)+'px'; _tip.style.top=y+'px'; }
+function hideTip(){ if(_tip) _tip.style.display='none'; }
+function setJournalChips(act,p){
+  const bn=document.getElementById('fxBanner'); if(bn&&bn.style.display!=='none') bn.style.display='none';   /* l'ancien texte sous le dôme fait double emploi avec les encarts */
+  const box=document.getElementById('evChips'); if(!box) return; const col=phaseColor(p), list=[], seen=new Set();
+  for(const a of act){ if(a.w<=.02) continue;
+    if(a.ev){ const k='e'+a.ev.k+'@'+a.ev.on; if(seen.has(k)) continue; seen.add(k); list.push({ ev:true, name:(window.FXMAP&&FXMAP.eventLabels&&FXMAP.eventLabels[a.ev.name])||a.ev.name, desc:'*'+mmss(a.ev.on)+'*  '+(a.ev.text||'') }); }
+    else { const k='f'+a.fx.n; if(seen.has(k)) continue; seen.add(k); list.push({ ev:false, name:a.fx.n, desc:descForFx(a.fx.n,p) }); } }
+  list.sort((x,y)=>(x.ev?1:0)-(y.ev?1:0));
+  const key=col+'|'+list.map(x=>(x.ev?'e':'f')+x.name).join('|'); if(box._k===key) return; box._k=key; box.textContent=''; hideTip();
+  list.forEach(x=>{ const c=document.createElement('span'); c.className='evchip'; c.textContent=x.name; c.style.color=x.ev?'#7fd4ff':col; c._d=x.desc; c.addEventListener('mouseenter',showTip); c.addEventListener('mousemove',moveTip); c.addEventListener('mouseleave',hideTip); box.appendChild(c); }); }
 /* ---------- Texte lié à la timeline ---------- */
 let shownPhase=-1, shownSub=null, shownEv=null;
 function updateText(t){
   if(!PH.length || editing) return; const i=phaseAt(t), p=PH[i];
   if(i!==shownPhase){ shownPhase=i;
-    document.getElementById('phMixTxt').textContent=`PHASE ${i+1}`; document.getElementById('phTime').style.color=phaseColor(p); document.getElementById('phText').style.color=phaseColor(p);
+    document.getElementById('phMixTxt').innerHTML=`PHASE ${i+1}<span class="phTim">\u00a0\u00a0\u00a0\u00a0${mmss(p.start)} => ${mmss(p.end)}</span>`; document.getElementById('phTime').style.color=phaseColor(p); document.getElementById('phText').style.color=phaseColor(p);
     
-    document.getElementById('phTech').textContent=p.tech; renderTechView(p.tech); document.getElementById('phText').textContent=`${mmss(p.start)} => ${mmss(p.end)}\u00a0\u00a0\u00a0${p.title}`; document.getElementById('phSon').textContent=p.audio; shownSub=null; cleanRefresh(); }
-  const sub=p.sub.find(s=>t>=s.start&&t<s.end); const st=sub?`[${mmss(sub.start)} => ${mmss(sub.end)}] ${sub.text}`:'';
-  if(st!==shownSub){ shownSub=st; const el=document.getElementById('phSub'); el.hidden=!st; el.textContent=st; }
-  const ev=EV.find(e=>t>=e.on && t<e.on+e.txtDur); /* texte affiché pendant la durée de l'event, 2 s minimum */ const es=ev?`*${mmss(ev.t)}* ${ev.text}`:'';
-  if(es!==shownEv){ shownEv=es; const el=document.getElementById('phEv'); el.hidden=!es; el.textContent=es; }
+    document.getElementById('phTech').textContent=p.tech; renderTechView(p.tech); document.getElementById('phText').textContent=p.title; document.getElementById('phSon').textContent=p.audio; shownSub=null; cleanRefresh(); }
 }
 
 /* ---------- Frise ---------- */
