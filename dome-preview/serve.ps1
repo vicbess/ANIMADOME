@@ -205,16 +205,42 @@ public static class Srv {
       return "OK\n" + log;
     }
   }
+  // ---------- Publication des phases d'un mix : fichier mixes/<mix>/publish/<utilisateur>_phases.json, commit + push dans le dépôt des mix ----------
+  static string PublishPhases(string body, string root, string mix) {
+    if (!Regex.IsMatch(mix ?? "", @"^[A-Za-z0-9_-]{1,40}$")) return "KO mix invalide";
+    string[] parts = body.Split(new char[] { '\n' }, 2); string user = parts[0].Trim(), json = parts.Length > 1 ? parts[1] : "";
+    if (!Regex.IsMatch(user, @"^[A-Za-z0-9_-]{2,30}$")) return "KO nom d'utilisateur invalide (2 à 30 caractères : lettres, chiffres, - et _)";
+    if (json.Length < 2 || json.Length > 6000000 || !json.TrimStart().StartsWith("{")) return "KO données invalides";
+    lock (Lock) {
+      string mixes = Path.Combine(root, "mixes"), mdir = Path.Combine(mixes, mix); int c; var log = new StringBuilder();
+      if (!Directory.Exists(mdir)) return "KO mix introuvable";
+      if (!Directory.Exists(Path.Combine(mixes, ".git"))) return "KO le dossier mixes n'est pas un dépôt Git";
+      string rem = Git(mixes, "remote get-url origin", out c); if (c != 0 || !Regex.IsMatch(rem, @"vicbess/MIX_Animadome(\.git)?$")) return "KO dépôt des mix inattendu : " + rem;
+      string dir = Path.Combine(mdir, "publish"); Directory.CreateDirectory(dir);
+      string rel = mix + "/publish/" + user + "_phases.json";
+      File.WriteAllText(Path.Combine(dir, user + "_phases.json"), json.Replace("\r", "") + "\n", new UTF8Encoding(false));
+      Func<string, bool> step = (a) => { string o = Git(mixes, a, out c); log.AppendLine("> git " + (a.Length > 80 ? a.Substring(0, 80) + "…" : a)); if (o.Length > 0) log.AppendLine(o); return c == 0; };
+      if (!step("add \"" + rel + "\"")) return "KO\n" + log;
+      string st = Git(mixes, "status --porcelain -- \"" + rel + "\"", out c);
+      if (st.Length == 0) { log.AppendLine("Aucune modification depuis la dernière publication : rien à envoyer."); return "OK\n" + log; }
+      if (!step("commit -m \"Phases " + mix + " (" + user + ")\" -- \"" + rel + "\"")) return "KO\n" + log;
+      if (!step("pull --rebase --autostash origin main")) return "KO\n" + log;
+      if (!step("push origin HEAD")) return "KO\n" + log;
+      log.AppendLine("Phases publiées : " + rel);
+      return "OK\n" + log;
+    }
+  }
+  static string WhoAmI(string root) { int c; string n = Git(RepoRoot(root), "config user.name", out c); return c == 0 ? n : ""; }
   static void Handle(HttpListenerContext c, string root) {
     try {
       string ap = c.Request.Url.AbsolutePath;
-      if (ap == "/api/versions" || ap == "/api/publish" || ap == "/api/update") {
+      if (ap == "/api/versions" || ap == "/api/publish" || ap == "/api/update" || ap == "/api/whoami" || ap == "/api/publish-phases") {
         // opérations Git : en-tête personnalisé exigé (une page web tierce ne peut pas l'envoyer sans autorisation du navigateur)
         string rs;
         if (c.Request.Headers["X-Animadome"] != "1") rs = "KO requête refusée";
         else {
           string bd = ""; if (c.Request.HttpMethod == "POST") using (var sr0 = new StreamReader(c.Request.InputStream, Encoding.UTF8)) bd = sr0.ReadToEnd();
-          try { rs = ap == "/api/versions" ? Versions(root) : ap == "/api/publish" ? Publish(bd, root) : Update(bd, root); } catch (Exception ex0) { rs = "KO erreur : " + ex0.Message; }
+          try { rs = ap == "/api/versions" ? Versions(root) : ap == "/api/publish" ? Publish(bd, root) : ap == "/api/whoami" ? WhoAmI(root) : ap == "/api/publish-phases" ? PublishPhases(bd, root, c.Request.QueryString["mix"]) : Update(bd, root); } catch (Exception ex0) { rs = "KO erreur : " + ex0.Message; }
         }
         byte[] rb0 = Encoding.UTF8.GetBytes(rs); c.Response.ContentType = (ap == "/api/versions" ? "application/json" : "text/plain") + "; charset=utf-8"; c.Response.ContentLength64 = rb0.Length;
         c.Response.OutputStream.Write(rb0, 0, rb0.Length); c.Response.Close(); return;

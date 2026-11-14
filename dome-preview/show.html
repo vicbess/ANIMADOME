@@ -123,7 +123,7 @@
 </head>
 <body>
 <div class="wrap">
-  <header><h1 aria-label="ANIMADÔME"><span>A</span><span>N</span><span>I</span><span>M</span><span>A</span><span>D</span><span>Ô</span><span>M</span><span>E</span></h1><label class="mixsel mixTop">Mix <select id="mixSel"></select></label><div class="verbar"><span class="ver" id="verLbl">V.1.0</span><button class="chip" id="btnPublish" title="Publier une nouvelle version de l'outil sur GitHub">publish tool version</button><button class="chip" id="btnUpdate" title="Choisir et installer une version de l'outil">update version</button></div></header>
+  <header><h1 aria-label="ANIMADÔME"><span>A</span><span>N</span><span>I</span><span>M</span><span>A</span><span>D</span><span>Ô</span><span>M</span><span>E</span></h1><label class="mixsel mixTop">Mix <select id="mixSel"></select></label><button class="chip" id="btnPubPhases" title="Publier toutes les phases de ce mix (fichier préfixé par ton nom d'utilisateur)">publish phases</button><div class="verbar"><span class="ver" id="verLbl">V.1.0</span><button class="chip" id="btnPublish" title="Publier une nouvelle version de l'outil sur GitHub">publish tool version</button><button class="chip" id="btnUpdate" title="Choisir et installer une version de l'outil">update tool version</button></div></header>
 
   <div class="stage">
     <div class="domewrap"><canvas id="dome" width="874" height="836"></canvas><canvas id="dome3d" width="874" height="836"></canvas><div class="ovInfo" id="info"></div><div class="fxBanner" id="fxBanner"></div>
@@ -1267,6 +1267,53 @@ sync3UI();
       const go=m.querySelector('#vmGo'); go.disabled=true; log.textContent='Installation en cours…'; const res=await api('/api/update',sel.value); log.textContent=res; go.disabled=false;
       if(res.startsWith('OK')){ go.textContent='Recharger la page'; go.onclick=()=>location.reload(); } };
   };
+})();
+
+/* ---------- Publication des phases d'un mix : TOUTES les phases d'un coup, dans un fichier préfixé par le nom d'utilisateur (publish/<utilisateur>_phases.json) ---------- */
+(function(){
+  const api=(p,body)=>fetch(p,{ method:body===undefined?'GET':'POST', headers:{ 'X-Animadome':'1' }, body }).then(r=>r.text());
+  const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const h53=(str,seed=0)=>{ let h1=0xdeadbeef^seed, h2=0x41c6ce57^seed; for(let i=0;i<str.length;i++){ const ch=str.charCodeAt(i); h1=Math.imul(h1^ch,2654435761); h2=Math.imul(h2^ch,1597334677); } h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909); h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909); return (4294967296*(2097151&h2)+(h1>>>0)).toString(36); };
+  const ID=s=>'p'+String(Math.round(s)).padStart(5,'0');
+  async function readDescriptifBlocks(){   // texte propre à chaque phase (sans les blocs d'events *mm:ss*, qui sont rattachés aux phases par leur heure)
+    const txt=await (await fetch(mixPath(MIX.descriptif)+'?'+Date.now())).text(), lines=txt.split(/\r?\n/), hdr=/^\[(\d{1,2}):(\d{2})\s*=>/, out={};
+    for(let i=0;i<lines.length;i++){ const m=hdr.exec(lines[i]); if(!m) continue; const start=(+m[1])*60+(+m[2]); let e=i+1; const own=[lines[i]]; let inEv=false;
+      for(;e<lines.length&&!hdr.test(lines[e])&&!/^=+\s*$/.test(lines[e])&&!lines[e].startsWith('Questions')&&!lines[e].startsWith('**CHAPITRE')&&!/PARTIR D.ICI/.test(lines[e]);e++){ const l=lines[e];
+        if(l.trim()===''){ inEv=false; own.push(l); continue; } if(/^\*\d{1,2}:\d{2}/.test(l)){ inEv=true; continue; } if(inEv) continue; own.push(l); }
+      out[start]=own.join('\n').replace(/\s+$/,''); }
+    return out; }
+  async function buildPackage(user){
+    const blocks=await readDescriptifBlocks(); const phases=[];
+    PH.forEach(p=>{ const evs=EV.filter(e=>e.on>=p.start-1e-6&&e.on<p.end-1e-6).sort((a,b)=>a.on-b.on||String(a.k).localeCompare(String(b.k))).map(e=>{
+        const t3=x=>x===undefined||x===null?undefined:+(+x).toFixed(3);
+        if(e.isLib) return { lib:1, k:e.k, on:t3(e.on), span:t3(e.span) };
+        if(e.isDup) return { dup:1, k:e.k, on:t3(e.on), span:t3(e.span), ov:e.ov };
+        return { k:e.k, name:e.name, on:t3(e.on), span:t3(e.span), text:e.text, def:(FXMAP.events||{})[e.k]||null, ov:e.ov }; });
+      const content={ start:p.start, end:p.end, title:p.title, descriptif:blocks[p.start]||'', fx:(FXMAP.phases||{})[mmss(p.start)]||null, events:evs };
+      phases.push(Object.assign({ id:ID(p.start), version:1, hash:h53(JSON.stringify(content)) },content)); });
+    let prev=null; try{ const r=await fetch(mixPath('publish/'+user+'_phases.json')+'?'+Date.now()); if(r.ok) prev=await r.json(); }catch(e){}
+    const pm={}; if(prev&&prev.phases) prev.phases.forEach(p=>{ pm[p.id]=p; }); const stat={ nouveau:[], modifie:[], inchange:[] };
+    phases.forEach((p,i)=>{ const o=pm[p.id]; if(!o){ p.version=1; stat.nouveau.push(i+1); } else if(o.hash===p.hash){ p.version=o.version; stat.inchange.push(i+1); } else { p.version=(o.version||1)+1; stat.modifie.push(i+1); } });
+    return { pack:{ format:1, mix:MIX.slug, user, publishedAt:new Date().toISOString(), toolVersion:window.TOOL_VERSION||'', audio:MIX.audio, duration:(typeof DUR!=='undefined'?DUR:null), phases }, stat, hadPrev:!!prev }; }
+  function modal(title,html){ const old=document.getElementById('verModal'); if(old) old.remove(); const m=document.createElement('div'); m.id='verModal';
+    m.innerHTML='<div class="vm-box"><div class="vm-h"><b>'+title+'</b><button class="chip vm-x">×</button></div><div class="vm-b">'+html+'</div></div>'; document.body.appendChild(m);
+    m.querySelector('.vm-x').onclick=()=>m.remove(); m.addEventListener('pointerdown',ev=>{ if(ev.target===m) m.remove(); }); return m; }
+  const rng=a=>a.length?a.join(', '):'—';
+  document.getElementById('btnPubPhases').onclick=async()=>{
+    const m=modal('Publier les phases de '+esc(MIX.title||MIX.slug),'<div class="vm-t">Préparation…</div>');
+    let user=''; try{ user=localStorage.getItem('animadome.user')||''; }catch(e){} if(!user){ user=(await api('/api/whoami')).trim(); if(/^KO/.test(user)) user=''; }
+    const body=m.querySelector('.vm-b');
+    const render=async()=>{ const u=(m.querySelector('#vmUser')?m.querySelector('#vmUser').value:user).trim()||user; let built; try{ built=await buildPackage(u); }catch(e){ body.innerHTML='<div class="vm-t">Erreur de préparation : '+esc(e.message)+'</div>'; return; }
+      const s=built.stat, ok=/^[A-Za-z0-9_-]{2,30}$/.test(u);
+      body.innerHTML='<label class="vm-l">Nom d\'utilisateur (préfixe de ton fichier de publication) <input id="vmUser" value="'+esc(u)+'" size="20" spellcheck="false"></label>'
+        +'<div class="vm-t">Fichier : <b>publish/'+esc(u)+'_phases.json</b> dans le mix <b>'+esc(MIX.slug)+'</b>. Publie TOUTES les phases ('+built.pack.phases.length+') avec le timing de chacune dans le mix.</div>'
+        +'<div class="vm-t">Nouvelles : <b>'+rng(s.nouveau.length>12?[s.nouveau.length+' phases']:s.nouveau)+'</b> · modifiées : <b>'+rng(s.modifie)+'</b> · inchangées : <b>'+s.inchange.length+'</b>'+(built.hadPrev?'':' <i>(première publication)</i>')+'</div>'
+        +(ok?'':'<div class="vm-t vm-w">Nom invalide : 2 à 30 caractères (lettres, chiffres, - et _).</div>')
+        +'<div class="vm-r"><button class="chip" id="vmGo"'+(ok?'':' disabled')+'>Publier les phases</button><button class="chip" id="vmClose">Fermer</button></div><pre id="vmLog" class="vm-log"></pre>';
+      m.querySelector('#vmClose').onclick=()=>m.remove(); m.querySelector('#vmUser').onchange=render;
+      m.querySelector('#vmGo').onclick=async()=>{ const go=m.querySelector('#vmGo'), log=m.querySelector('#vmLog'); go.disabled=true; log.textContent='Publication en cours…'; try{ localStorage.setItem('animadome.user',u); }catch(e){}
+        const res=await api('/api/publish-phases?mix='+encodeURIComponent(MIX.slug),u+'\n'+JSON.stringify(built.pack,null,1)); log.textContent=res; if(res.startsWith('OK')){ go.textContent='Publié ✓'; } else go.disabled=false; }; };
+    render(); };
 })();
 
 function renderDome(t){ show3D(view3d&&!geoView);
