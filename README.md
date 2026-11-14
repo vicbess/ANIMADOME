@@ -21,7 +21,7 @@ L'outil tourne dans le navigateur (HTML + JavaScript, rien à installer côté p
    powershell -ExecutionPolicy Bypass -File setup.ps1
    ```
    Il vérifie Git et ta clé GitHub, **récupère les mix** dans `dome-preview/mixes`, règle l'identité utilisée pour tes publications et te dit où placer l'audio.
-4. **Ajouter l'audio** de chaque mix à l'endroit indiqué par `setup.ps1` (par exemple `dome-preview/mixes/pyrobeats/audio/pyrobeats_128k.mp3`). Les fichiers audio ne sont jamais sur GitHub : les collaborateurs se les échangent directement.
+4. **Ajouter l'audio** du mix avec le bouton **Select Audio files** (sous le sélecteur de mix) : **A** = le fichier à lire (obligatoire, copié à la bonne place dans le dossier du mix), **B** = des pistes séparées de bonne qualité à analyser (facultatif, même durée que A). Les fichiers audio ne sont jamais sur GitHub : les collaborateurs se les échangent directement. Tu peux aussi les déposer à la main à l'endroit indiqué par `setup.ps1`.
 5. Lancer `dome-preview/lancer-apercu.bat` (ou `powershell -ExecutionPolicy Bypass -File dome-preview/serve.ps1`) puis ouvrir <http://localhost:8765/show.html>. Garder la fenêtre du serveur ouverte.
 
 ### Accès en écriture (pour publier)
@@ -92,6 +92,8 @@ ANIMADOME/
 ```
 
 ## Analyse du son (facultatif)
+
+La fenêtre **Select Audio files** peut lancer l'analyse : sur le fichier A seul (énergie, kicks, séparation des stems par Demucs, rugosité), ou sur les pistes B si tu en fournis (départs de sons, énergie et brillance de chaque piste, dans `tracks.js`). Si les outils ci-dessous ne sont pas installés, l'outil le dit et liste ce qui manque ; le fichier A reste lisible. La progression s'affiche dans la fenêtre.
 
 Pour **créer un nouveau mix**, les scripts de `dome-preview/tools/` séparent les stems puis calculent l'analyse (kicks, notes, énergie par bande…). Ils nécessitent Python 3.11 et :
 

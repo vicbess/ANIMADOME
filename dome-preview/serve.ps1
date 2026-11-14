@@ -324,18 +324,79 @@ public static class Srv {
       } finally { try { Directory.Delete(tmp, true); } catch { } }
     }
   }
+  // ---------- Fichiers audio d'un mix : envoi (local), contrôle des outils d'analyse, lancement et suivi de l'analyse ----------
+  static System.Diagnostics.Process _an = null; static string _anMix = "";
+  static readonly object AnLock = new object();
+  static string MixAudioRel(string md) {
+    string mj = Path.Combine(md, "mix.json"); if (!File.Exists(mj)) return null;
+    var m = Regex.Match(File.ReadAllText(mj, Encoding.UTF8), "\"audio\"\\s*:\\s*\"([^\"]+)\""); return m.Success ? m.Groups[1].Value : null;
+  }
+  static string UploadFile(HttpListenerContext c, string root, string mix, string kind, string name, bool reset) {
+    if (!Regex.IsMatch(mix ?? "", @"^[A-Za-z0-9_-]{1,40}$")) return "KO mix invalide";
+    if (kind != "audio" && kind != "track") return "KO type de fichier invalide";
+    name = Path.GetFileName(name ?? ""); string ext = Path.GetExtension(name).ToLower();
+    if (Array.IndexOf(new string[] { ".mp3", ".wav", ".flac", ".m4a", ".ogg", ".aif", ".aiff" }, ext) < 0) return "KO format audio non pris en charge";
+    if (!Regex.IsMatch(name, @"^[\p{L}\p{N} ._()\[\]+&'\-]{1,120}$")) return "KO nom de fichier non pris en charge (lettres, chiffres, espaces et . _ - ( ) )";
+    string md = Path.GetFullPath(Path.Combine(root, "mixes", mix)); if (!md.StartsWith(root) || !Directory.Exists(md)) return "KO mix introuvable";
+    string target;
+    if (kind == "audio") { string rel = MixAudioRel(md); if (rel == null || rel.Contains("..")) return "KO mix.json sans fichier audio déclaré"; target = Path.GetFullPath(Path.Combine(md, rel.Replace("/", "\\"))); }
+    else target = Path.GetFullPath(Path.Combine(md, "tracks", name));
+    if (!target.StartsWith(md)) return "KO chemin refusé";
+    if (kind == "track" && reset) { string td = Path.GetDirectoryName(target); if (Directory.Exists(td)) foreach (var old in Directory.GetFiles(td)) { try { File.Delete(old); } catch { } } }   // nouveau lot de pistes : on repart d'un dossier vide
+    Directory.CreateDirectory(Path.GetDirectoryName(target)); string part = target + ".part"; long total = 0, limit = 6L * 1024 * 1024 * 1024;
+    try {
+      using (var fs = new FileStream(part, FileMode.Create, FileAccess.Write)) { byte[] buf = new byte[262144]; int n; var s = c.Request.InputStream; while ((n = s.Read(buf, 0, buf.Length)) > 0) { total += n; if (total > limit) throw new Exception("fichier trop volumineux (6 Go max)"); fs.Write(buf, 0, n); } }
+      if (total == 0) { File.Delete(part); return "KO fichier vide"; }
+      if (File.Exists(target)) File.Delete(target); File.Move(part, target);
+    } catch (Exception ex) { try { File.Delete(part); } catch { } return "KO envoi interrompu : " + ex.Message; }
+    return "OK " + (kind == "audio" ? "audio" : "piste") + " enregistré(e) (" + (total / 1048576) + " Mo)";
+  }
+  static string RunPs(string root, string script, string args, int timeoutMs) {
+    var psi = new System.Diagnostics.ProcessStartInfo("powershell.exe", "-NoProfile -ExecutionPolicy Bypass -File \"" + Path.Combine(root, "tools", script) + "\" " + args);
+    psi.UseShellExecute = false; psi.CreateNoWindow = true; psi.RedirectStandardOutput = true; psi.StandardOutputEncoding = Encoding.UTF8; psi.WorkingDirectory = root;
+    using (var p = System.Diagnostics.Process.Start(psi)) { string o = p.StandardOutput.ReadToEnd(); p.WaitForExit(timeoutMs); return o.Trim(); }
+  }
+  static string AnalysisCheck(string root, bool needStems) { lock (AnLock) { return RunPs(root, "check-analysis.ps1", needStems ? "-NeedStems" : "", 60000); } }
+  static string AnalysisStart(string root, string mix, bool tracks) {
+    if (!Regex.IsMatch(mix ?? "", @"^[A-Za-z0-9_-]{1,40}$")) return "KO mix invalide";
+    lock (AnLock) {
+      if (_an != null && !_an.HasExited) return "KO une analyse est déjà en cours";
+      string md = Path.GetFullPath(Path.Combine(root, "mixes", mix)); if (!md.StartsWith(root) || !Directory.Exists(md)) return "KO mix introuvable";
+      if (tracks && !(Directory.Exists(Path.Combine(md, "tracks")) && Directory.GetFiles(Path.Combine(md, "tracks")).Length > 0)) return "KO aucune piste envoyée";
+      string log = Path.Combine(md, "analysis.log"); File.WriteAllText(log, "", new UTF8Encoding(false));
+      var psi = new System.Diagnostics.ProcessStartInfo("powershell.exe", "-NoProfile -ExecutionPolicy Bypass -File \"" + Path.Combine(root, "tools", "run-analysis.ps1") + "\" -MixDir \"" + md + "\"" + (tracks ? " -Tracks" : ""));
+      psi.UseShellExecute = false; psi.CreateNoWindow = true; psi.RedirectStandardOutput = true; psi.RedirectStandardError = true; psi.StandardOutputEncoding = Encoding.UTF8; psi.StandardErrorEncoding = Encoding.UTF8; psi.WorkingDirectory = root;
+      var p = new System.Diagnostics.Process(); p.StartInfo = psi; object ll = new object();
+      System.Diagnostics.DataReceivedEventHandler h = (s, ev) => { if (ev.Data != null) lock (ll) { try { File.AppendAllText(log, ev.Data + "\n", new UTF8Encoding(false)); } catch { } } };
+      p.OutputDataReceived += h; p.ErrorDataReceived += h; p.Start(); p.BeginOutputReadLine(); p.BeginErrorReadLine(); _an = p; _anMix = mix;
+      return "OK analyse lancée";
+    }
+  }
+  static string AnalysisStatus(string root, string mix) {
+    if (!Regex.IsMatch(mix ?? "", @"^[A-Za-z0-9_-]{1,40}$")) return "{\"error\":\"mix invalide\"}";
+    lock (AnLock) {
+      string log = Path.Combine(root, "mixes", mix, "analysis.log"); string[] lines = File.Exists(log) ? File.ReadAllLines(log, Encoding.UTF8) : new string[0];
+      int from = Math.Max(0, lines.Length - 40); var sb = new StringBuilder(); for (int i = from; i < lines.Length; i++) sb.AppendLine(lines[i]);
+      bool running = _an != null && !_an.HasExited && _anMix == mix; int code = (_an != null && _an.HasExited && _anMix == mix) ? _an.ExitCode : -1;
+      return "{\"running\":" + (running ? "true" : "false") + ",\"exit\":" + code + ",\"log\":" + Json(sb.ToString()) + "}";
+    }
+  }
   static void Handle(HttpListenerContext c, string root) {
     try {
       string ap = c.Request.Url.AbsolutePath;
-      if (ap == "/api/versions" || ap == "/api/publish" || ap == "/api/update" || ap == "/api/whoami" || ap == "/api/publish-phases" || ap == "/api/publish-list" || ap == "/api/save-mixfile" || ap == "/api/publish-remote" || ap == "/api/merge-context") {
+      if (ap == "/api/upload") {
+        string up = c.Request.Headers["X-Animadome"] != "1" || c.Request.HttpMethod != "POST" ? "KO requête refusée" : UploadFile(c, root, c.Request.QueryString["mix"], c.Request.QueryString["kind"], c.Request.QueryString["name"], c.Request.QueryString["reset"] == "1");
+        byte[] ub = Encoding.UTF8.GetBytes(up); c.Response.ContentType = "text/plain; charset=utf-8"; c.Response.ContentLength64 = ub.Length; c.Response.OutputStream.Write(ub, 0, ub.Length); c.Response.Close(); return;
+      }
+      if (ap == "/api/versions" || ap == "/api/publish" || ap == "/api/update" || ap == "/api/whoami" || ap == "/api/publish-phases" || ap == "/api/publish-list" || ap == "/api/save-mixfile" || ap == "/api/publish-remote" || ap == "/api/merge-context" || ap == "/api/analysis-check" || ap == "/api/analysis-start" || ap == "/api/analysis-status") {
         // opérations Git : en-tête personnalisé exigé (une page web tierce ne peut pas l'envoyer sans autorisation du navigateur)
         string rs;
         if (c.Request.Headers["X-Animadome"] != "1") rs = "KO requête refusée";
         else {
           string bd = ""; if (c.Request.HttpMethod == "POST") using (var sr0 = new StreamReader(c.Request.InputStream, Encoding.UTF8)) bd = sr0.ReadToEnd();
-          try { rs = ap == "/api/versions" ? Versions(root) : ap == "/api/publish" ? Publish(bd, root) : ap == "/api/whoami" ? WhoAmI(root) : ap == "/api/publish-phases" ? PublishPhases(bd, root, c.Request.QueryString["mix"]) : ap == "/api/publish-list" ? PublishList(root, c.Request.QueryString["mix"], c.Request.QueryString["pull"]) : ap == "/api/publish-remote" ? PublishRemote(root, c.Request.QueryString["mix"], c.Request.QueryString["known"], c.Request.QueryString["force"] == "1") : ap == "/api/merge-context" ? MergeContext(root, c.Request.QueryString["mix"]) : ap == "/api/save-mixfile" ? SaveMixFile(bd, root, c.Request.QueryString["mix"], c.Request.QueryString["name"], c.Request.QueryString["backup"]) : Update(bd, root); } catch (Exception ex0) { rs = "KO erreur : " + ex0.Message; }
+          try { rs = ap == "/api/versions" ? Versions(root) : ap == "/api/publish" ? Publish(bd, root) : ap == "/api/whoami" ? WhoAmI(root) : ap == "/api/publish-phases" ? PublishPhases(bd, root, c.Request.QueryString["mix"]) : ap == "/api/publish-list" ? PublishList(root, c.Request.QueryString["mix"], c.Request.QueryString["pull"]) : ap == "/api/publish-remote" ? PublishRemote(root, c.Request.QueryString["mix"], c.Request.QueryString["known"], c.Request.QueryString["force"] == "1") : ap == "/api/analysis-check" ? AnalysisCheck(root, c.Request.QueryString["stems"] == "1") : ap == "/api/analysis-start" ? AnalysisStart(root, c.Request.QueryString["mix"], c.Request.QueryString["tracks"] == "1") : ap == "/api/analysis-status" ? AnalysisStatus(root, c.Request.QueryString["mix"]) : ap == "/api/merge-context" ? MergeContext(root, c.Request.QueryString["mix"]) : ap == "/api/save-mixfile" ? SaveMixFile(bd, root, c.Request.QueryString["mix"], c.Request.QueryString["name"], c.Request.QueryString["backup"]) : Update(bd, root); } catch (Exception ex0) { rs = "KO erreur : " + ex0.Message; }
         }
-        byte[] rb0 = Encoding.UTF8.GetBytes(rs); c.Response.ContentType = (ap == "/api/versions" ? "application/json" : "text/plain") + "; charset=utf-8"; c.Response.ContentLength64 = rb0.Length;
+        byte[] rb0 = Encoding.UTF8.GetBytes(rs); c.Response.ContentType = ((ap == "/api/versions" || ap == "/api/analysis-check" || ap == "/api/analysis-status") ? "application/json" : "text/plain") + "; charset=utf-8"; c.Response.ContentLength64 = rb0.Length;
         c.Response.OutputStream.Write(rb0, 0, rb0.Length); c.Response.Close(); return;
       }
       if (c.Request.HttpMethod == "POST" && (c.Request.Url.AbsolutePath == "/api/phase-text" || c.Request.Url.AbsolutePath == "/api/prompt" || c.Request.Url.AbsolutePath == "/api/event-time" || c.Request.Url.AbsolutePath == "/api/clean-report" || c.Request.Url.AbsolutePath == "/api/clean-undo")) {

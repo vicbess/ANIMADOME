@@ -37,7 +37,7 @@ Page : <http://localhost:8765/show.html>. PowerShell **5.1** : pas de `&&`, pas 
 | `mixes/<mix>/descriptif-<mix>.txt` | Le scénario écrit : phases `[mm:ss => mm:ss] Titre`, texte technique en gras (`**…**`), son en italique (`_…_`), events `*mm:ss*` suivis de leur texte. Un event invoqué par son nom : `Nom : texte`. |
 | `mixes/<mix>/fxmap.js` | Réglages techniques : `phases` (effets continus par phase, clé = début `mm:ss`), `events` (une ligne par event, clé = `mm:ss`), `eventTypes` (descriptions génériques de la banque), `eventCategory`, `eventLib`… |
 | `mixes/<mix>/events-timing.json` | Positions, durées, copies d'events posés sur la timeline. **Géré par la page** (voir règles). |
-| `mixes/<mix>/stems.js beats.js features.js gut.js` | Analyse du son (calculée, ne pas éditer à la main). |
+| `mixes/<mix>/stems.js beats.js features.js gut.js tracks.js` | Analyse du son (calculée, ne pas éditer à la main). `tracks.js` = analyse des pistes séparées (`tools/analyze-tracks.py`) ; tout est lancé par le bouton **Select Audio files** via `tools/run-analysis.ps1` (outils vérifiés par `tools/check-analysis.ps1`). |
 | `mixes/<mix>/prompts.jsonl`, `prompts-done.json` | Prompts reçus / traités (locaux, jamais versionnés). |
 | `mixes/<mix>/publish/<utilisateur>_phases.json` | Phases publiées (voir le README des mix). |
 
