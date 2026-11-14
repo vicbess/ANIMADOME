@@ -19,7 +19,7 @@
   .fxBanner { position:absolute; left:2%; bottom:2%; max-width:76%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; z-index:2; pointer-events:none; line-height:1.3; font:700 17px system-ui; text-align:left; }
   .ovInfo { color:var(--mut); font-size:11px; line-height:1.3; position:absolute; right:1.5%; bottom:1.5%; z-index:2; text-align:right; pointer-events:none; }
   #evChips { display:flex; flex-wrap:wrap; gap:6px; padding-top:11px; }
-  #evTitle { display:flex; justify-content:space-between; align-items:baseline; gap:12px; } #evHint { color:var(--mut); font-size:.78em; font-weight:400; text-align:right; }
+  #evHint { color:var(--mut); font-size:.78em; font-weight:400; }
   .evchip { border:1px solid currentColor; border-radius:7px; padding:2px 9px; font-size:.82em; font-weight:600; cursor:default; background:rgba(255,255,255,.04); white-space:nowrap; }
   #chipTip { position:fixed; z-index:95; display:none; max-width:440px; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 11px; font-size:12px; line-height:1.45; color:var(--fg); box-shadow:0 8px 24px #000a; pointer-events:none; white-space:pre-wrap; }
   #textBlock #phText { text-align:left; margin:0 0 .5em; font-size:.95em; cursor:default; }
@@ -146,10 +146,10 @@
       <p class="ph-edit ph-son" id="phSon" contenteditable="plaintext-only" spellcheck="false" data-ph="Son : analyse audio…" title="Partie son (italique) – cliquer pour modifier"></p>
       <div class="save" id="saveState"></div>
       </div>
-      <div id="liveLines"><div id="evSep"></div><div id="evTitle">Journal des effets<span id="evHint">passer la souris sur un effet ou un event pour voir sa description</span></div><div id="evChips"></div></div>   <!-- sous-étapes et events : toujours visibles, juste au-dessus du prompteur (hors de la zone qui défile) -->
+      <div id="liveLines"><div id="evSep"></div><div id="evTitle">Journal des effets&nbsp;&nbsp;&nbsp;&nbsp;<span id="evHint">passer la souris sur un effet ou un event pour voir sa description</span></div><div id="evChips"></div></div>   <!-- sous-étapes et events : toujours visibles, juste au-dessus du prompteur (hors de la zone qui défile) -->
       
       <div class="promptbox">
-        <textarea id="promptIn" rows="4" placeholder="prompt modificateur de phase&#10;&#10;Entrée écrire dans le prompt  |  Échap quitter le champ  |  Ctrl+Espace insérer le temps de lecture"></textarea>
+        <textarea id="promptIn" rows="4" placeholder="prompt modificateur de phase&#10;&#10;Entrée écrire dans le prompt  |  Échap quitter champ de prompt  |  Ctrl+Espace insérer timecode"></textarea>
         <div id="promptState" class="save"></div>
         
       </div>
@@ -1093,7 +1093,7 @@ function eventBankRefresh(){ const box=document.getElementById('eventList'); if(
     const sl=card.querySelector('.evs'), sv=card.querySelector('.evsv'), cur=()=>evScaled(src,+sl.value);
     sl.onclick=e=>e.stopPropagation(); sl.onpointerdown=e=>e.stopPropagation(); sl.onmouseenter=()=>{ card.draggable=false; }; sl.onmouseleave=()=>{ card.draggable=true; };   /* le slider ne doit pas lancer un glisser-déposer de la carte */
     sl.oninput=()=>{ evDurMap[g.name]=+sl.value; sv.textContent=nf(+sl.value)+' s'; if(evPrev&&evPrev.name===g.name) evPreviewStart(cur()); };
-    card.querySelector('.evx').onclick=e=>{ e.stopPropagation(); hidden.add(g.name); evSaveHidden(hidden); if(evPrev&&evPrev.name===g.name) evPrev=null; eventBankRefresh(); };
+    card.querySelector('.evx').onclick=e=>{ e.stopPropagation(); if(!confirm('Retirer « '+g.name+' » de la banque d\'events ?\n\nL\'event existe toujours sur la timeline : il n\'est juste plus listé ici.')) return; hidden.add(g.name); evSaveHidden(hidden); if(evPrev&&evPrev.name===g.name) evPrev=null; eventBankRefresh(); };
     card.onclick=()=>{ if(evPrev&&evPrev.name===g.name) evPrev=null; else evPreviewStart(cur()); eventBankRefresh(); };
     card.querySelector('.evadd').onclick=e=>{ e.stopPropagation(); const on=Math.round((au.currentTime||0)*20)/20, s2=cur(), c=Object.assign({},s2,{isDup:true,on,fx:s2.fx.map(f=>Object.assign({},f,{t0:on}))}); EV.push(c); saveEvt(); eventBankRefresh(); };
     (cats[evCatOf(g.name)]||cats.Basics).push(card); shown++; });
@@ -1129,7 +1129,7 @@ const D3 = {
   R: 3.0,            // rayon de la sphère (m) : déduit de H = 3,56 m et du rayon au sol 2,95 m
   H: 3.56, RFLOOR: 2.95,   // hauteur (m) et rayon (m) du dôme au sol
   RING_H: 1.4,       // hauteur du bord inférieur de la 1re rangée de LEDs au-dessus du sol (m) : ~1,5 m annoncé ; 1,4 = bon compromis avec les longueurs de barres
-  EYE_H: 1.75,       // hauteur des yeux du public au-dessus du sol (m)
+  EYE_H: 0,          // hauteur de la caméra Centre au-dessus du sol (m) : 0 = au sol (1,75 = yeux d'un spectateur debout)
   EYE_X: 0, EYE_Z: 0,// position de la caméra Centre dans le plan (en R, 0 = centre exact)
   ASPECT: 874/836,   // format de la vue 3D (largeur / hauteur) : le même format (presque carré) que la vue 2D
   FOV_CENTRE: 60, FOV_FIXED: 40,   // champs de vision verticaux (°) ; en format carré, 60° vertical = 60° horizontal environ
@@ -1311,7 +1311,7 @@ sync3UI();
     const render=async()=>{ const u=(m.querySelector('#vmUser')?m.querySelector('#vmUser').value:user).trim()||user; let built; try{ built=await buildPackage(u); }catch(e){ body.innerHTML='<div class="vm-t">Erreur de préparation : '+esc(e.message)+'</div>'; return; }
       const s=built.stat, ok=/^[A-Za-z0-9_-]{2,30}$/.test(u);
       body.innerHTML='<label class="vm-l">Nom d\'utilisateur (préfixe de ton fichier de publication) <input id="vmUser" value="'+esc(u)+'" size="20" spellcheck="false"></label>'
-        +'<div class="vm-t">Fichier : <b>publish/'+esc(u)+'_phases.json</b> dans le mix <b>'+esc(MIX.slug)+'</b>. Publie TOUTES les phases ('+built.pack.phases.length+') avec le timing de chacune dans le mix.</div>'
+        +'<div class="vm-t">Fichier : <b>publish/'+esc(u)+'_phases.json</b> dans le mix <b>'+esc(MIX.slug)+'</b>. Publie TOUTES les phases ('+built.pack.phases.length+') avec le timing de chacune dans le mix. Le contexte du mix (<b>CONTEXT.md</b>) est publié avec, s\'il a changé.</div>'
         +'<div class="vm-t">Nouvelles : <b>'+rng(s.nouveau.length>12?[s.nouveau.length+' phases']:s.nouveau)+'</b> · modifiées : <b>'+rng(s.modifie)+'</b> · inchangées : <b>'+s.inchange.length+'</b>'+(built.hadPrev?'':' <i>(première publication)</i>')+'</div>'
         +(ok?'':'<div class="vm-t vm-w">Nom invalide : 2 à 30 caractères (lettres, chiffres, - et _).</div>')
         +'<div class="vm-r"><button class="chip" id="vmGo"'+(ok?'':' disabled')+'>Publier les phases</button><button class="chip" id="vmClose">Fermer</button></div><pre id="vmLog" class="vm-log"></pre>';
@@ -1335,11 +1335,15 @@ sync3UI();
   window.PHMARKED=new Set();
   /* publications des autres : lues sur GitHub en mémoire (rien n'est écrit chez toi) ; repli sur les fichiers locaux si GitHub est injoignable */
   let remote={ sha:'', pubs:null };
-  async function getRemote(force){ try{ const r=JSON.parse(await api('/api/publish-remote?mix='+encodeURIComponent(MIX.slug)+(force?'&force=1':'&known='+remote.sha))); if(r.error) return null; if(r.same&&remote.pubs) return remote.pubs;
-      const pubs=[]; for(const [f,txt] of Object.entries(r.files||{})){ try{ const j=JSON.parse(txt); pubs.push({ file:f, user:j.user||f.replace(/_phases\.json$/,''), data:j }); }catch(e){} } remote={ sha:r.sha, pubs }; return pubs; }catch(e){ return null; } }
+  async function getRemote(force){ try{ const r=JSON.parse(await api('/api/publish-remote?mix='+encodeURIComponent(MIX.slug)+(force?'&force=1':'&known='+remote.sha))); if(r.error) return null; remote.ctx=r.ctx||remote.ctx; if(r.same&&remote.pubs) return remote.pubs;
+      const pubs=[]; for(const [f,txt] of Object.entries(r.files||{})){ try{ const j=JSON.parse(txt); pubs.push({ file:f, user:j.user||f.replace(/_phases\.json$/,''), data:j }); }catch(e){} } remote={ sha:r.sha, pubs, ctx:r.ctx }; return pubs; }catch(e){ return null; } }
   async function getPubs(force){ const p=await getRemote(force); if(p) return { pubs:p, src:'GitHub' }; const lf=await listFiles(false); return { pubs:lf.files?await loadPubs(lf.files):[], src:'local' }; }
   async function recompute(pubs){ const u=await whoami(); await refreshLocal(); const s=new Set(); pubs.filter(x=>x.user!==u).forEach(pb=>(pb.data.phases||[]).forEach(p=>{ const l=localPh[p.id]; if(l&&l.hash!==p.hash) s.add(p.id); })); window.PHMARKED=s; }
-  async function refreshMarks(force){ try{ const g=await getPubs(!!force); await recompute(g.pubs); return g.src; }catch(e){ return 'erreur'; } }
+  function updateCtxBadge(){ const c=remote.ctx; let b=document.getElementById('ctxBadge'); const upd=c&&c.remote&&c.remote!==c.head&&c.local===c.head, mod=c&&c.local&&c.local!==c.head;
+    if(!upd&&!mod){ if(b) b.remove(); return; } if(!b){ b=document.createElement('button'); b.id='ctxBadge'; b.className='chip'; document.getElementById('btnPubPhases').after(b); }
+    if(upd){ b.disabled=false; b.textContent='● contexte mis à jour : récupérer'; b.style.color='#ffe14a'; b.title='Un collaborateur a publié une nouvelle version de CONTEXT.md (le contexte de ce mix pour Claude). Clique pour la récupérer.'; b.onclick=async()=>{ b.disabled=true; b.textContent='récupération…'; await api('/api/publish-list?mix='+encodeURIComponent(MIX.slug)+'&pull=1'); await refreshMarks(true); }; }
+    else { b.disabled=false; b.textContent='contexte modifié (publié avec les phases)'; b.style.color='var(--mut)'; b.title='Ton CONTEXT.md a changé : il sera envoyé avec « publish phases ».'; b.onclick=null; } }
+  async function refreshMarks(force){ try{ const g=await getPubs(!!force); await recompute(g.pubs); updateCtxBadge(); return g.src; }catch(e){ return 'erreur'; } }
   window.aniRefreshMarks=refreshMarks; setTimeout(()=>refreshMarks(),3000); setInterval(()=>refreshMarks(),180000);   /* toutes les 3 min : un simple test sur GitHub (ls-remote) ; téléchargement seulement s'il y a du neuf */
   setInterval(()=>{ if(remote.pubs) recompute(remote.pubs).catch(()=>{}); },30000);   /* relecture locale des marqueurs quand tu modifies une phase */
   function modal(title,html){ const old=document.getElementById('verModal'); if(old) old.remove(); const m=document.createElement('div'); m.id='verModal';
@@ -1704,7 +1708,7 @@ function saveUI(){ try{ localStorage.setItem(uiKey,JSON.stringify({ event:eventV
     if(s.par){ const b=[...document.querySelectorAll('.par')].find(x=>x.textContent.indexOf(s.par==='even'?'Pairs':'Impairs')===0); if(b) b.click(); }
     if(s.geo) geoSetView(true); else if(s.event) eventSetView(true); geoSyncChips(); geoRecompute(); geoUpdateFormula(); }catch(e){} })();
 setInterval(saveUI,500); addEventListener('pagehide',saveUI);
-document.getElementById('nled').value='42'; buildLEDs(42);
+document.getElementById('nled').value='24'; buildLEDs(24);   /* défaut léger pour les ordinateurs moins rapides ; vue 2D par défaut aussi */
 loadDescriptif().then(()=>requestAnimationFrame(frame));
 setInterval(loadDescriptif, 2500);
 </script>

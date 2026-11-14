@@ -220,10 +220,11 @@ public static class Srv {
       string rel = mix + "/publish/" + user + "_phases.json";
       File.WriteAllText(Path.Combine(dir, user + "_phases.json"), json.Replace("\r", "") + "\n", new UTF8Encoding(false));
       Func<string, bool> step = (a) => { string o = Git(mixes, a, out c); log.AppendLine("> git " + (a.Length > 80 ? a.Substring(0, 80) + "…" : a)); if (o.Length > 0) log.AppendLine(o); return c == 0; };
-      if (!step("add \"" + rel + "\"")) return "KO\n" + log;
-      string st = Git(mixes, "status --porcelain -- \"" + rel + "\"", out c);
+      string ctxRel = mix + "/CONTEXT.md"; bool hasCtx = File.Exists(Path.Combine(mdir, "CONTEXT.md")); string paths = "\"" + rel + "\"" + (hasCtx ? " \"" + ctxRel + "\"" : "");   // le contexte du mix est publié avec les phases
+      if (!step("add " + paths)) return "KO\n" + log;
+      string st = Git(mixes, "status --porcelain -- " + paths, out c);
       if (st.Length == 0) { log.AppendLine("Aucune modification depuis la dernière publication : rien à envoyer."); return "OK\n" + log; }
-      if (!step("commit -m \"Phases " + mix + " (" + user + ")\" -- \"" + rel + "\"")) return "KO\n" + log;
+      if (!step("commit -m \"Phases " + mix + " (" + user + ")\" -- " + paths)) return "KO\n" + log;
       if (!step("pull --rebase --autostash origin main")) return "KO\n" + log;
       if (!step("push origin HEAD")) return "KO\n" + log;
       log.AppendLine("Phases publiées : " + rel);
@@ -266,6 +267,13 @@ public static class Srv {
   }
   // ---------- Publications des autres, lues sur GitHub SANS toucher au dossier de travail : ls-remote (très léger) puis, seulement s'il y a du neuf, fetch + lecture en mémoire ----------
   static string _rSha = "", _rMix = "", _rJson = "";
+  static string CtxJson(string mixes, string mix) {   // état de CONTEXT.md : version sur GitHub, version publiée localement (HEAD) et fichier actuel
+    int c; string rp = mix + "/CONTEXT.md";
+    string rr = Git(mixes, "rev-parse -q --verify \"origin/main:" + rp + "\"", out c); if (c != 0) rr = "";
+    string hh = Git(mixes, "rev-parse -q --verify \"HEAD:" + rp + "\"", out c); if (c != 0) hh = "";
+    string lp = Path.Combine(mixes, mix, "CONTEXT.md"), ll = ""; if (File.Exists(lp)) { ll = Git(mixes, "hash-object \"" + lp + "\"", out c); if (c != 0) ll = ""; }
+    return "{\"remote\":" + Json(rr) + ",\"head\":" + Json(hh) + ",\"local\":" + Json(ll) + "}";
+  }
   static string PublishRemote(string root, string mix, string known, bool force) {
     if (!Regex.IsMatch(mix ?? "", @"^[A-Za-z0-9_-]{1,40}$")) return "{\"error\":\"mix invalide\"}";
     lock (Lock) {
@@ -273,7 +281,7 @@ public static class Srv {
       string rem = Git(mixes, "remote get-url origin", out c); if (c != 0 || !Regex.IsMatch(rem, @"vicbess/MIX_Animadome(\.git)?$")) return "{\"error\":\"dépôt des mix inattendu\"}";
       string ls = Git(mixes, "ls-remote origin refs/heads/main", out c); if (c != 0 || ls.Length < 40) return "{\"error\":\"GitHub injoignable\"}";
       string sha = ls.Substring(0, 40);
-      if (!force && sha == (known ?? "")) return "{\"sha\":\"" + sha + "\",\"same\":true}";
+      if (!force && sha == (known ?? "")) return "{\"sha\":\"" + sha + "\",\"same\":true,\"ctx\":" + CtxJson(mixes, mix) + "}";
       if (sha != _rSha || mix != _rMix || force) {
         string f = Git(mixes, "fetch origin main --quiet", out c); if (c != 0) return "{\"error\":\"fetch impossible\",\"log\":" + Json(f) + "}";
         string names = Git(mixes, "ls-tree -r --name-only origin/main -- \"" + mix + "/publish/\"", out c);
@@ -285,7 +293,7 @@ public static class Srv {
         }
         sb.Append("}}"); _rSha = sha; _rMix = mix; _rJson = sb.ToString();
       }
-      return _rJson;
+      return _rJson.Substring(0, _rJson.Length - 1) + ",\"ctx\":" + CtxJson(mixes, mix) + "}";
     }
   }
   static void Handle(HttpListenerContext c, string root) {
