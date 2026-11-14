@@ -13,6 +13,9 @@ Chaque mix a un fichier **`dome-preview/mixes/<mix>/CONTEXT.md`** : intention ar
 - **Mets-le à jour** dès que l'utilisateur donne une consigne durable (une règle, un choix, une préférence qui vaut pour la suite). Chaque collaborateur écrit ses notes sous `### Notes de <utilisateur>` ; la partie principale est tenue par le propriétaire du mix.
 - **Avant toute publication** (`publish phases`), vérifie que `CONTEXT.md` reflète bien les décisions de la session : il est envoyé avec les phases, c'est ainsi que le collaborateur suivant en hérite. La page signale (« ● contexte mis à jour ») quand un autre a publié un nouveau contexte : récupère-le avant de continuer.
 - Ce fichier ne contient jamais d'information personnelle (adresse, identifiants, chemins de ta machine).
+## Connaissances son et lumière
+Le skill **nimadome-son-lumiere** (.claude/skills/animadome-son-lumiere/SKILL.md) rassemble ce qu'un technicien son et lumière doit savoir ici : pilotage sACN/DMX, alimentation, gamma et couleur, photosensibilité, synchronisation, analyse audio, ambisonie. Consulte-le avant de régler un effet destiné au dôme réel ou de parler d'export.
+
 ## Lancer
 ```
 powershell -ExecutionPolicy Bypass -File dome-preview\serve.ps1 -Port 8765     (serveur, à garder ouvert)
