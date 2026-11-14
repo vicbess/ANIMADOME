@@ -1,4 +1,4 @@
-# Serveur local de prévisualisation (gère les "Range" pour l'audio) + surveillance du descriptif.
+﻿# Serveur local de prévisualisation (gère les "Range" pour l'audio) + surveillance du descriptif.
 # À chaque enregistrement de descriptif-pyrobeats.txt, descriptif.json est régénéré (la page se met à jour seule).
 # Lancer :  powershell -ExecutionPolicy Bypass -File serve.ps1      puis ouvrir http://localhost:8765/show.html
 param([int]$Port = 8765)
@@ -120,8 +120,105 @@ public static class Srv {
       case ".png": return "image/png"; case ".webm": return "video/webm"; case ".mp4": return "video/mp4";
       default: return "application/octet-stream"; }
   }
+  // ---------- Versions de l'outil (publish / update) : opérations Git sur le dépôt de l'outil (dossier parent de dome-preview) ----------
+  static string GitExe() {
+    foreach (var p in new string[] { @"C:\Program Files\Git\cmd\git.exe", @"C:\Program Files (x86)\Git\cmd\git.exe", Environment.GetEnvironmentVariable("LOCALAPPDATA") + @"\Programs\Git\cmd\git.exe" }) if (File.Exists(p)) return p;
+    return "git";
+  }
+  static string RepoRoot(string root) { return Path.GetFullPath(Path.Combine(root, "..")); }
+  static string Git(string repo, string args, out int code) {
+    var psi = new System.Diagnostics.ProcessStartInfo(GitExe(), args);
+    psi.WorkingDirectory = repo; psi.UseShellExecute = false; psi.CreateNoWindow = true; psi.RedirectStandardOutput = true; psi.RedirectStandardError = true;
+    psi.StandardOutputEncoding = Encoding.UTF8; psi.StandardErrorEncoding = Encoding.UTF8;
+    psi.EnvironmentVariables["GIT_TERMINAL_PROMPT"] = "0"; psi.EnvironmentVariables["GIT_SSH_COMMAND"] = "ssh -o BatchMode=yes";
+    using (var p = System.Diagnostics.Process.Start(psi)) {
+      var er = p.StandardError.ReadToEndAsync(); string o = p.StandardOutput.ReadToEnd(); p.WaitForExit(180000); code = p.ExitCode; return (o + er.Result).Trim();
+    }
+  }
+  static string OfficialRemote(string repo) {   // seul le dépôt officiel de l'outil est accepté (jamais une adresse venue de la page)
+    int c; string rem = Git(repo, "remote get-url origin", out c);
+    if (c != 0 || !Regex.IsMatch(rem, @"vicbess/ANIMADOME(\.git)?$")) return null; return rem;
+  }
+  static string Json(string s) { return "\"" + (s ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\r", "").Replace("\n", "\\n").Replace("\t", " ") + "\""; }
+  static string Versions(string root) {
+    lock (Lock) {
+      string repo = RepoRoot(root); int c; string rem = OfficialRemote(repo); if (rem == null) return "{\"error\":\"dépôt distant inattendu\"}";
+      string branch = Git(repo, "rev-parse --abbrev-ref HEAD", out c);
+      string fetch = Git(repo, "fetch origin --tags --force --quiet", out c); string warn = c != 0 ? fetch : "";
+      string cur = Git(repo, "describe --tags --exact-match HEAD", out c); if (c != 0) cur = "";
+      string dirty = Git(repo, "status --porcelain", out c);
+      string list = Git(repo, "for-each-ref --sort=-creatordate \"--format=%(refname:short)|%(creatordate:short)|%(contents:subject)\" \"refs/tags/v*\"", out c);
+      var sb = new StringBuilder("[");
+      foreach (var ln in list.Split(new char[] { '\n' }, StringSplitOptions.RemoveEmptyEntries)) {
+        var f = ln.Trim().Split(new char[] { '|' }, 3); if (f.Length < 3 || !Regex.IsMatch(f[0], @"^v\d+\.\d+\.\d+$")) continue;
+        if (sb.Length > 1) sb.Append(","); sb.Append("{\"v\":" + Json(f[0]) + ",\"date\":" + Json(f[1]) + ",\"note\":" + Json(f[2]) + "}");
+      }
+      sb.Append("]");
+      return "{\"branch\":" + Json(branch) + ",\"current\":" + Json(cur) + ",\"dirty\":" + (dirty.Length > 0 ? "true" : "false") + ",\"warn\":" + Json(warn) + ",\"versions\":" + sb + "}";
+    }
+  }
+  static string Publish(string body, string root) {
+    string[] parts = body.Replace("\r", "").Split(new char[] { '\n' }, 2);
+    string ver = parts[0].Trim(), notes = parts.Length > 1 ? parts[1].Trim() : "";
+    if (!Regex.IsMatch(ver, @"^\d{1,3}\.\d{1,3}\.\d{1,3}$")) return "KO version invalide (attendu : 1.0.0)";
+    if (notes.Length > 4000) return "KO notes trop longues";
+    lock (Lock) {
+      string repo = RepoRoot(root); int c; var log = new StringBuilder();
+      if (OfficialRemote(repo) == null) return "KO dépôt distant inattendu";
+      string br = Git(repo, "rev-parse --abbrev-ref HEAD", out c); if (c != 0 || br == "HEAD") return "KO HEAD détaché : revenir sur une branche avant de publier";
+      string ex = Git(repo, "ls-remote --tags origin refs/tags/v" + ver, out c); if (c != 0) return "KO connexion à GitHub impossible :\n" + ex; if (ex.Length > 0) return "KO la version v" + ver + " existe déjà sur GitHub";
+      Git(repo, "tag -d v" + ver, out c);   // étiquette locale restée d'un essai précédent
+      string date = DateTime.Now.ToString("yyyy-MM-dd");
+      File.WriteAllText(Path.Combine(root, "version.json"), "{\"version\":\"" + ver + "\",\"date\":\"" + date + "\"}\n", new UTF8Encoding(false));
+      string cl = Path.Combine(repo, "CHANGELOG.md"); string old = File.Exists(cl) ? File.ReadAllText(cl, Encoding.UTF8) : "# Changelog\n\n";
+      string entry = "## v" + ver + " — " + date + "\n\n" + (notes == "" ? "(pas de notes)" : notes) + "\n\n";
+      int ix = old.IndexOf("\n## "); string nw = ix >= 0 ? old.Substring(0, ix + 1) + entry + old.Substring(ix + 1) : old.TrimEnd() + "\n\n" + entry;
+      File.WriteAllText(cl, nw, new UTF8Encoding(false));
+      string msg = Path.Combine(Path.GetTempPath(), "animadome-msg-" + Guid.NewGuid().ToString("N") + ".txt");
+      File.WriteAllText(msg, "Version " + ver + "\n\n" + notes + "\n", new UTF8Encoding(false));
+      try {
+        Func<string, bool> step = (a) => { string o = Git(repo, a, out c); log.AppendLine("> git " + (a.Length > 70 ? a.Substring(0, 70) + "…" : a)); if (o.Length > 0) log.AppendLine(o); return c == 0; };
+        if (!step("add -A")) return "KO\n" + log;
+        string st = Git(repo, "status --porcelain", out c);
+        if (st.Length > 0 && !step("commit -F \"" + msg + "\"")) return "KO\n" + log;
+        if (!step("push origin HEAD")) return "KO\n" + log;
+        if (!step("tag -a v" + ver + " -F \"" + msg + "\"")) return "KO\n" + log;
+        if (!step("push origin v" + ver)) return "KO\n" + log;
+        log.AppendLine("Version v" + ver + " publiée (branche " + br + ").");
+        return "OK\n" + log;
+      } finally { try { File.Delete(msg); } catch { } }
+    }
+  }
+  static string Update(string body, string root) {
+    string ver = body.Trim().TrimStart('v', 'V');
+    if (!Regex.IsMatch(ver, @"^\d{1,3}\.\d{1,3}\.\d{1,3}$")) return "KO version invalide";
+    lock (Lock) {
+      string repo = RepoRoot(root); int c; var log = new StringBuilder();
+      if (OfficialRemote(repo) == null) return "KO dépôt distant inattendu";
+      string st = Git(repo, "status --porcelain", out c);
+      if (st.Length > 0) return "KO des modifications locales de l'outil ne sont pas publiées : publie-les ou annule-les avant de changer de version.\n" + st;
+      string f = Git(repo, "fetch origin --tags --force --quiet", out c); if (c != 0) return "KO connexion à GitHub impossible :\n" + f;
+      Git(repo, "rev-parse -q --verify refs/tags/v" + ver, out c); if (c != 0) return "KO version v" + ver + " introuvable";
+      string o = Git(repo, "switch --detach v" + ver, out c); log.AppendLine(o);
+      if (c != 0) return "KO\n" + log;
+      log.AppendLine("Version v" + ver + " installée. Relance le serveur (ferme sa fenêtre puis lancer-apercu.bat) et recharge la page.");
+      return "OK\n" + log;
+    }
+  }
   static void Handle(HttpListenerContext c, string root) {
     try {
+      string ap = c.Request.Url.AbsolutePath;
+      if (ap == "/api/versions" || ap == "/api/publish" || ap == "/api/update") {
+        // opérations Git : en-tête personnalisé exigé (une page web tierce ne peut pas l'envoyer sans autorisation du navigateur)
+        string rs;
+        if (c.Request.Headers["X-Animadome"] != "1") rs = "KO requête refusée";
+        else {
+          string bd = ""; if (c.Request.HttpMethod == "POST") using (var sr0 = new StreamReader(c.Request.InputStream, Encoding.UTF8)) bd = sr0.ReadToEnd();
+          try { rs = ap == "/api/versions" ? Versions(root) : ap == "/api/publish" ? Publish(bd, root) : Update(bd, root); } catch (Exception ex0) { rs = "KO erreur : " + ex0.Message; }
+        }
+        byte[] rb0 = Encoding.UTF8.GetBytes(rs); c.Response.ContentType = (ap == "/api/versions" ? "application/json" : "text/plain") + "; charset=utf-8"; c.Response.ContentLength64 = rb0.Length;
+        c.Response.OutputStream.Write(rb0, 0, rb0.Length); c.Response.Close(); return;
+      }
       if (c.Request.HttpMethod == "POST" && (c.Request.Url.AbsolutePath == "/api/phase-text" || c.Request.Url.AbsolutePath == "/api/prompt" || c.Request.Url.AbsolutePath == "/api/event-time" || c.Request.Url.AbsolutePath == "/api/clean-report" || c.Request.Url.AbsolutePath == "/api/clean-undo")) {
         string body; using (var sr = new StreamReader(c.Request.InputStream, Encoding.UTF8)) body = sr.ReadToEnd();
         string res; try { string qd = c.Request.QueryString["dir"], qt = c.Request.QueryString["txt"];
