@@ -20,7 +20,15 @@
   .ovInfo { color:var(--mut); font-size:11px; line-height:1.3; position:absolute; right:1.5%; bottom:1.5%; z-index:2; text-align:right; pointer-events:none; }
   #evChips { display:flex; flex-wrap:wrap; gap:6px; padding-top:11px; }
   #evHint { color:var(--mut); font-size:.78em; font-weight:400; }
-  .evchip { border:1px solid currentColor; border-radius:7px; padding:2px 9px; font-size:.82em; font-weight:600; cursor:default; background:rgba(255,255,255,.04); white-space:nowrap; }
+  .evchip { border:1px solid currentColor; border-radius:7px; padding:2px 9px; font-size:.82em; font-weight:600; cursor:pointer; background:rgba(255,255,255,.04); white-space:nowrap; position:relative; }
+  #evChips { flex-direction:column; flex-wrap:nowrap; gap:4px; padding-top:5px; } .evrow { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  .evchip.base { border:3px double currentColor; padding:0 8px; }   /* effet de base : double bordure */
+  .evchip.mod { border:1px solid currentColor; }   /* anim 2D layer : bordure simple, chaînée à son effet de base (↳) */
+  .evchip.evt { border:0; border-radius:999px; padding:2px 11px 2px 8px; background:color-mix(in srgb,currentColor 20%,transparent); }   /* event : pastille pleine teintée */
+  .evchip.evt::before { content:'\25C6\00a0'; font-size:.8em; }
+  .evchip.off { opacity:.3; } .evchip.hl { box-shadow:0 0 0 2px #fff8; }
+  .evchip .chipP { display:none; margin-left:7px; opacity:.85; } .evchip:hover .chipP { display:inline; } .evchip .chipP:hover { opacity:1; text-shadow:0 0 6px currentColor; }
+  #layBtns { display:inline-flex; gap:6px; margin-right:10px; vertical-align:middle; } .laybtn { padding:2px 11px; font-size:.95em; } .laybtn:not(.on) { opacity:.45; text-decoration:line-through; }
   #chipTip { position:fixed; z-index:95; display:none; max-width:440px; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 11px; font-size:12px; line-height:1.45; color:var(--fg); box-shadow:0 8px 24px #000a; pointer-events:none; white-space:pre-wrap; }
   #textBlock #phText { text-align:left; margin:0 0 .5em; font-size:.95em; cursor:default; }
   .phTim { font-size:.62em; font-weight:500; opacity:.9; }  .mixcol { position:absolute; left:0; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; align-items:stretch; gap:5px; } .mixcol .mixTop { position:static; transform:none; } #btnAudio { align-self:flex-start; width:auto; font-size:12px; line-height:1.25; padding:11px 10px; border-radius:4px; text-align:center; white-space:nowrap; }   /* aligné sous le sélecteur (marge gauche calculée par la page) */ #btnAudio.warn { border-color:var(--acc); color:var(--acc); }
@@ -51,7 +59,7 @@
   .side { font-size:clamp(14px,1.05vw,20px); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px; min-height:0; flex:1; overflow:hidden; display:flex; flex-direction:column; }
   .side > * { flex:none; } .side > #textBlock { flex:1 1 auto; max-height:none; min-height:0; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; scrollbar-color:#4a4a62 transparent; padding-right:6px; font-size:clamp(11px,.78vw,14.5px); }   /* texte long : barre de défilement, la police ne rétrécit plus */
   .ph-time { display:flex; justify-content:center; align-items:baseline; gap:.9em; flex-wrap:wrap; }   /* minuteur de phase et nom de phase sur une seule ligne */
-  #liveLines { flex:none; height:5.2em; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#4a4a62 transparent; } #evSep { display:none; height:2px; margin:8px 0 8px; background:#8a8aa8; border-radius:1px; } #evTitle { color:var(--ev); font-weight:700; font-size:.85em; margin:0 0 2px; } #liveLines p { margin:4px 0 0; }
+  #liveLines { flex:none; height:9.6em; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#4a4a62 transparent; } #evSep { display:none; height:2px; margin:8px 0 8px; background:#8a8aa8; border-radius:1px; } #evTitle { color:var(--ev); font-weight:700; font-size:.85em; margin:0 0 2px; } #liveLines p { margin:4px 0 0; }
   /* texte technique : vue lisible (titres ▸ en gras, le reste en normal) ; un clic bascule en édition du texte brut */
   .ph-techview { white-space:pre-wrap; line-height:1.55; cursor:text; padding:3px 5px; margin:0 0 1.15em -5px; border:1px dashed transparent; border-radius:5px; } .ph-techview:hover { border-color:#3a3a50; }
   .ph-techview .th { font-weight:700; margin-top:.6em; } .ph-techview > div:first-child { margin-top:0; } .ph-techview .tb { font-weight:400; padding-left:1.1em; text-indent:-1.1em; } .ph-techview .tp { font-weight:400; }
@@ -138,7 +146,7 @@
       <p class="ph-edit ph-son" id="phSon" contenteditable="plaintext-only" spellcheck="false" data-ph="Son : analyse audio…" title="Partie son (italique) – cliquer pour modifier"></p>
       <div class="save" id="saveState"></div>
       </div>
-      <div id="liveLines"><div id="evSep"></div><div id="evTitle">Journal des effets&nbsp;&nbsp;&nbsp;&nbsp;<span id="evHint">passer la souris sur un effet ou un event pour voir sa description</span></div><div id="evChips"></div></div>   <!-- sous-étapes et events : toujours visibles, juste au-dessus du prompteur (hors de la zone qui défile) -->
+      <div id="liveLines"><div id="evSep"></div><div id="evTitle"><span id="layBtns"><button class="chip laybtn on" data-l="base" title="Effets de base : afficher / couper cette couche dans l'aperçu">Effets de base</button><button class="chip laybtn on" data-l="mod" title="Anim 2D layer : variations chaînées aux effets de base (accélération, intensité, couleur)">Anim 2D layer</button><button class="chip laybtn on" data-l="evt" title="Events : afficher / couper cette couche dans l'aperçu">Events</button></span><span id="evHint">survol : description · clic : voir dans la timeline · ✎ : prompter</span></div><div id="evChips"></div></div>   <!-- sous-étapes et events : toujours visibles, juste au-dessus du prompteur (hors de la zone qui défile) -->
       
       <div class="promptbox">
         <textarea id="promptIn" rows="4" placeholder="PROMPTEUR : ask me anything&#10;&#10;Entrée écrire dans le prompt  |  Échap quitter champ de prompt  |  Ctrl+Espace insérer timecode"></textarea>
@@ -781,14 +789,20 @@ let evPreviewOnly=null;
 /* FadeMinus / FadePlus (events de base, fx 'Fade' dir -1 / +1) : ils agissent sur l'ANIMATION DE BASE (les effets de phase) et PAS sur les events (« effets »). FadeMinus fait passer l'animation de base au noir sur la durée de la zone de l'event, et elle y RESTE ; FadePlus la rallume en fondu sur la durée de sa zone, et elle y reste. Le gain de base est calculé pour tout instant à partir de la suite chronologique de ces events (1 au départ). */
 function baseGain(t){ let g=1; const L=EV.filter(e=>e.fx&&e.fx.some(f=>f.n==='Fade')).sort((a,b)=>a.on-b.on); if(evPreviewOnly&&L.length&&L[0].fx.find(f=>f.n==='Fade').dir>0) g=0;   /* aperçu de la banque : FadePlus part du noir */
   for(const e of L){ if(t<e.on) break; const dir=e.fx.find(f=>f.n==='Fade').dir, tgt=dir<0?0:1, u=Math.min(1,(t-e.on)/Math.max(.05,e.span||1)), s=u*u*(3-2*u); g=g+(tgt-g)*s; } return g; }
+/* ---------- Couches d'animation : base (effets de base), mod (« Anim 2D layer » : variations chaînées à un effet de base), evt (events). Un effet de phase est « base » sauf si fx.layer === 'mod' (fx.on = nom de l'effet de base auquel il est chaîné, sinon le premier de la phase). ---------- */
+const LAYER_ON={ base:true, mod:true, evt:true }; try{ Object.assign(LAYER_ON,JSON.parse(localStorage.getItem('animadome_layers')||'{}')); }catch(e){}
+const layerOfFx=fx=>fx&&fx.layer==='mod'?'mod':'base';
+const FXHUE={ fire:30, ember:10, lava:18, violet:275, ocean:200, sun:45, blue:210 };
+/* couleur d'un effet = celle de sa palette (pal) ; sinon celle de la phase (effets) ou bleu (events). Toujours éclaircie pour rester lisible sur fond sombre (journal et timeline). */
+function fxColor(fx,ph,fallback){ const h=fx&&fx.pal!==undefined?FXHUE[fx.pal]:undefined; if(h!==undefined) return `hsl(${h},88%,66%)`; return fallback||phaseColor(ph); }
 function runFx(t,act,f){ const bg=baseGain(t); let sc=false; const scale=()=>{ sc=true; if(bg<.9999) for(let k=0;k<buf.length;k++) buf[k]*=bg; };
-  for(const a of act){ if(a.ev&&!sc) scale(); const fn=FX[a.fx.n]; if(fn) fn(t,a.w,a.fx,a.fx.slow?featSlow(t):f); } if(!sc) scale(); }
+  for(const a of act){ if(a.off) continue; if(a.ev&&!sc) scale(); const fn=FX[a.fx.n]; if(fn) fn(t,a.w,a.fx,a.fx.slow?featSlow(t):f); } if(!sc) scale(); }
 FX['Fade']=()=>{};   /* le gain de base est appliqué par runFx */
 function activeFx(t, i){
   const list=[]; if(!PH.length) return list; ensureFades();
   for(let j=Math.max(0,i-1); j<=Math.min(PH.length-1,i+1); j++){ const w=inProg(j,t)*(1-inProg(j+1,t)); if(w<=0.002) continue;
-    PH[j].fx.forEach(fx => { if(evPreviewOnly&&!evPreviewOnly.all&&!evPreviewOnly.needs.includes(fx.n)) return; let w2=w; if(fx.win){ /* fx.win = [[début,fin,fondu]] : l'effet n'est actif que dans ces fenêtres (fondu d'entrée/sortie, 3 s par défaut) */ let ww=0; for(const q of fx.win){ const fd=q[2]??3; ww=Math.max(ww,ssG(clamp((t-q[0])/fd))*ssG(clamp((q[1]-t)/fd))); } if(ww<=.002) return; w2=w*ww; } list.push({fx, w:w2}); }); }
-  EV.forEach(e => { if(t>=e.on-.05 && t<e.on+e.dur) e.fx.forEach(fx => list.push({fx, w:1, ev:e})); });
+    PH[j].fx.forEach(fx => { if(evPreviewOnly&&!evPreviewOnly.all&&!evPreviewOnly.needs.includes(fx.n)) return; let w2=w; if(fx.win){ /* fx.win = [[début,fin,fondu]] : l'effet n'est actif que dans ces fenêtres (fondu d'entrée/sortie, 3 s par défaut) */ let ww=0; for(const q of fx.win){ const fd=q[2]??3; ww=Math.max(ww,ssG(clamp((t-q[0])/fd))*ssG(clamp((q[1]-t)/fd))); } if(ww<=.002) return; w2=w*ww; } list.push({fx, w:w2, layer:layerOfFx(fx), off:!LAYER_ON[layerOfFx(fx)]}); }); }
+  EV.forEach(e => { if(t>=e.on-.05 && t<e.on+e.dur) e.fx.forEach(fx => list.push({fx, w:1, ev:e, layer:'evt', off:!LAYER_ON.evt&&!evPreviewOnly&&fx.n!=='Fade'})); });
   if(!evPreviewOnly&&list.some(a=>a.ev&&a.fx.n==='SlowLava'&&!a.fx.overlay)) return list.filter(a=>a.fx.n==='SlowLava'||a.fx.n==='Noir'||(a.ev&&(a.ev.name==='TriGlitch'||a.ev.name==='Éruption'))).sort((x,y)=>(x.fx.n==='SlowLava'?0:1)-(y.fx.n==='SlowLava'?0:1));   /* mode exclusif : seuls restent les noirs « Rien », TriGlitch et Éruption (qui PRÉVALENT sur SlowLava : dessinés par-dessus) : tant qu'un SlowLava est actif (jusqu'à la fin de sa retombée), AUCUNE autre animation n'est visible */
   return list; }
 
@@ -800,7 +814,8 @@ function computeBuf(t){ const i=phaseAt(t), f=feat(t), act=activeFx(t,i); buf.fi
   { const gc=gradeAt(t); if(gc<.999) applyGrade(gc); }
   return act; }
 const _colCache={};
-function computePhaseColors(){ if(!PH.length) return; const saved=LEDS_PER_BAR; let todo=PH.filter(p=>!_colCache[p.start+':'+p.end+':'+JSON.stringify(p.fx)]); 
+function computePhaseColors(){ const sv=Object.assign({},LAYER_ON); LAYER_ON.base=LAYER_ON.mod=LAYER_ON.evt=true; try{ computePhaseColors0(); } finally { Object.assign(LAYER_ON,sv); } }
+function computePhaseColors0(){ if(!PH.length) return; const saved=LEDS_PER_BAR; let todo=PH.filter(p=>!_colCache[p.start+':'+p.end+':'+JSON.stringify(p.fx)]); 
   if(todo.length){ buildLEDs(4); const N=6;
     todo.forEach(p=>{ let R=0,G=0,B=0,Wt=0; for(let k=0;k<N;k++){ const t=p.start+(k+.5)/N*(p.end-p.start); computeBuf(t);
         for(let id=0;id<LED.length;id++){ const r=Math.min(1,buf[3*id]), g=Math.min(1,buf[3*id+1]), b=Math.min(1,buf[3*id+2]), v=Math.max(r,g,b); if(v<.04) continue; const wt=v*v; R+=r/v*wt; G+=g/v*wt; B+=b/v*wt; Wt+=wt; } }
@@ -1505,20 +1520,30 @@ function renderDome(t){ show3D(view3d&&!geoView);
 /* ---------- Journal des events : un encart par effet de phase (couleur de la phase) et par event (bleu) ; la description détaillée apparaît au survol ---------- */
 function descForFx(name,p){ const L=String(p.tech||'').split(/\r?\n/).map(l=>l.replace(/^\*\*|\*\*$/g,'').trim()); const nl=String(name).toLowerCase(); let on=false; const out=[];
   for(const l of L){ const h=/^▸\s*(.+)$/.exec(l); if(h){ if(on) break; const hl=h[1].toLowerCase(); on=hl.includes(nl)||nl.includes(hl); continue; } if(on&&l) out.push(l); }
-  return out.length?out.join('\n'):('Effet de phase « '+name+' » : réglé pour cette phase dans fxmap.js.'); }
+  return out.length?out.join('\n'):('Effet de base « '+name+' » : réglé pour cette phase dans fxmap.js.'); }
 let _tip=null;
 function showTip(ev){ if(!_tip){ _tip=document.createElement('div'); _tip.id='chipTip'; document.body.appendChild(_tip); } _tip.textContent=ev.currentTarget._d||''; _tip.style.display='block'; moveTip(ev); }
 function moveTip(ev){ if(!_tip) return; const w=_tip.offsetWidth, h=_tip.offsetHeight; let x=Math.min(ev.clientX+14,innerWidth-w-10), y=ev.clientY-h-14; if(y<8) y=ev.clientY+18; _tip.style.left=Math.max(8,x)+'px'; _tip.style.top=y+'px'; }
 function hideTip(){ if(_tip) _tip.style.display='none'; }
+document.querySelectorAll('.laybtn').forEach(b=>{ const l=b.dataset.l; b.classList.toggle('on',!!LAYER_ON[l]); b.setAttribute('aria-pressed',!!LAYER_ON[l]); b.onclick=()=>{ LAYER_ON[l]=!LAYER_ON[l]; b.classList.toggle('on',LAYER_ON[l]); b.setAttribute('aria-pressed',LAYER_ON[l]); try{ localStorage.setItem('animadome_layers',JSON.stringify(LAYER_ON)); }catch(e){} b.blur(); }; });
 function setJournalChips(act,p){
   const bn=document.getElementById('fxBanner'); if(bn&&bn.style.display!=='none') bn.style.display='none';   /* l'ancien texte sous le dôme fait double emploi avec les encarts */
-  const box=document.getElementById('evChips'); if(!box) return; const col=phaseColor(p), list=[], seen=new Set();
+  const box=document.getElementById('evChips'); if(!box) return; const col=phaseColor(p), pi=PH.indexOf(p), base=[], mod=[], evt=[], seen=new Set();
   for(const a of act){ if(a.w<=.02) continue;
-    if(a.ev){ const k='e'+a.ev.k+'@'+a.ev.on; if(seen.has(k)) continue; seen.add(k); list.push({ ev:true, name:(window.FXMAP&&FXMAP.eventLabels&&FXMAP.eventLabels[a.ev.name])||a.ev.name, desc:'*'+mmss(a.ev.on)+'*  '+(a.ev.text||'') }); }
-    else { const k='f'+a.fx.n; if(seen.has(k)) continue; seen.add(k); list.push({ ev:false, name:a.fx.n, desc:descForFx(a.fx.n,p) }); } }
-  list.sort((x,y)=>(x.ev?1:0)-(y.ev?1:0));
-  const key=col+'|'+list.map(x=>(x.ev?'e':'f')+x.name).join('|'); if(box._k===key) return; box._k=key; box.textContent=''; hideTip();
-  list.forEach(x=>{ const c=document.createElement('span'); c.className='evchip'; c.textContent=x.name; c.style.color=x.ev?'#7fd4ff':col; c._d=x.desc; c.addEventListener('mouseenter',showTip); c.addEventListener('mousemove',moveTip); c.addEventListener('mouseleave',hideTip); box.appendChild(c); }); }
+    if(a.ev){ const k='e'+a.ev.k+'@'+a.ev.on; if(seen.has(k)) continue; seen.add(k); evt.push({ layer:'evt', name:(window.FXMAP&&FXMAP.eventLabels&&FXMAP.eventLabels[a.ev.name])||a.ev.name, desc:'*'+mmss(a.ev.on)+'*  '+(a.ev.text||''), color:fxColor(a.ev.fx&&a.ev.fx[0],p,'#7fd4ff'), ev:a.ev, off:a.off }); }
+    else { const k='f'+a.fx.n; if(seen.has(k)) continue; seen.add(k); const own=PH.findIndex(q=>q.fx.includes(a.fx)), q=PH[own<0?pi:own]; (a.layer==='mod'?mod:base).push({ layer:a.layer==='mod'?'mod':'base', name:a.fx.n, desc:descForFx(a.fx.n,q), color:fxColor(a.fx,q), pi:own<0?pi:own, on:a.fx.on, off:a.off }); } }
+  const bases=base.map(x=>x.name); mod.forEach(m=>{ m.link=(m.on&&bases.includes(m.on))?m.on:bases[0]||''; });
+  const key=col+'|'+pi+'|'+JSON.stringify(LAYER_ON)+'|'+[base,mod,evt].map(l=>l.map(x=>x.name+(x.off?'!':'')+(x.link||'')).join(',')).join('|'); if(box._k===key) return; box._k=key; box.textContent=''; hideTip();
+  const rowOf=()=>{ const r=document.createElement('div'); r.className='evrow'; return r; };
+  const phTxt=x=>x.layer==='base'?'effet de base':x.layer==='mod'?'anim 2D layer':'event';
+  [base,mod,evt].forEach(arr=>{ if(!arr.length) return; const row=rowOf(); box.appendChild(row);
+    arr.forEach(x=>{ const c=document.createElement('span'); c.className='evchip '+x.layer+(x.off?' off':''); c.style.color=x.color; c.textContent=(x.layer==='mod'?'\u21b3 ':'')+x.name; c._d=(x.layer==='mod'&&x.link?'Chaîné à « '+x.link+' »\n':'')+x.desc; c.dataset.name=x.name; c.dataset.layer=x.layer;
+      const pr=document.createElement('b'); pr.className='chipP'; pr.textContent='\u270e'; pr.title='Prompter : préremplit le prompteur pour modifier cet effet';
+      pr.addEventListener('click',ev=>{ ev.stopPropagation(); const pIn=document.getElementById('promptIn'); if(!pIn) return; const ctxt='['+x.name+' · '+phTxt(x)+' · phase '+((x.ev?phaseAt(x.ev.on):x.pi)+1)+'] '; pIn.value=ctxt+'Change cet effet de la manière suivante : '; pIn.dispatchEvent(new Event('input',{bubbles:true})); pIn.focus(); pIn.setSelectionRange(pIn.value.length,pIn.value.length); }); c.appendChild(pr);
+      c.addEventListener('mouseenter',ev=>{ showTip(ev); if(x.layer==='mod'&&x.link) box.querySelectorAll('.evchip.base').forEach(b=>b.classList.toggle('hl',b.dataset.name===x.link)); else if(x.layer==='base') box.querySelectorAll('.evchip.mod').forEach(m=>{ const mm=mod.find(z=>z.name===m.dataset.name); m.classList.toggle('hl',!!mm&&mm.link===x.name); }); });
+      c.addEventListener('mousemove',moveTip); c.addEventListener('mouseleave',()=>{ hideTip(); box.querySelectorAll('.hl').forEach(h=>h.classList.remove('hl')); });
+      c.addEventListener('click',()=>{ hideTip(); if(x.ev){ setPhaseView(true,phaseAt(x.ev.on)); au.currentTime=x.ev.on; selEv=x.ev; } else { const P=PH[x.pi], t0=au.currentTime||0; setPhaseView(true,x.pi); if(t0<P.start||t0>=P.end) au.currentTime=P.start; } });   /* clic sur un encart : passe en Vue Phase sur cet effet */
+      row.appendChild(c); }); }); }
 /* ---------- Texte lié à la timeline ---------- */
 let shownPhase=-1, shownSub=null, shownEv=null;
 function updateText(t){
@@ -1553,6 +1578,7 @@ function drawTL(t){
   PH.forEach((p,i)=>{ const x0=X(p.start),x1=X(p.end), mk=!!(window.PHMARKED&&window.PHMARKED.has("p"+String(Math.round(p.start)).padStart(5,"0"))); tctx.fillStyle=mk?window.__stripe:barColor(p); tctx.globalAlpha=mk?1:.7; tctx.fillRect(x0,18,x1-x0-1,12); tctx.globalAlpha=.10; tctx.fillRect(x0,top,x1-x0-1,base-top); tctx.globalAlpha=1;
     if(i===phaseAt(t)){ tctx.strokeStyle='#fff'; tctx.globalAlpha=.8; tctx.strokeRect(x0+.5,18.5,x1-x0-2,11); tctx.globalAlpha=1; }
     if(Math.min(x1,w)-Math.max(x0,0)>26){ tctx.font='bold 13px system-ui'; tctx.textAlign='left'; if(mk){ tctx.lineWidth=3; tctx.strokeStyle='#b3150f'; tctx.strokeText(String(i+1),Math.max(x0,0)+4,14); tctx.fillStyle='#ffe14a'; } else tctx.fillStyle='#fff'; tctx.fillText(String(i+1),Math.max(x0,0)+4,14); } });
+  if(LAYER_ON.mod) PH.forEach(p=>{ const ms=p.fx.filter(f=>f.layer==='mod'); ms.forEach((f,k)=>{ const x0=X(p.start),x1=X(p.end); if(x1<0||x0>w) return; tctx.fillStyle=fxColor(f,p); tctx.globalAlpha=.9; tctx.fillRect(Math.max(0,x0),31+k*3,Math.min(w,x1)-Math.max(0,x0)-1,2); tctx.globalAlpha=1; }); });   /* bande fine sous la barre des phases : anim 2D layer chaînées */
   if(stemAny()&&curve.s){   /* pistes superposées en transparence : synthés (bleu), basse (violet), batterie (orange), et par-dessus les KICKS en jaune clair, bien plus opaques */
     const lay=(a,col,al)=>{ tctx.beginPath(); tctx.moveTo(0,base); for(let x=0;x<w;x++) tctx.lineTo(x,base-a[x]*(base-top)); tctx.lineTo(w,base); tctx.closePath(); tctx.globalAlpha=al; tctx.fillStyle=col; tctx.fill(); tctx.globalAlpha=1; };
     if(stemOn.o) lay(curve.s.so,'#4aa3ff',.40); if(stemOn.v) lay(curve.s.sv,'#6fe28a',.42); if(stemOn.b) lay(curve.s.sb,'#b86bff',.45); if(stemOn.h) lay(curve.s.sh,'#e86fc0',.40); if(stemOn.d) lay(curve.s.sd,'#ff9a4a',.40);
@@ -1562,14 +1588,14 @@ function drawTL(t){
   tctx.beginPath(); tctx.moveTo(0,base); for(let x=0;x<w;x++) tctx.lineTo(x,base-curve.c[x]*(base-top)); tctx.lineTo(w,base); tctx.closePath(); tctx.fillStyle='#d8d8e866'; tctx.fill();
   tctx.beginPath(); for(let x=0;x<w;x++){ const y=base-curve.d[x]*(base-top)*.9; x?tctx.lineTo(x,y):tctx.moveTo(x,y); } tctx.strokeStyle='#ff9a4a'; tctx.lineWidth=1; tctx.stroke(); }
   tctx.fillStyle='#8a8a9a'; tctx.font='11px system-ui'; tctx.textAlign='left'; { const step=[5,10,15,30,60,120,300,600].find(s=>(VW1-VW0)/s<=12)||600; for(let m=Math.ceil(VW0/step)*step;m<=VW1;m+=step){ tctx.fillText(fmt(m),X(m)+3,phaseView?base-3:h-8); tctx.fillStyle='#ffffff18'; tctx.fillRect(X(m),top,1,base-top); tctx.fillStyle='#8a8a9a'; } }
-  lbRects=[]; const lbRow=new Map(); if(phaseView){ tctx.font='bold 10px system-ui'; const rowEnd=[-1e9,-1e9,-1e9]; EV.filter(e=>{ const x=X(e.on); return x>=-20&&x<=w+20; }).sort((a,b)=>a.on-b.on).forEach(e=>{ const x=X(e.on), lb=((window.FXMAP&&FXMAP.eventLabels&&FXMAP.eventLabels[e.name])||e.name)+(dragEv===e?'  00:00.00':''), tw=tctx.measureText(lb).width; let lx=Math.min(Math.max(x,tw/2+3),w-tw/2-3), r=rowEnd.findIndex(en=>lx-tw/2-3>=en); if(r<0){ r=rowEnd.indexOf(Math.min(...rowEnd)); lx=rowEnd[r]+tw/2+3; } rowEnd[r]=lx+tw/2+3; lbRow.set(e,{r,lx}); }); }   /* noms : rangée 0 juste sous la tirette, sinon 1 puis 2 plus bas s'ils se chevauchent ; si les 3 sont prises, le nom est décalé à droite sur la rangée libérée le plus tôt */  EV.forEach(e=>{ const x=X(e.on); if(x<-20||x>w+20) return; const sel=(selEv===e); tctx.fillStyle=sel?'#34e08a':'#7fd4ff';
+  lbRects=[]; const lbRow=new Map(); if(phaseView){ tctx.font='bold 10px system-ui'; const rowEnd=[-1e9,-1e9,-1e9]; EV.filter(e=>{ const x=X(e.on); return x>=-20&&x<=w+20; }).sort((a,b)=>a.on-b.on).forEach(e=>{ const x=X(e.on), lb=((window.FXMAP&&FXMAP.eventLabels&&FXMAP.eventLabels[e.name])||e.name)+(dragEv===e?'  00:00.00':''), tw=tctx.measureText(lb).width; let lx=Math.min(Math.max(x,tw/2+3),w-tw/2-3), r=rowEnd.findIndex(en=>lx-tw/2-3>=en); if(r<0){ r=rowEnd.indexOf(Math.min(...rowEnd)); lx=rowEnd[r]+tw/2+3; } rowEnd[r]=lx+tw/2+3; lbRow.set(e,{r,lx}); }); }   /* noms : rangée 0 juste sous la tirette, sinon 1 puis 2 plus bas s'ils se chevauchent ; si les 3 sont prises, le nom est décalé à droite sur la rangée libérée le plus tôt */  EV.forEach(e=>{ const x=X(e.on); if(x<-20||x>w+20) return; const sel=(selEv===e), ecol=fxColor(e.fx&&e.fx[0],null,'#7fd4ff'); if(!LAYER_ON.evt) return; tctx.fillStyle=sel?'#34e08a':ecol;
     if(e.span){ tctx.globalAlpha=sel?.38:.22; tctx.fillRect(x,top,Math.max(2,X(e.on+e.span)-x),(phaseView?base+4:base)-top); tctx.globalAlpha=1; }   /* événement à durée : bande de sa longueur */
     if(!phaseView){ tctx.fillRect(x-1,top,2,base-top); return; }   /* Vue Piste : seulement la barre (ni nom ni poignée, non déplaçable) */
     tctx.fillRect(x-(sel?1.5:1),top,sel?3:2,base+4-top);   /* Vue Phase : barre ; tirette (poignée de début) et poignée de fin seulement pour l'event SÉLECTIONNÉ (vert) ; les autres : plage cyan sans tirette */
     if(sel){ const gy=base+4; tctx.beginPath(); tctx.roundRect?tctx.roundRect(x-7,gy,14,11,3):tctx.rect(x-7,gy,14,11); tctx.fillStyle=(dragEv===e)?'#ffffff':'#34e08a'; tctx.fill(); tctx.fillStyle='#0f0f16'; tctx.fillRect(x-3,gy+3,6,1); tctx.fillRect(x-3,gy+7,6,1); }
     if(e.span&&selEv===e){ const xe=X(e.on+e.span), gy2=base+4; tctx.beginPath(); tctx.roundRect?tctx.roundRect(xe-4,gy2,8,11,3):tctx.rect(xe-4,gy2,8,11); tctx.fillStyle=(resizeEv===e)?'#ffffff':'#7dffc0'; tctx.fill(); tctx.fillStyle='#0f0f16'; tctx.fillRect(xe-1,gy2+2,2,7); }   /* poignée de FIN : étire / raccourcit l'event */
     tctx.font='bold 10px system-ui'; tctx.textBaseline='alphabetic'; const lb=((window.FXMAP&&FXMAP.eventLabels&&FXMAP.eventLabels[e.name])||e.name)+(dragEv===e?'  '+Math.floor(e.on/60)+':'+(e.on%60).toFixed(2).padStart(5,'0'):''), tw=tctx.measureText(lb).width, lx=Math.min(Math.max(x,tw/2+3),w-tw/2-3);
-    const lr=lbRow.get(e)||{r:0,lx:lx}, ry=base+18+lr.r*13, lx2=lr.lx; tctx.fillStyle='#0f0f16cc'; tctx.fillRect(lx2-tw/2-2,ry,tw+4,12); tctx.fillStyle=sel?'#34e08a':'#7fd4ff'; tctx.textAlign='center'; tctx.fillText(lb,lx2,ry+10); lbRects.push({e,x0:lx2-tw/2-2,x1:lx2+tw/2+2,y0:ry,y1:ry+12});   /* rangée 0 juste sous la tirette ; rectangle du nom mémorisé : un clic dessus sélectionne l'event */ tctx.textAlign='left'; });
+    const lr=lbRow.get(e)||{r:0,lx:lx}, ry=base+18+lr.r*13, lx2=lr.lx; tctx.fillStyle='#0f0f16cc'; tctx.fillRect(lx2-tw/2-2,ry,tw+4,12); tctx.fillStyle=sel?'#34e08a':ecol; tctx.textAlign='center'; tctx.fillText(lb,lx2,ry+10); lbRects.push({e,x0:lx2-tw/2-2,x1:lx2+tw/2+2,y0:ry,y1:ry+12});   /* rangée 0 juste sous la tirette ; rectangle du nom mémorisé : un clic dessus sélectionne l'event */ tctx.textAlign='left'; });
   tctx.fillStyle='#ff3b30'; tctx.fillRect(X(t)-1,0,2,h);
 }
 function seekFromEvent(ev){ const r=tl.getBoundingClientRect(); au.currentTime=VW0+clamp((ev.clientX-r.left)/r.width)*(VW1-VW0); }
