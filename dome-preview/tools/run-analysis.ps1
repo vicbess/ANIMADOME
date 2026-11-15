@@ -31,6 +31,8 @@ if ($Tracks) {
   L "ETAPE 2/${total} : analyse des pistes séparées"
   & $py -I -X utf8 (Join-Path $PSScriptRoot 'analyze-tracks.py') (Join-Path $MixDir 'tracks') (Join-Path $MixDir 'tracks.js') $audio
   if ($LASTEXITCODE -ne 0) { Fail 5 "analyse des pistes en échec (code $LASTEXITCODE)" }
+  # les pistes envoyées ne servent plus une fois analysées (tracks.js suffit) : on libère l'espace. En cas d'échec elles restent pour relancer.
+  L "Suppression des copies de pistes (inutiles après l'analyse)"; Remove-Item (Join-Path $MixDir 'tracks') -Recurse -Force -ErrorAction SilentlyContinue
 } else {
   $tmp = Join-Path $env:TEMP ('animadome_stems_' + [guid]::NewGuid().ToString('N')); New-Item -ItemType Directory $tmp | Out-Null
   try {
