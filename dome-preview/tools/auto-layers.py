@@ -239,8 +239,50 @@ def main():
         plan = json.load(open(pp, encoding='utf-8-sig'))
         pt = np.array([x['on'] for x in plan]) if plan else np.array([])
         events = [x for x in events if not (len(pt) and np.min(np.abs(pt - x['on'])) < 3.5)]
-        for x in plan: events.append({'name': x['name'], 'on': float(x['on']), 'span': x.get('span'), 'why': x.get('why', '')})
+        for x in plan:
+            ev = {'name': x['name'], 'on': float(x['on']), 'span': x.get('span'), 'why': x.get('why', '')}
+            if x.get('ov'): ev['ov'] = x['ov']
+            events.append(ev)
         events.sort(key=lambda x: x['on'])
+    # ---- calage rythmique : début sur un temps fort (premier temps, sinon temps, sinon kick, sinon attaque marquée) ; fin sur le premier temps / l'attaque suivants,
+    #      pour que la durée de l'event épouse une mesure ou une phrase (un event court dans un passage sans rythme est ÉTIRÉ jusqu'à la prochaine attaque marquée)
+    Bt = np.array(A['beats']); Db = np.array(A['downbeats'])
+    kk_all = np.array([t for t, *_ in A['drums'].get('kick', [])])
+    mo = np.array([o[0] for o in music['onsets'] if o[1] >= 0.3]) if music.get('onsets') else np.array([])   # toutes les attaques de la musique : dans un passage sans kick, ce sont elles qui donnent le rythme (ex. une pulsation lente toutes les 5,6 s)
+    ob = np.array([o[0] for o in (bruit['onsets'] if bruit else []) if o[1] >= 0.8])
+    strong = np.sort(np.concatenate([mo, ob])) if len(mo) + len(ob) else np.array([])
+    def near(arr, t, tol):
+        if not len(arr): return None
+        i = int(np.argmin(np.abs(arr - t)));  return float(arr[i]) if abs(arr[i] - t) <= tol else None
+    def after(arr, t):
+        if not len(arr): return None
+        i = int(np.searchsorted(arr, t)); return float(arr[i]) if i < len(arr) else None
+    def phase_end(t):
+        for p in phases:
+            if p['start'] <= t < p['end']: return float(p['end'])
+        return dur
+    MINSPAN = {'PentaCircle': 4.0, 'LineAPulse': 3.0, 'Spirale': 5.0, 'Balayage': 3.0, 'OndeDeChoc': 4.0, 'Ruée': 3.0, 'Jaillissement': 4.0}   # un event bref dans un passage sans temps est ÉTIRÉ jusqu'à la prochaine attaque marquée
+    FIXED = {'EvilPenta', 'Rien', 'Gerbes', 'Éruption', 'GerbeEtincelles'}   # durée propre à l'effet : seul le début est calé
+    def snap_event(ev):
+        t = ev['on']; s = max(ev.get('span') or 2.0, MINSPAN.get(ev['name'], 0)); moved = []
+        # début : premier temps (±0.9 s) > temps (±0.5) > kick (±0.45) > attaque marquée (±0.8)
+        for arr, tol in ((Db, 0.9), (Bt, 0.5), (kk_all, 0.45), (strong, 3.0)):
+            c = near(arr, t, tol)
+            if c is not None: t = c; break
+        if ev['name'] not in FIXED:
+            tgt = t + s; lo = t + 0.9 * s; hi = t + max(1.7 * s, s + 2.5); pe = phase_end(t) - 0.15
+            end = None
+            for arr in (Db, Bt[::4] if len(Bt) else Bt, strong):   # fin de mesure, sinon tous les 4 temps, sinon prochaine attaque marquée
+                if len(arr):
+                    cand = arr[(arr >= lo) & (arr <= min(hi, pe))]
+                    if len(cand): end = float(cand[np.argmin(np.abs(cand - tgt))]); break
+            if end is not None and end > t + 0.3: s = end - t
+            elif t + s > pe: s = max(0.4, pe - t)
+        else:
+            if t + s > phase_end(t) - 0.1: t = max(t - 0.0, phase_end(t) - s - 0.1)
+        ev['on'] = round(t, 2); ev['span'] = round(s, 2)
+    for ev in events: snap_event(ev)
+    events.sort(key=lambda x: x['on'])
     out = {'v': 1, 'generated': 'auto-layers.py', 'base': basewin, 'mods': mods, 'events': events}
     open(os.path.join(mix, 'layers.js'), 'w', encoding='utf-8').write('window.LAYERS=' + json.dumps(out, ensure_ascii=False, separators=(',', ':')) + ';\n')
     kinds = {}

@@ -710,6 +710,35 @@ Object.assign(FX, {
       add(L.id, hsv(hue-18*LS+14*dimS,.9-.4*LS,clamp(v*(1+.8*LS)*Math.pow(1-dimS,1.3))));
       if(he>0.02 && h32(L.id*7+Math.floor(t*20))<.18*f.high) add(L.id, hsv(195,.2,he*w)); } },
 
+  /* ---------- Nouveaux events (v1.3) : Onde de choc, Spirale, Balayage, Marée, Bulles, Cendres. Tous lisent p.t0 (début), p.span (durée), p.pal, p.level. Distances calculées en coordonnées polaires (L.r : 0 = sommet, 1 = bord). ---------- */
+  /* Onde de choc : un anneau de lumière part du sommet vers le bord à l'impact de départ, puis à chaque kick marqué de l'event */
+  'Onde de choc': (t,w,p,f) => { const t0=p.t0, span=p.span??4, minS=p.minS??4, pal=PAL[p.pal||'fire'], sp=p.speed??.85, waves=[], endF=clamp((t0+span+.3-t)/.3);
+    if(endF<=0) return; const a0=t-t0; if(a0>=0&&a0<1.5) waves.push([a0,1]);
+    for(const i of recent(BT.kick,BT.kickS,t,1.4,minS)){ const k=BT.kick[i]; if(k<t0+.15||k>t0+span) continue; waves.push([t-AVL-k, clamp(BT.kickS[i]/6,.45,1)]); }
+    if(!waves.length) return;
+    for(const L of LED){ let v=0; for(const [age,s] of waves){ const d=(L.r-age*sp)/.07; if(d>-4&&d<4) v+=Math.exp(-d*d)*s*Math.pow(clamp(1-age/1.5),1.4); }
+      if(v>.012){ const [h,sat]=pal(L.r,L.id); add(L.id,hsv(h,Math.max(.25,sat-.5*v),clamp(v*(p.level??1)*endF)*w)); } } },
+  /* Spirale : une tête lumineuse tourne en spirale du bord vers le sommet (deux bras) et laisse une longue traîne qui s'éteint */
+  'Spirale': (t,w,p,f) => { const t0=p.t0, span=p.span??5, age=t-t0; if(age<0||age>span+1.2) return; const e=ssG(clamp(age/span)), turns=p.turns??2.2, pal=PAL[p.pal||'fire'], fade=1-clamp((age-span)/1.2), dir=p.dir==='out'?-1:1;
+    for(const L of LED){ const u=1-L.r; if(u>e+.02) continue; const trail=Math.exp(-(e-u)/.22); let best=9;
+      for(let a=0;a<2;a++){ let d=L.theta-(a*Math.PI+dir*turns*6.2832*u); d=Math.abs((((d+Math.PI)%6.2832)+6.2832)%6.2832-Math.PI); if(d<best) best=d; }
+      const v=Math.exp(-Math.pow(best/.28,2))*trail*(u>e-.03?1.4:1)*fade*w*(p.level??1); if(v<.02) continue; const [h,sat]=pal(L.r,L.id); add(L.id,hsv(h,Math.max(.2,sat-.6*Math.max(0,v-.8)),clamp(v))); } },
+  /* Balayage : une bande de lumière traverse le dôme d'un côté à l'autre (sens tiré au hasard) et laisse une brève rémanence */
+  'Balayage': (t,w,p,f) => { const t0=p.t0, span=p.span??3, age=t-t0; if(age<-.05||age>span+.8) return; const ang=p.ang!==undefined?p.ang:h32(Math.floor(t0*10)+3)*6.2832, pos=lerp(-1.15,1.15,ssG(clamp(age/span))), pal=PAL[p.pal||'lava'], fade=1-clamp((age-span)/.8);
+    for(const L of LED){ const d=L.r*Math.cos(L.theta-ang)-pos, core=Math.exp(-Math.pow(d/.07,2)), tail=d<0?Math.exp(d/.35)*.35:0, v=(core+tail)*fade*w*(p.level??1); if(v<.02) continue; const [h,sat]=pal(L.r,L.id); add(L.id,hsv(h,Math.max(.1,sat-.7*core),clamp(v))); } },
+  /* Marée : un large front d'eau traverse le dôme et laisse derrière lui une lueur liquide qui ondule (écume sur les aigus), puis se retire */
+  'Marée': (t,w,p,f) => { const t0=p.t0, span=p.span??9, age=t-t0; if(age<0||age>span+2) return; const ang=p.ang!==undefined?p.ang:h32(Math.floor(t0*10)+9)*6.2832, front=lerp(-1.3,1.3,ssG(clamp(age/(span*.6)))), out=1-ssG(clamp((age-span*.7)/(span*.3+1.5))), hue0=p.hue??196;
+    for(const L of LED){ const d=L.r*Math.cos(L.theta-ang)-front; if(d>.4) continue; const crest=Math.exp(-Math.pow((d+.05)/.1,2)), body=d<0?.32*(.6+.4*Math.sin(6.2832*(L.r*1.7-t*.12)+L.theta*2))*Math.min(1,-d*3+.2):0, v=(body+crest*.9)*out*w*(p.level??1); if(v<.02) continue;
+      add(L.id,hsv(lerp(hue0,hue0+30,.5+.5*Math.sin(L.theta*2+t*.2)),.85-.5*crest,clamp(v))); if(crest>.3&&h32(L.id*5+Math.floor(t*14))<.25*f.high+.05) add(L.id,hsv(190,.12,crest*out*w*.8)); } },
+  /* Bulles : des bulles montent lentement du bord vers le sommet (légère dérive) et éclatent en petits éclairs */
+  'Bulles': (t,w,p,f) => { const t0=p.t0, span=p.span??9, age=t-t0; if(age<0||age>span+4.5) return; const N=p.count??14, sd0=Math.floor(t0*10)*31;
+    for(let b=0;b<N;b++){ const sd=sd0+b*17, start=h32(sd)*span*.75, life=2.8+h32(sd+1)*1.8, a=age-start; if(a<0||a>life+.35) continue; const th=h32(sd+2)*6.2832+.25*Math.sin(a*1.3+b), pr=(.55+.45*h32(sd+3))*(1-a/life)+.02*Math.sin(a*3+b), pop=a>life?(a-life)/.35:0, rad=.05*(1+2.4*pop), amp=a>life?(1-pop):Math.min(1,a/.3)*.8, cT=Math.cos(th), sT=Math.sin(th);
+      for(const L of LED){ if(Math.abs(L.r-pr)>rad*3.2) continue; if(L._c===undefined){ L._c=Math.cos(L.theta); L._s=Math.sin(L.theta); } const d2=L.r*L.r+pr*pr-2*L.r*pr*(L._c*cT+L._s*sT); if(d2>rad*rad*9) continue; const v=Math.exp(-d2/(rad*rad))*amp*w*(p.level??1); if(v>.02) add(L.id,hsv(pop>0?195:200,pop>0?.1:.55,clamp(v))); } } },
+  /* Cendres : des cendres tièdes dérivent du sommet vers le bord, par petits points qui vacillent */
+  'Cendres': (t,w,p,f) => { const t0=p.t0, span=p.span??12, age=t-t0; if(age<0||age>span+1.5) return; const N=p.count??26, fade=ssG(clamp(age/2))*(1-ssG(clamp((age-span)/1.5))), sd0=Math.floor(t0*10)*57;
+    for(let b=0;b<N;b++){ const sd=sd0+b*13, th=h32(sd)*6.2832+.35*Math.sin(age*.6+b), spd=.05+.06*h32(sd+1), r=((h32(sd+2)+age*spd)%1), fl=.6+.4*Math.sin(age*5+b*3), cT=Math.cos(th), sT=Math.sin(th), rad=.03;
+      for(const L of LED){ if(Math.abs(L.r-r)>rad*3.2) continue; if(L._c===undefined){ L._c=Math.cos(L.theta); L._s=Math.sin(L.theta); } const d2=L.r*L.r+r*r-2*L.r*r*(L._c*cT+L._s*sT); if(d2>rad*rad*9) continue; const v=Math.exp(-d2/(rad*rad))*fl*fade*w*(p.level??1)*.55; if(v>.02) add(L.id,hsv(28,.2,clamp(v))); } } },
+
   // Éclairs : sur les gros aigus (au hasard), un trait blanc-bleuté tombe du sommet (centre) vers le bord, flash faible sur tout le dôme
   'Éclairs': (t,w,p,f) => {
     const rate=p.rate??.4, minS=p.minS??6;
@@ -767,7 +796,7 @@ function applyDescriptif(d){
   EV = (d.events||[]).map(e => { const k=key(e.t), m = FXMAP.events[k]; /* instant réel : déplacé à la main sur la timeline (events-timing.json) > 'at' de fxmap > seconde notée dans le descriptif */ const on=(EVT[k]!==undefined)?EVT[k]:(m&&m.at!==undefined)?m.at:e.t; return { k, t:e.t, on, name:shortName(e.text), text:e.text, dur:m?m.dur:4, span:m?m.span:undefined, span0:m?m.span:undefined, rush:m?m.rush:undefined, txtDur:Math.max(2, m?m.dur:0), fx:m?(Array.isArray(m.fx)?m.fx:[m.fx]).map(x=>Object.assign({},x,{t0:on})):[] }; });
   /* doublons d'events (Maj+clic sur la poignée) : mémorisés dans events-timing.json sous __dups = [{k:'02:21', on:142.3}] */
   (EVT.__dups||[]).forEach(dp=>{ const b=String(dp.k).startsWith('lib:')?evLibEvent(String(dp.k).slice(4),dp.on,dp.span):EV.find(e=>e.k===dp.k&&!e.isDup); if(!b) return; let c=Object.assign({},b,{ isDup:true, on:dp.on, fx:b.fx.map(f=>Object.assign({},f,{t0:dp.on})) }); if(dp.span&&b.span&&!b.isLib) evSetSpan(c,dp.span); if(dp.ov){ c.ov=dp.ov; c.fx.forEach(f=>Object.assign(f,dp.ov)); } EV.push(c); });   /* dp.ov : réglages propres à cette copie (ex. couleur), enregistrés avec elle */
-  ((window.LAYERS||{}).events||[]).forEach(dp=>{ const b=dp.name?EV.find(e=>e.name===dp.name&&!e.isDup):(String(dp.k).startsWith('lib:')?evLibEvent(String(dp.k).slice(4),dp.on,dp.span):EV.find(e=>e.k===dp.k&&!e.isDup)); if(!b) return; const c=Object.assign({},b,{ isDup:true, auto:true, why:dp.why, on:dp.on, fx:b.fx.map(f=>Object.assign({},f,{t0:dp.on})) }); if(dp.span&&b.span&&!b.isLib) evSetSpan(c,dp.span); EV.push(c); });   /* events ajoutés par la passe automatique (layers.js) : jamais enregistrés dans events-timing.json */
+  ((window.LAYERS||{}).events||[]).forEach(dp=>{ const b=dp.name?(EV.find(e=>e.name===dp.name&&!e.isDup)||evLibEvent(dp.name,dp.on,dp.span)):(String(dp.k).startsWith('lib:')?evLibEvent(String(dp.k).slice(4),dp.on,dp.span):EV.find(e=>e.k===dp.k&&!e.isDup)); if(!b) return; const c=Object.assign({},b,{ isDup:true, auto:true, why:dp.why, on:dp.on, fx:b.fx.map(f=>Object.assign({},f,{t0:dp.on})) }); if(dp.span&&b.span&&!b.isLib) evSetSpan(c,dp.span); if(dp.ov){ c.ov=dp.ov; c.fx.forEach(f=>Object.assign(f,dp.ov)); } EV.push(c); });   /* events ajoutés par la passe automatique (layers.js) : jamais enregistrés dans events-timing.json */
   Object.keys(EVT.__spans||{}).forEach(k=>{ const b=EV.find(e=>e.k===k&&!e.isDup); if(b&&b.span) evSetSpan(b,EVT.__spans[k]); });   /* durées étirées à la main sur la timeline */
   EVREM=[]; (EVT.__removed||[]).forEach(k=>{ const i=EV.findIndex(e=>e.k===k&&!e.isDup); if(i>=0){ EVREM.push(EV[i]); EV.splice(i,1); } });   /* events d'origine supprimés à la main */
   shownPhase=-1; shownSub=null; updateTitleGradient(); setTimeout(computePhaseColors,80); if(eventView) eventBankRefresh();
@@ -1120,6 +1149,12 @@ const LIBALIAS={ 'Pulsation':'PulseSlow' };
 /* Events de bibliothèque propres à l'outil (disponibles dans tous les mix) : rangés dans leurs listes de l'Event Bank */
 const TOOL_LIB={
   'LeverDeSoleil':{ cat:'Nature', span:20, d:"Un soleil apparaît du côté est du dôme puis monte lentement vers le sommet en éclairant de plus en plus l'eau, qui s'éclaircit.", fx:{ n:'Lever de soleil', delay:5, eastDeg:0 } },
+  'OndeDeChoc':{ cat:'Geometric', span:4, d:"Un anneau de lumière part du sommet vers le bord à l'impact de départ, puis à chaque kick marqué pendant l'event.", fx:{ n:'Onde de choc', pal:'fire' } },
+  'Spirale':{ cat:'Geometric', span:5, d:"Une tête lumineuse tourne en spirale du bord vers le sommet (deux bras) en laissant une longue traîne qui s'éteint.", fx:{ n:'Spirale', pal:'fire' } },
+  'Balayage':{ cat:'Basics', span:3, d:"Une bande de lumière traverse le dôme d'un côté à l'autre en laissant une brève rémanence ; le sens est tiré au hasard à chaque occurrence.", fx:{ n:'Balayage', pal:'lava' } },
+  'Marée':{ cat:'Water', span:9, d:"Un large front d'eau traverse le dôme et laisse derrière lui une lueur liquide qui ondule, avec de l'écume sur les aigus, puis se retire doucement.", fx:{ n:'Marée', pal:'ocean' } },
+  'Bulles':{ cat:'Water', span:9, d:"Des bulles montent lentement du bord vers le sommet, avec une légère dérive, et éclatent en petits éclairs.", fx:{ n:'Bulles', pal:'ocean' } },
+  'Cendres':{ cat:'Volcano', span:12, d:"Des cendres tièdes dérivent du sommet vers le bord, par petits points qui vacillent, très discrètes.", fx:{ n:'Cendres', pal:'ember' } },
   'EauDeNuit':{ cat:'Water', span:10, d:"Fond uniforme et sombre sur tout le dôme, sans vague ; seule une autre source de lumière (comme le soleil) en modifie les teintes.", fx:{ n:'Eau de nuit' } } };
 const libDef=name=>(window.FXMAP&&FXMAP.eventLib&&FXMAP.eventLib[name])||TOOL_LIB[name];   /* anciens noms d'events de bibliothèque -> nouveaux (copies déjà enregistrées) */
 function evLibEvent(name,on,span){ name=LIBALIAS[name]||name; const def=libDef(name); if(def){ const sp=span||def.span||2; return { k:'lib:'+name, t:on, on, name, text:name+' : '+def.d, dur:sp+.3, span:sp, txtDur:Math.max(2,sp), isLib:true, fx:[Object.assign({},def.fx,{span:sp,t0:on})] }; } const b=BANK[name]; if(!b) return null; const sp=span||4; return { k:'lib:'+name, t:on, on, name, text:name+' : '+b.d, dur:sp+.3, span:sp, txtDur:Math.max(2,sp), isLib:true, fx:[{ n:'Bank', eff:name, grad:'Blanc', speed:1, level:1, span:sp, t0:on }] }; }
@@ -1337,7 +1372,7 @@ sync3UI();
     return out; }
   async function buildPackage(user){
     const blocks=await readDescriptifBlocks(); const phases=[];
-    PH.forEach(p=>{ const evs=EV.filter(e=>e.on>=p.start-1e-6&&e.on<p.end-1e-6).sort((a,b)=>a.on-b.on||String(a.k).localeCompare(String(b.k))).map(e=>{
+    PH.forEach(p=>{ const evs=EV.filter(e=>!e.auto&&e.on>=p.start-1e-6&&e.on<p.end-1e-6).sort((a,b)=>a.on-b.on||String(a.k).localeCompare(String(b.k))).map(e=>{
         const t3=x=>x===undefined||x===null?undefined:+(+x).toFixed(3);
         if(e.isLib) return { lib:1, k:e.k, on:t3(e.on), span:t3(e.span) };
         if(e.isDup) return { dup:1, k:e.k, on:t3(e.on), span:t3(e.span), ov:e.ov };
