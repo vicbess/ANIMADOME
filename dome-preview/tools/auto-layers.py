@@ -233,6 +233,14 @@ def main():
                 i = int(t * FPS); rise = Edb[i - 4 * FPS:i - FPS].mean() - Edb[i - 10 * FPS:i - 7 * FPS].mean()
                 if rise >= 3 and t - 3.2 > a and not (len(ut) and np.min(np.abs(ut - (t - 3.2))) < 4) and not any(abs(x['on'] - (t - 3.2)) < 4 for x in events):   # montée avant l'impact : la lave s'emballe juste avant
                     events.append({'name': 'Ruée', 'on': round(t - 3.2, 2), 'span': 2.3, 'why': 'montée de volume (+%.0f dB en 6 s) juste avant un impact : la lave s\'emballe' % rise})
+    # events écrits à la main d'après le descriptif et l'analyse (events-plan.json) : ils priment sur les flashs automatiques voisins
+    pp = os.path.join(mix, 'events-plan.json')
+    if os.path.exists(pp):
+        plan = json.load(open(pp, encoding='utf-8-sig'))
+        pt = np.array([x['on'] for x in plan]) if plan else np.array([])
+        events = [x for x in events if not (len(pt) and np.min(np.abs(pt - x['on'])) < 3.5)]
+        for x in plan: events.append({'name': x['name'], 'on': float(x['on']), 'span': x.get('span'), 'why': x.get('why', '')})
+        events.sort(key=lambda x: x['on'])
     out = {'v': 1, 'generated': 'auto-layers.py', 'base': basewin, 'mods': mods, 'events': events}
     open(os.path.join(mix, 'layers.js'), 'w', encoding='utf-8').write('window.LAYERS=' + json.dumps(out, ensure_ascii=False, separators=(',', ':')) + ';\n')
     kinds = {}
