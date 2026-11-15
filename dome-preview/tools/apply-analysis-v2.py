@@ -24,7 +24,10 @@ def remap(new_s, old_s):
 
 def main():
     mix = os.path.abspath(sys.argv[1]); a = open(os.path.join(mix, 'analysis2.js'), encoding='utf-8').read(); A = json.loads(a[a.index('=') + 1:].strip().rstrip(';'))
-    bt = read_js(os.path.join(mix, 'beats.js'), 'BEATS'); sd = read_js(os.path.join(mix, 'stems.js'), 'STEMS')
+    DEF = [1] * 30 + [2] * 50 + [3] * 30 + [4] * 15 + [5] * 6 + [6] * 3 + [7]   # échelle de forces par défaut (mix sans ancienne analyse)
+    bp, sp = os.path.join(mix, 'beats.js'), os.path.join(mix, 'stems.js')
+    bt = read_js(bp, 'BEATS') if os.path.exists(bp) else {'kick': [], 'kickS': DEF, 'hit': [0] * 9000, 'hitS': DEF}
+    sd = read_js(sp, 'STEMS') if os.path.exists(sp) else {'kickS': DEF, 'hitS': DEF}
     kick = merge([A['drums']['kick']], 0.12)
     # frappes : caisse claire + hi-hat + crash, plus fortes d'abord, jusqu'au même nombre qu'avant
     hit = merge([A['drums']['snare'], A['drums']['hh'], A['drums']['crash']], 0.06)

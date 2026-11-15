@@ -33,7 +33,7 @@ Ce que l'outil montre à l'écran n'est pas ce que les LEDs rendront : la vue 2D
 ## Son et synchronisation
 - Une animation « en rythme » se règle avec un **décalage son/lumière réglable** : la perception tolère mieux une lumière légèrement en avance qu'en retard, et la latence audio (carte son, Bluetooth, sono) doit être compensée à part.
 - Pour caler TouchDesigner sur le morceau : timecode **LTC** ou MIDI, **OSC**, ou **Ableton Link** ; le projet Ableton du mix est la source de vérité du temps.
-- Analyse (offline) : kicks, départs de notes, flux spectral, énergie par bande, rugosité (voir `dome-preview/tools/`). Bibliothèques : librosa (déjà utilisée), madmom (battements, mesures), Essentia. Les séparations de stems (Demucs) améliorent nettement la détection des kicks et de la basse.
+- Analyse (offline) : kicks, départs de notes, flux spectral, énergie par bande, rugosité (voir `dome-preview/tools/`). Bibliothèques utilisées : librosa (superflux), Demucs htdemucs_ft + drumsep (batterie séparée), beat_this (temps et premiers temps). Autres pistes : madmom, Essentia. Les séparations de stems (Demucs) améliorent nettement la détection des kicks et de la basse.
 - **Ambisonie** : les mix sont ambisoniques. L'analyse de la **direction d'arrivée** du son (azimut, élévation) permettrait d'allumer la bonne zone du dôme. Piste non exploitée aujourd'hui ; ne pas l'inventer sans demande, mais la proposer si une phase s'y prête.
 
 ## Réflexes pour ce projet

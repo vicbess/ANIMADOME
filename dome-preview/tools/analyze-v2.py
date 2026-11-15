@@ -1,6 +1,6 @@
 # Analyse v2 (en essai, en parallèle des anciens outils) : pistes séparées, 44,1 kHz, pas ~6 ms.
 #   python analyze-v2.py <dossier_mix> [--work <dossier_temporaire>] [--only etape,...]
-# Étapes : features (superflux + enveloppes par piste), demucs (htdemucs_ft : batterie de la piste musique),
+# Étapes : features (superflux + enveloppes par piste ; sans pistes séparées, l'audio à lire est la seule piste), demucs (htdemucs_ft : 4 stems de la piste musique = celle dont le nom contient « music », sinon la plus forte),
 #          drums (séparation kick/snare/toms/hh/ride/crash), beats (beat_this), context (nouveautés + bilan par phase), pack.
 # Sorties : <mix>/analysis2.js (window.ANALYSIS2) et <mix>/analysis2.report.md (bilan par phase pour relire avec le descriptif).
 import sys, os, json, time, subprocess, shutil, glob
@@ -58,14 +58,17 @@ def envelopes(y, sr):
     return {'fps': FPS, 'rms': db(rms).tolist(), 'cen': np.round(cen).astype(int).tolist(), 'lo': np.round(lo, 1).tolist(), 'hi': np.round(hi, 1).tolist()}
 
 def stage_features(mix, work):
-    files = sorted(glob.glob(os.path.join(mix, 'tracks', '*.*'))); cache = os.path.join(work, 'features.json')
+    files = [f for f in sorted(glob.glob(os.path.join(mix, 'tracks', '*.*'))) if not f.endswith('.part')]
+    if not files:   # pas de pistes séparées : l'audio à lire est la seule piste (et la piste musique)
+        a = json.load(open(os.path.join(mix, 'mix.json'), encoding='utf-8-sig')).get('audio', ''); files = [os.path.join(mix, a.replace('/', os.sep))]
+    cache = os.path.join(work, 'features.json')
     if os.path.exists(cache): log('features : cache'); return json.load(open(cache))
     res = {'tracks': []}
     for f in files:
         nm = os.path.splitext(os.path.basename(f))[0]; log('piste', nm); y, sr = load_mono(f); dur = len(y) / sr
         on, env, mel, fr = superflux_onsets(y, sr); log('  ', len(on), 'départs'); en = envelopes(y, sr)
         peak = float(20 * np.log10(np.abs(y).max() + 1e-9))
-        res['tracks'].append({'name': nm, 'file': os.path.basename(f), 'dur': round(dur, 2), 'peakDb': round(peak, 1), 'onsets': on, 'env': en,
+        res['tracks'].append({'name': nm, 'file': os.path.basename(f), 'path': f, 'dur': round(dur, 2), 'peakDb': round(peak, 1), 'onsets': on, 'env': en,
                               'novfeat': None})
         # caractéristiques pour la nouveauté (0,5 s) : log-mel 64 bandes
         y22 = librosa.resample(y, orig_sr=sr, target_sr=22050) if sr != 22050 else y
@@ -76,8 +79,8 @@ def stage_features(mix, work):
 def stage_demucs(mix, work, music):
     out = os.path.join(work, 'demucs'); d = glob.glob(os.path.join(out, '**', 'drums.wav'), recursive=True)
     if d: log('demucs : cache'); return d[0]
-    log('demucs htdemucs_ft (batterie) sur', os.path.basename(music), '- étape longue')
-    r = subprocess.run([sys.executable, '-X', 'utf8', '-m', 'demucs', '-n', 'htdemucs_ft', '--two-stems=drums', '--float32', '-o', out, music])
+    log('demucs htdemucs_ft (stems) sur', os.path.basename(music), '- étape longue')
+    r = subprocess.run([sys.executable, '-X', 'utf8', '-m', 'demucs', '-n', 'htdemucs_ft', '--float32', '-o', out, music])
     d = glob.glob(os.path.join(out, '**', 'drums.wav'), recursive=True)
     if r.returncode != 0 or not d: raise SystemExit('demucs en échec')
     return d[0]
@@ -170,13 +173,13 @@ def main():
     os.makedirs(work, exist_ok=True); log('mix', mix, '| travail', work)
     feats = stage_features(mix, work)
     music = [t for t in feats['tracks'] if 'music' in t['name'].lower()] or [max(feats['tracks'], key=lambda t: t['peakDb'])]
-    mf = os.path.join(mix, 'tracks', music[0]['file'])
+    mf = music[0]['path']
     dp = stage_demucs(mix, work, mf); drums = stage_drums(work, dp); beats = stage_beats(mf, work)
     nov, tempo = stage_context(mix, work, feats, drums, beats)
-    for t in feats['tracks']: t.pop('novfeat', None)
+    for t in feats['tracks']: t.pop('novfeat', None); t.pop('path', None)
     out = {'sr': SR, 'hop': round(HOPS, 5), 'dur': feats['tracks'][0]['dur'], 'tracks': feats['tracks'], 'drums': drums, 'beats': beats['beats'], 'downbeats': beats['downbeats'], 'tempo': tempo, 'novelty': nov}
     open(os.path.join(mix, 'analysis2.js'), 'w', encoding='utf-8').write('window.ANALYSIS2=' + json.dumps(out, separators=(',', ':')) + ';\n'); log('analysis2.js écrit')
     if os.path.exists(os.path.join(mix, 'descriptif.json')): phase_report(mix, feats, drums, beats, nov, tempo)
-    log('TERMINE')
+    log('STEMS_DIR=' + os.path.dirname(dp)); log('TERMINE')
 
 if __name__ == '__main__': main()

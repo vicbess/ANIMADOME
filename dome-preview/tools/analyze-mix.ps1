@@ -1,4 +1,4 @@
-﻿# Prépare un nouveau mix pour ANIMADÔme : audio 128 kbps + analyse (énergie par bandes, kicks/hits) + dossier prêt à l'emploi.
+﻿# Prépare un nouveau mix pour ANIMADÔme : audio 128 kbps + analyse de l'énergie par bandes (features.js ; kicks et frappes : analyze-v2.py) + dossier prêt à l'emploi.
 #   powershell -ExecutionPolicy Bypass -File tools\analyze-mix.ps1 -Audio "C:\...\mix.mp3" -OutDir "mixes\monmix"
 param([Parameter(Mandatory)][string]$Audio, [Parameter(Mandatory)][string]$OutDir, [switch]$NoAudioCopy)   # -NoAudioCopy : ne recrée pas audio.mp3 (le fichier à lire est déjà en place)
 $root = Split-Path -Parent $PSScriptRoot
@@ -10,7 +10,6 @@ $tmp = Join-Path $env:TEMP ('animadome_' + [guid]::NewGuid().ToString('N')); New
 if (-not $NoAudioCopy) { & $ff -hide_banner -loglevel error -y -i $Audio -ac 2 -b:a 128k (Join-Path $OutDir 'audio.mp3') }
 & $ff -hide_banner -loglevel error -y -i $Audio -ac 1 -ar 22050 -f s16le (Join-Path $tmp 'mono22k.raw')
 & (Join-Path $PSScriptRoot 'analyze-features.ps1') -raw (Join-Path $tmp 'mono22k.raw') -out (Join-Path $tmp 'features.json')
-& (Join-Path $PSScriptRoot 'analyze-beats.ps1') -raw (Join-Path $tmp 'mono22k.raw') -out (Join-Path $OutDir 'beats.js')
 $f = Get-Content (Join-Path $tmp 'features.json') -Raw | ConvertFrom-Json
 $inv = [System.Globalization.CultureInfo]::InvariantCulture
 function J($a,$dd){ ($a | ForEach-Object { ([math]::Round([double]$_,$dd)).ToString($inv) }) -join ',' }

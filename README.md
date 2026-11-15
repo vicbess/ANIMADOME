@@ -93,17 +93,27 @@ ANIMADOME/
 
 ## Analyse du son (facultatif)
 
-La fenêtre **Select Audio files** peut lancer l'analyse : sur le fichier A seul (énergie, kicks, séparation des stems par Demucs, rugosité), ou sur les pistes B si tu en fournis (départs de sons, énergie et brillance de chaque piste, dans `tracks.js`). Si les outils ci-dessous ne sont pas installés, l'outil le dit et liste ce qui manque ; le fichier A reste lisible. La progression s'affiche dans la fenêtre.
+La fenêtre **Select Audio files** peut lancer l'analyse : sur le fichier A seul, ou sur les pistes B si tu en fournis (bruitages, musique, écho… de même durée que A). Si les outils ci-dessous ne sont pas installés, l'outil le dit et liste ce qui manque ; le fichier A reste lisible. La progression s'affiche dans la fenêtre.
 
-Pour **créer un nouveau mix**, les scripts de `dome-preview/tools/` séparent les stems puis calculent l'analyse (kicks, notes, énergie par bande…). Ils nécessitent Python 3.11 et :
+Ce que fait l'analyse (`dome-preview/tools/run-analysis.ps1`) :
+- **Énergie par bandes** de l'audio à lire (`features.js`).
+- **Départs de sons de chaque piste** en 44,1 kHz (pas d'environ 6 ms, méthode « superflux » de librosa) avec niveau, brillance, graves et aigus (`analysis2.js`, local).
+- **Batterie** de la piste musique (celle dont le nom contient « music », sinon la plus forte ; sans pistes, l'audio A) : séparée par Demucs `htdemucs_ft`, puis découpée par drumsep en kick, caisse claire, toms, hi-hat, ride et crash. Ce sont les **kicks** et **frappes** qui pilotent les animations (`beats.js`, `stems.js`).
+- **Temps et premiers temps** par [beat_this](https://github.com/CPJKU/beat_this).
+- **Stems** de la même piste : basse, voix, aigus, notes de synthé, rugosité (`stems.js`).
+- **Bilan par phase** (`analysis2.report.md`) : niveau, densité de sons, ruptures sonores, tempo, à relire avec le descriptif.
+Les copies de pistes envoyées sont supprimées une fois l'analyse terminée (seuls l'audio à lire et les fichiers d'analyse restent).
 
-- [Demucs](https://github.com/facebookresearch/demucs) (séparation des stems)
-- [PyTorch / torchaudio](https://pytorch.org/), [librosa](https://librosa.org/), numpy, scipy
+Pour utiliser l'analyse, il faut Python 3.11, ffmpeg et, dans un environnement `audio-analysis\venv` :
 
-Ces outils ne sont **pas** embarqués dans le dépôt (plusieurs Go) : à installer soi-même. Les fichiers d'analyse **déjà calculés** d'un mix sont dans le dépôt des mix : pour utiliser un mix existant, ils ne sont pas nécessaires.
+```
+python -m venv audio-analysis\venv
+audio-analysis\venv\Scripts\pip install numpy scipy scikit-learn librosa soundfile torch torchaudio demucs beat-this mdxnet-infer
+```
 
+PyTorch avec CUDA est conseillé (sur une GTX 1080, un mix de 50 minutes prend environ 25 minutes). Les modèles (Demucs, drumsep, beat_this) se téléchargent au premier lancement. Ces outils ne sont **pas** embarqués dans le dépôt (plusieurs Go). Les fichiers d'analyse **déjà calculés** d'un mix sont dans le dépôt des mix : pour utiliser un mix existant, ils ne sont pas nécessaires.
 ## Licence et crédits
 
 Code sous licence [MIT](LICENSE). Les mix, leur audio et leurs droits appartiennent à leurs auteurs ; l'audio n'est jamais publié dans ces dépôts.
 
-Outils tiers utilisés (installés séparément, jamais redistribués ici) : Demucs (MIT), PyTorch (BSD), librosa (ISC), numpy et scipy (BSD).
+Outils tiers utilisés (installés séparément, jamais redistribués ici) : Demucs (MIT), drumsep / mdxnet-infer, beat_this (MIT), PyTorch (BSD), librosa (ISC), numpy et scipy (BSD).
