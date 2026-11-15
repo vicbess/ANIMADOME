@@ -26,7 +26,7 @@
   .evchip.mod { border:1px solid currentColor; }   /* anim 2D layer : bordure simple, chaînée à son effet de base (↳) */
   .evchip.evt { border:0; border-radius:999px; padding:2px 11px 2px 8px; background:color-mix(in srgb,currentColor 20%,transparent); }   /* event : pastille pleine teintée */
   .evchip.evt::before { content:'\25C6\00a0'; font-size:.8em; }
-  .evchip.off { opacity:.3; } .evchip.hl { box-shadow:0 0 0 2px #fff8; }
+  .evchip.solo { box-shadow:0 0 0 2px currentColor; } .evchip.off { opacity:.3; } .evchip.hl { box-shadow:0 0 0 2px #fff8; }
   .evchip .chipP { display:none; margin-left:7px; opacity:.85; } .evchip:hover .chipP { display:inline; } .evchip .chipP:hover { opacity:1; text-shadow:0 0 6px currentColor; }
   .evrow { gap:8px; align-items:flex-start; } .evrc { display:flex; flex-wrap:wrap; gap:7px 12px; align-items:center; flex:1; min-height:22px; }
   .laysw { width:132px; flex:none; display:flex; align-items:center; gap:7px; padding:2px 8px 2px 6px; font-size:.76em; text-align:left; white-space:nowrap; }
@@ -70,7 +70,7 @@
   .ph-techview { white-space:pre-wrap; line-height:1.55; cursor:text; padding:3px 5px; margin:0 0 1.15em -5px; border:1px dashed transparent; border-radius:5px; } .ph-techview:hover { border-color:#3a3a50; }
   .ph-techview .th { font-weight:700; margin-top:.6em; } .ph-techview > div:first-child { margin-top:0; } .ph-techview .tb { font-weight:400; padding-left:1.1em; text-indent:-1.1em; } .ph-techview .tp { font-weight:400; }
   #phTech { display:none; font-weight:500; } #phTech.editing { display:block; }
-  #phTitleRow { display:block; } #phBtns { display:flex; justify-content:center; gap:10px; margin:0 0 .9em; } #phTitleRow #phText { flex:1; } #editBtn { flex:none; --c:#7fd4ff; font-size:11px; padding:4px 10px; margin-top:1px; } #cleanBtn { flex:none; --c:#ffd84d; font-size:11px; padding:4px 10px; margin-top:1px; }
+  #phHead { display:flex; justify-content:flex-end; align-items:baseline; gap:18px; margin:0 0 .5em; } #phHead .ph-time { margin:0; justify-content:flex-end; text-align:right; } #phTitleRow { display:block; } #phBtns { display:flex; justify-content:flex-end; gap:8px; margin:0; } #phTitleRow #phText { flex:1; } #editBtn { flex:none; --c:#7fd4ff; font-size:11px; padding:4px 10px; margin-top:1px; } #cleanBtn { flex:none; --c:#ffd84d; font-size:11px; padding:4px 10px; margin-top:1px; }
   #cleanBox { border:1px solid #6a5a2a; background:#1a1710; border-radius:8px; padding:8px 10px; margin:0 0 .8em; font-size:12.5px; line-height:1.4; max-height:34vh; overflow:auto; scrollbar-width:thin; scrollbar-color:#4a4a62 transparent; } #cleanBox[hidden] { display:none; }
   #cleanBox h4 { margin:0 0 5px; font-size:12px; color:#ffd84d; letter-spacing:.3px; } #cleanBox ul { margin:0 0 8px; padding-left:16px; } #cleanBox li { margin:0 0 5px; color:#d8d8e4; } #cleanBox li i { color:#aab0c4; } #cleanBox li b { color:#ffb86b; font-weight:600; } #cleanBox .row { display:flex; gap:8px; flex-wrap:wrap; } #cleanBox .row .chip { --c:#ffd84d; } #cleanBox .mut { color:var(--mut); }
   .ph-son { display:none; } #phText { margin:0 0 .75em; font-size:1.02em; font-weight:600; line-height:1.3; text-align:center; }
@@ -87,7 +87,7 @@
   .mixTop { position:absolute; left:0; top:50%; transform:translateY(-50%); font-size:18px; color:var(--fg); } .mixTop select { font-size:19px; font-weight:700; padding:6px 12px; }
   .chip { font:600 11px system-ui; padding:3px 9px; border-radius:12px; border:1px solid var(--line); background:#14141c; color:var(--mut); cursor:pointer; letter-spacing:.2px; }
   .chip:hover { border-color:#5a5a80; } .chip.on { color:#0b0b10; background:var(--c,#e8e8f0); border-color:var(--c,#e8e8f0); } .chip.par { --c:#ffffff; } .chip.vue { --c:#ffffff; font-size:14px; padding:6px 14px; border-color:#6a6a86; color:var(--fg); }
-  .side.geomode #phTitleRow, .side.geomode #cleanBox, .side.geomode #liveLines, .side.geomode #phText, .side.geomode #textBlock, .side.geomode .promptbox, .side.geomode .ph-time { display:none; }
+  .side.geomode #phHead, .side.geomode #phTitleRow, .side.geomode #cleanBox, .side.geomode #liveLines, .side.geomode #phText, .side.geomode #textBlock, .side.geomode .promptbox, .side.geomode .ph-time { display:none; }
   #geoTools { flex:1 1 auto; min-height:0; overflow:auto; font-size:13px; display:flex; flex-direction:column; gap:7px; }
   .tabs { display:flex; gap:6px; margin:-4px 0 10px; border-bottom:1px solid var(--line); } .tabs .tab { border:0; border-bottom:2px solid transparent; border-radius:0; background:none; color:var(--mut); font:700 12px system-ui; letter-spacing:.6px; padding:6px 14px; cursor:pointer; } .tabs .tab.on { color:var(--fg); border-bottom-color:var(--acc); } .side.geomode .tabs { display:none; }
   .side.eventmode > :not(.tabs):not(#eventTools) { display:none !important; }
@@ -143,8 +143,8 @@
       <div class="geoOv" id="geoOv"><div class="geoMain" id="geoMain"><div class="geotop" id="geoTop"></div><div class="geotop" id="geoPar"></div></div><div class="geo" id="geoBar"></div></div></div>
     <div class="rightcol">
     <div class="side">
-      <div class="ph-time" id="phTime"><div id="phMix"><span id="phMixTxt" title="Cliquer : mettre à jour / vérifier les mises à jour de cette phase" style="cursor:pointer"></span></div></div>
-      <div id="phTitleRow"><div id="phBtns"><button class="chip" id="editBtn" title="Modifier le texte technique de cette phase (Entrée = valider, Maj+Entrée = nouvelle ligne, Échap = annuler)">Éditer la description</button><button class="chip" id="cleanBtn" title="Vérifie cette phase (contradictions du descriptif, couleurs, effets qui se gênent), liste les problèmes trouvés et te demande confirmation avant de corriger. Annulable.">Nettoyer l'anim de la phase</button></div></div>
+      <div id="phHead"><div class="ph-time" id="phTime"><div id="phMix"><span id="phMixTxt" title="Cliquer : mettre à jour / vérifier les mises à jour de cette phase" style="cursor:pointer"></span></div></div>
+      <div id="phTitleRow"><div id="phBtns"><button class="chip" id="editBtn" title="Modifier le texte technique de cette phase (Entrée = valider, Maj+Entrée = nouvelle ligne, Échap = annuler)">Éditer la description</button><button class="chip" id="cleanBtn" title="Vérifie cette phase (contradictions du descriptif, couleurs, effets qui se gênent), liste les problèmes trouvés et te demande confirmation avant de corriger. Annulable.">Nettoyer l'anim de la phase</button></div></div></div>
       <div id="cleanBox" hidden></div>
       <div id="textBlock"><p class="ph-title" id="phText" title="Titre de la phase (résumé, non modifiable ; il est défini dans le descriptif)"></p>
       <div id="phTechView" class="ph-techview" title="Partie technique (bouton « Éditer la description » pour la modifier)"></div>
@@ -788,6 +788,7 @@ function boundaryFade(tb){
     m1/=Math.max(1,b-a); m2/=Math.max(1,c-b); d+=Math.abs(m2-m1); }
   d/=5; const x=clamp((d-0.04)/0.2); return lerp(8,0.5,Math.pow(x,0.7)); }
 function ensureFades(){ if(PH._f) return; PH._f=true;
+  ((window.LAYERS||{}).base||[]).forEach(b=>{ if(!b.on) return; const P=PH.find(q=>q.start===b.ph); if(P) P.fx.forEach(fx=>{ if(fx.n===b.on&&!fx.win){ Object.defineProperty(fx,'win',{ value:b.win, enumerable:false, writable:true, configurable:true }); Object.defineProperty(fx,'autoWhy',{ value:b.why, enumerable:false, writable:true, configurable:true }); } }); });   /* fenêtres d'apparition calculées par la passe automatique (layers.js) : non enregistrées dans les phases */
   PH.forEach((p,i)=>{ if(i===0){ p.L=0; return; } const prev=PH[i-1]; p.L=Math.min(boundaryFade(p.start),0.8*(p.end-p.start),0.8*(prev.end-prev.start)); p.d=0; }); }
 const smooth=x=>x*x*(3-2*x);
 function inProg(j,t){ if(j<=0) return 1; if(j>=PH.length) return 0; const p=PH[j]; if(p.L<0.05) return t>=p.start?1:0; return smooth(clamp((t-(p.start-p.L/2))/p.L)); }
@@ -803,13 +804,14 @@ const layerOfFx=fx=>fx&&fx.layer==='mod'?'mod':'base';
 const LAYERS=(window.LAYERS&&typeof window.LAYERS==='object')?window.LAYERS:{ mods:[], events:[] };
 const OFFSET=(()=>{ try{ return new Set(JSON.parse(localStorage.getItem('animadome_off_'+(window.MIX&&MIX.slug))||'[]')); }catch(e){ return new Set(); } })();
 const saveOff=()=>{ try{ localStorage.setItem('animadome_off_'+(window.MIX&&MIX.slug),JSON.stringify([...OFFSET])); }catch(e){} };
+const BASEADD=new Map(); (LAYERS.base||[]).forEach(b=>{ if(!b.add) return; const fx=Object.assign({},b.add,{ win:b.win, layer:'base', auto:true, why:b.why }); if(!BASEADD.has(b.ph)) BASEADD.set(b.ph,[]); BASEADD.get(b.ph).push(fx); });   /* effets de base ajoutés par la passe automatique (par ex. des braises dans les passages calmes) : jamais écrits dans fxmap.js */
 const MODIDX=new Map(); (LAYERS.mods||[]).forEach(m=>{ const k=m.ph+'|'+m.on; if(!MODIDX.has(k)) MODIDX.set(k,[]); MODIDX.get(k).push(m); });
 const KIND_LABEL={ level:'Intensité', beat:'Contraste du rythme', speed:'Accélération', pal:'Couleur' };
 function modVal(m,t){ const P=m.pts; if(t<=P[0][0]) return P[0][1]; for(let i=1;i<P.length;i++) if(t<=P[i][0]){ const a=P[i-1], b=P[i], k=(t-a[0])/Math.max(1e-6,b[0]-a[0]); return a[1]+(b[1]-a[1])*k; } return P[P.length-1][1]; }
 function modWarp(m,t){ const P=m.pts; let s=0; for(let i=1;i<P.length;i++){ const a=P[i-1], b=P[i]; if(t<=a[0]) break; const e=Math.min(t,b[0]), k=(e-a[0])/Math.max(1e-6,b[0]-a[0]), ve=a[1]+(b[1]-a[1])*k; s+=(e-a[0])*(a[1]+ve)/2; } return s; }
 /* applique les variations actives à un effet de base : retourne [{fx,w}] (2 entrées pendant un changement de palette : fondu à puissance constante) */
-function applyMods(a,t){ const list=a.ph===undefined?null:MODIDX.get(a.ph+'|'+a.fx.n); if(!list||!LAYER_ON.mod) return [a]; let fx=a.fx, copy=null, pal=null;
-  for(const m of list){ if(OFFSET.has(m.id)||t<m.t0||t>m.t1) continue; if(m.kind==='pal'){ pal=m; continue; } copy=copy||(copy=Object.assign({},fx)); const v=modVal(m,t);
+function applyMods(a,t){ const list=a.ph===undefined?null:MODIDX.get(a.ph+'|'+a.fx.n); if(!list||!LAYER_ON.mod||(SOLO&&SOLO.layer!=='mod')) return [a]; let fx=a.fx, copy=null, pal=null;
+  for(const m of list){ if(OFFSET.has(m.id)||t<m.t0||t>m.t1) continue; if(SOLO&&!(SOLO.layer==='mod'&&SOLO.id===m.id)) continue; if(m.kind==='pal'){ pal=m; continue; } copy=copy||(copy=Object.assign({},fx)); const v=modVal(m,t);
     if(m.kind==='level') copy.level=(fx.level??1)*v; else if(m.kind==='beat') copy.beat=clamp((fx.beat??.5)*v,0,1); else if(m.kind==='speed') copy.tw=m.t0+modWarp(m,t); }
   if(copy) fx=copy; if(!pal) return fx===a.fx?[a]:[Object.assign({},a,{fx})];
   let cur=null, prev=null, x=1; const P=pal.pts; for(let i=0;i<P.length;i++){ if(t>=P[i][0]-2){ prev=cur; cur=P[i]; x=smooth(clamp((t-(P[i][0]-2))/4)); } }
@@ -821,10 +823,13 @@ function fxColor(fx,ph,fallback){ const h=fx&&fx.pal!==undefined?FXHUE[fx.pal]:u
 function runFx(t,act,f){ const bg=baseGain(t); let sc=false; const scale=()=>{ sc=true; if(bg<.9999) for(let k=0;k<buf.length;k++) buf[k]*=bg; };
   for(const a0 of act){ if(a0.off) continue; if(a0.ev&&!sc) scale(); for(const a of applyMods(a0,t)){ const fn=FX[a.fx.n]; if(fn) fn(t,a.w,a.fx,a.fx.slow?featSlow(t):f); } } if(!sc) scale(); }
 FX['Fade']=()=>{};   /* le gain de base est appliqué par runFx */
-function activeFx(t, i){
+let SOLO=null;   /* Ctrl+clic sur un encart : { id, layer, name, ph (début de phase), link } ; seul cet élément reste actif, les autres encarts sont grisés. Jamais enregistré : rechargement = fin du mode. */
+function soloMatch(a){ if(!SOLO) return true; if(SOLO.layer==='evt') return !!a.ev&&('e'+a.ev.k+'@'+a.ev.on)===SOLO.id; if(a.ev) return false; return a.ph===SOLO.ph&&a.fx.n===(SOLO.layer==='mod'&&SOLO.link?SOLO.link:SOLO.name); }
+function activeFx(t,i){ const l=activeFx0(t,i); if(SOLO) for(const a of l) if(!soloMatch(a)) a.off=true; return l; }
+function activeFx0(t, i){
   const list=[]; if(!PH.length) return list; ensureFades();
   for(let j=Math.max(0,i-1); j<=Math.min(PH.length-1,i+1); j++){ const w=inProg(j,t)*(1-inProg(j+1,t)); if(w<=0.002) continue;
-    PH[j].fx.forEach(fx => { if(evPreviewOnly&&!evPreviewOnly.all&&!evPreviewOnly.needs.includes(fx.n)) return; let w2=w; if(fx.win){ /* fx.win = [[début,fin,fondu]] : l'effet n'est actif que dans ces fenêtres (fondu d'entrée/sortie, 3 s par défaut) */ let ww=0; for(const q of fx.win){ const fd=q[2]??3; ww=Math.max(ww,ssG(clamp((t-q[0])/fd))*ssG(clamp((q[1]-t)/fd))); } if(ww<=.002) return; w2=w*ww; } list.push({fx, w:w2, ph:PH[j].start, layer:layerOfFx(fx), off:!LAYER_ON[layerOfFx(fx)]}); }); }
+    PH[j].fx.concat(BASEADD.get(PH[j].start)||[]).forEach(fx => { if(evPreviewOnly&&!evPreviewOnly.all&&!evPreviewOnly.needs.includes(fx.n)) return; let w2=w; if(fx.win){ /* fx.win = [[début,fin,fondu]] : l'effet n'est actif que dans ces fenêtres (fondu d'entrée/sortie, 3 s par défaut) */ let ww=0; for(const q of fx.win){ const fd=q[2]??3; ww=Math.max(ww,ssG(clamp((t-q[0])/fd))*ssG(clamp((q[1]-t)/fd))); } if(ww<=.002) return; w2=w*ww; } list.push({fx, w:w2, ph:PH[j].start, layer:layerOfFx(fx), off:!LAYER_ON[layerOfFx(fx)]}); }); }
   EV.forEach(e => { if(t>=e.on-.05 && t<e.on+e.dur) e.fx.forEach(fx => list.push({fx, w:1, ev:e, layer:'evt', off:(!LAYER_ON.evt&&!evPreviewOnly&&fx.n!=='Fade')||(e.auto&&OFFSET.has('e'+e.k+'@'+e.on)&&!evPreviewOnly)})); });
   if(!evPreviewOnly&&list.some(a=>a.ev&&a.fx.n==='SlowLava'&&!a.fx.overlay)) return list.filter(a=>a.fx.n==='SlowLava'||a.fx.n==='Noir'||(a.ev&&(a.ev.name==='TriGlitch'||a.ev.name==='Éruption'))).sort((x,y)=>(x.fx.n==='SlowLava'?0:1)-(y.fx.n==='SlowLava'?0:1));   /* mode exclusif : seuls restent les noirs « Rien », TriGlitch et Éruption (qui PRÉVALENT sur SlowLava : dessinés par-dessus) : tant qu'un SlowLava est actif (jusqu'à la fin de sa retombée), AUCUNE autre animation n'est visible */
   return list; }
@@ -1479,6 +1484,7 @@ sync3UI();
       +'<div class="vm-t"><b>A · Fichier audio à lire</b> (1 fichier, obligatoire)</div><div class="vm-r" style="justify-content:flex-start;align-items:center"><button class="chip" id="aBtn">Choisir le fichier…</button><span class="vm-d" id="aInfo">aucun fichier choisi</span></div>'
       +'<div class="vm-t"><b>B · Fichiers audios à analyser</b> (facultatif — bonne qualité, plusieurs pistes — même durée que l\'audio à lire)</div><div class="vm-r" style="justify-content:flex-start;align-items:center"><button class="chip" id="bBtn">Choisir les fichiers…</button><span class="vm-d" id="bInfo">aucun fichier choisi</span></div><div class="vm-list" id="bList"></div>'
       +'<div class="vm-t">Si B n\'est pas fourni, l\'analyse est effectuée sur A.</div>'
+      +'<div class="vm-r" style="justify-content:flex-start;align-items:center"><button class="chip" id="dBtn">Joindre descriptif écrit du mix ?</button><span class="vm-d" id="dInfo"></span></div><div id="dBox" hidden><div class="vm-t">Texte du descriptif (phases <code>[mm:ss => mm:ss] Titre</code>, texte technique en <code>**gras**</code>, son en <code>_italique_</code>, events <code>*mm:ss*</code>). Il remplace celui du mix : l\'ancien est sauvegardé dans clean/backups.</div><textarea id="dTxt" rows="6" style="width:100%;box-sizing:border-box;background:#262638;color:inherit;border:1px solid #3a3a52;border-radius:6px;padding:6px;font:inherit;font-size:12px" placeholder="Colle ou écris le texte ici…"></textarea><button class="chip" id="dFile">Choisir un fichier .txt…</button></div><input type="file" id="dIn" accept=".txt,text/plain" hidden>'
       +'<label class="vm-i"><input type="checkbox" id="doAn"> Lancer l\'analyse après le chargement <span class="vm-d" id="anNote"></span></label>'
       +'<div class="vm-t vm-w" id="anErr"></div><div class="vm-r"><button class="chip" id="goBtn">Valider</button><button class="chip" id="closeBtn">Fermer</button></div><pre class="vm-log" id="anLog"></pre>'
       +'<input type="file" id="aIn" accept="audio/*,.mp3,.wav,.flac,.m4a,.ogg" hidden><input type="file" id="bIn" accept="audio/*,.mp3,.wav,.flac,.m4a,.ogg" multiple hidden></div></div>'; document.body.appendChild(m);
@@ -1486,13 +1492,18 @@ sync3UI();
     const doAn=$('#doAn'); doAn.checked=!hasAnalysis(); $('#anNote').textContent=hasAnalysis()?'(remplace l\'analyse actuelle de ce mix)':'(ce mix n\'a pas encore d\'analyse)';
     const sync=()=>{ if(B.length){ doAn.checked=true; doAn.disabled=true; } else doAn.disabled=false; };
     $('#aBtn').onclick=()=>$('#aIn').click(); $('#bBtn').onclick=()=>$('#bIn').click();
+    $('#dBtn').onclick=()=>{ const bx=$('#dBox'); bx.hidden=!bx.hidden; };
+    $('#dFile').onclick=()=>$('#dIn').click(); $('#dIn').onchange=async()=>{ const f=$('#dIn').files[0]; if(!f) return; $('#dTxt').value=await f.text(); $('#dInfo').textContent=f.name; };
     $('#aIn').onchange=async()=>{ A=$('#aIn').files[0]||null; if(!A) return; $('#aInfo').textContent=A.name+' · '+size(A.size)+' · lecture…'; durA=await probe(A); $('#aInfo').textContent=A.name+' · '+size(A.size)+(isFinite(durA)?' · '+fmt(durA):''); renderB(); };
     const renderB=async()=>{ $('#bInfo').textContent=B.length?B.length+' fichier'+(B.length>1?'s':''):'aucun fichier choisi'; const list=$('#bList'); list.innerHTML=''; durB=[]; for(const f of B){ const d=await probe(f); durB.push(d); const diff=isFinite(d)&&isFinite(durA)&&Math.abs(d-durA)>1; const row=document.createElement('div'); row.className='vm-i'; row.innerHTML='<span>'+esc(f.name)+'</span><span class="vm-d">'+size(f.size)+(isFinite(d)?' · '+fmt(d):'')+'</span>'+(diff?'<b class="vm-w">durée différente de A</b>':''); list.appendChild(row); } sync(); };
     $('#bIn').onchange=()=>{ B=[...$('#bIn').files]; renderB(); };
     $('#goBtn').onclick=async()=>{ const err=$('#anErr'), log=$('#anLog'), go=$('#goBtn'); err.textContent=''; log.textContent='';
       const audioOk=au.readyState>0&&!au.error; if(!A&&!audioOk){ err.textContent='Le fichier audio à lire (A) est obligatoire.'; return; }
       if(A) playFile(A);
-      if(!doAn.checked){ m.remove(); return; }
+      const dtxt=($('#dTxt').value||'').trim(); let descDone=false;
+      if(dtxt){ if(!confirm('Remplacer le descriptif écrit actuel de ce mix par ce texte ?\nL\'ancien est sauvegardé dans clean/backups.')) return; go.disabled=true; log.textContent='Envoi du descriptif…';
+        let rr; try{ rr=await api('/api/upload?mix='+encodeURIComponent(MIX.slug)+'&kind=descriptif&name=descriptif.txt',dtxt); }catch(e){ rr='KO '+e.message; } if(!rr.startsWith('OK')){ err.textContent=rr; go.disabled=false; return; } log.textContent=rr; descDone=true; }
+      if(!doAn.checked){ if(descDone){ go.textContent='Recharger la page'; go.disabled=false; go.onclick=()=>location.reload(); return; } m.remove(); return; }
       if(B.length){ const ds=durB.filter(isFinite), spread=ds.length?Math.max(...ds)-Math.min(...ds):0, offA=isFinite(durA)?ds.filter(x=>Math.abs(x-durA)>1).length:0;
         if(spread>1||offA){ const msg='Attention : les pistes à analyser n\'ont pas toutes la même durée'+(spread>1?' (écart de '+spread.toFixed(1)+' s entre elles)':'')+(offA?' ; '+offA+' piste'+(offA>1?'s diffèrent':' diffère')+' de l\'audio à lire':'')+'.\nLes animations risquent d\'être décalées.\n\nLancer l\'analyse malgré tout ?'; if(!confirm(msg)) return; } }
       go.disabled=true; log.textContent='Vérification des outils d\'analyse…';
@@ -1551,12 +1562,12 @@ function renderDome(t){ show3D(view3d&&!geoView);
 /* ---------- Journal des events : un encart par effet de phase (couleur de la phase) et par event (bleu) ; la description détaillée apparaît au survol ---------- */
 function descForFx(name,p){ const L=String(p.tech||'').split(/\r?\n/).map(l=>l.replace(/^\*\*|\*\*$/g,'').trim()); const nl=String(name).toLowerCase(); let on=false; const out=[];
   for(const l of L){ const h=/^▸\s*(.+)$/.exec(l); if(h){ if(on) break; const hl=h[1].toLowerCase(); on=hl.includes(nl)||nl.includes(hl); continue; } if(on&&l) out.push(l); }
-  return out.length?out.join('\n'):('Effet de base « '+name+' » : réglé pour cette phase dans fxmap.js.'); }
+  return out.length?out.join('\n'):('Anim base layer « '+name+' » : réglée pour cette phase dans fxmap.js.'); }
 let _tip=null;
 function showTip(ev){ if(!_tip){ _tip=document.createElement('div'); _tip.id='chipTip'; document.body.appendChild(_tip); } _tip.textContent=ev.currentTarget._d||''; _tip.style.display='block'; moveTip(ev); }
 function moveTip(ev){ if(!_tip) return; const w=_tip.offsetWidth, h=_tip.offsetHeight; let x=Math.min(ev.clientX+14,innerWidth-w-10), y=ev.clientY-h-14; if(y<8) y=ev.clientY+18; _tip.style.left=Math.max(8,x)+'px'; _tip.style.top=y+'px'; }
 function hideTip(){ if(_tip) _tip.style.display='none'; }
-const LAYROWS=[ ['base','Effets de base'], ['mod','Anim 2D layer'], ['evt','Events'] ];
+const LAYROWS=[ ['base','Anim base layer'], ['mod','Anim secondaire'], ['evt','Events'] ];
 function ensureJournalRows(box){ if(box._rows) return box._rows; box.textContent=''; box._rows={};
   LAYROWS.forEach(([l,label])=>{ const row=document.createElement('div'); row.className='evrow'; const sw=document.createElement('button'); sw.className='chip laysw'+(LAYER_ON[l]?' on':''); sw.dataset.l=l; sw.setAttribute('aria-pressed',!!LAYER_ON[l]); sw.innerHTML='<i class="sw"></i>'+label; sw.title=label+' : afficher / couper cette couche dans l\'aperçu';
     sw.onclick=()=>{ LAYER_ON[l]=!LAYER_ON[l]; sw.classList.toggle('on',LAYER_ON[l]); sw.setAttribute('aria-pressed',LAYER_ON[l]); try{ localStorage.setItem('animadome_layers',JSON.stringify(LAYER_ON)); }catch(e){} sw.blur(); box._k=''; };
@@ -1564,28 +1575,33 @@ function ensureJournalRows(box){ if(box._rows) return box._rows; box.textContent
 /* plage de temps d'un effet : fenêtres (win) la plus proche, sinon t0/t1, sinon toute la phase */
 function fxRange(fx,P,t){ if(fx.t1!==undefined&&fx.t0!==undefined&&fx.pts) return [fx.t0,fx.t1]; if(fx.win&&fx.win.length){ const w=fx.win.slice().sort((a,b)=>a[0]-b[0]); const q=w.find(z=>t>=z[0]&&t<z[1])||w.find(z=>z[0]>=t)||w[0]; return [q[0],q[1]]; }
   if(typeof fx.t0==='number'&&typeof fx.t1==='number'&&fx.t1>fx.t0&&fx.t0>=P.start-1&&fx.t1<=P.end+1) return [Math.max(P.start,fx.t0),Math.min(P.end,fx.t1)]; return [P.start,P.end]; }
-function goToFx(x,t){ hideTip(); if(x.ev){ setPhaseView(true,phaseAt(x.ev.on)); au.currentTime=x.ev.on; selEv=x.ev; selFx=null; return; }
-  const P=PH[x.pi], r=fxRange(x.fx||{},P,t); selFx={ name:x.name, range:r, color:x.color, layer:x.layer }; setPhaseView(true,x.pi); const len=P.end-P.start;
-  phZoom=(r[1]-r[0])<len*.6?{ pi:x.pi, a:Math.max(P.start,r[0]-Math.max(2,(r[1]-r[0])*.15)), b:Math.min(P.end,r[1]+Math.max(2,(r[1]-r[0])*.15)) }:null; au.currentTime=Math.min(Math.max(r[0],P.start),P.end-.05); selEv=null; }
+function goToFx(x,t){ hideTip();
+  /* déjà en Vue Phase : on reste dans la phase affichée (un encart peut appartenir à la phase voisine pendant un fondu) */
+  const cur=phaseView?(phOverride!==null?phOverride:phaseAt(au.currentTime||0)):null, pi=cur!==null?cur:(x.ev?phaseAt(x.ev.on):x.pi), P=PH[pi], inP=v=>Math.min(Math.max(v,P.start),P.end-.05);
+  if(x.ev){ if(cur===null) setPhaseView(true,pi); au.currentTime=inP(x.ev.on); selEv=x.ev; selFx=null; return; }
+  const r0=fxRange(x.fx||{},P,t), r=[Math.max(P.start,r0[0]),Math.min(P.end,r0[1])]; if(!(r[1]>r[0])){ r[0]=P.start; r[1]=P.end; }
+  selFx={ name:x.name, range:r, color:x.color, layer:x.layer }; if(cur===null) setPhaseView(true,pi); const len=P.end-P.start, mg=Math.max(2,(r[1]-r[0])*.15);
+  phZoom=(r[1]-r[0])<len*.6?{ pi, a:Math.max(P.start,r[0]-mg), b:Math.min(P.end,r[1]+mg) }:null; au.currentTime=inP(r[0]); selEv=null; }
 function setJournalChips(act,p,t){
   const bn=document.getElementById('fxBanner'); if(bn&&bn.style.display!=='none') bn.style.display='none';   /* l'ancien texte sous le dôme fait double emploi avec les encarts */
   const box=document.getElementById('evChips'); if(!box) return; const rows=ensureJournalRows(box); box.querySelectorAll('.laysw').forEach(sw=>{ sw.classList.toggle('on',!!LAYER_ON[sw.dataset.l]); }); const col=phaseColor(p), pi=PH.indexOf(p), base=[], mod=[], evt=[], seen=new Set(); t=t??au.currentTime;
   for(const a of act){ if(a.w<=.02) continue;
     if(a.ev){ const k='e'+a.ev.k+'@'+a.ev.on; if(seen.has(k)) continue; seen.add(k); evt.push({ layer:'evt', id:k, name:(window.FXMAP&&FXMAP.eventLabels&&FXMAP.eventLabels[a.ev.name])||a.ev.name, desc:(a.ev.auto?'[ajouté par la passe automatique] '+(a.ev.why||'')+'\n':'')+'*'+mmss(a.ev.on)+'*  '+(a.ev.text||''), color:evColor(a.ev), ev:a.ev, off:a.off||(a.ev.auto&&OFFSET.has(k)), auto:!!a.ev.auto, canOff:!!a.ev.auto }); }
-    else { const k='f'+a.fx.n; if(seen.has(k)) continue; seen.add(k); const own=PH.findIndex(q=>q.fx.includes(a.fx)), q=PH[own<0?pi:own]; (a.layer==='mod'?mod:base).push({ layer:a.layer==='mod'?'mod':'base', id:k, name:a.fx.n, fx:a.fx, desc:descForFx(a.fx.n,q), color:fxColor(a.fx,q), pi:own<0?pi:own, on:a.fx.on, off:a.off }); } }
+    else { const k='f'+a.fx.n; if(seen.has(k)) continue; seen.add(k); const own=PH.findIndex(q=>q.fx.includes(a.fx)), q=PH[own<0?pi:own]; (a.layer==='mod'?mod:base).push({ layer:a.layer==='mod'?'mod':'base', id:k, name:a.fx.n, fx:a.fx, desc:((a.fx.auto||a.fx.autoWhy)?'[passe automatique] '+(a.fx.why||a.fx.autoWhy)+'\n':'')+descForFx(a.fx.n,q), color:fxColor(a.fx,q), pi:own<0?pi:own, on:a.fx.on, off:a.off, auto:!!(a.fx.auto||a.fx.autoWhy) }); } }
   const bases=base.map(x=>x.name);
   mod.forEach(m=>{ m.link=(m.on&&bases.includes(m.on))?m.on:bases[0]||''; });
   (LAYERS.mods||[]).forEach(m=>{ if(m.ph!==p.start||t<m.t0||t>m.t1) return; const bi=base.find(b=>b.name===m.on); mod.push({ layer:'mod', id:m.id, name:KIND_LABEL[m.kind]||m.kind, fx:m, desc:'[passe automatique] '+(m.why||''), color:bi?bi.color:fxColor(null,p), pi, link:m.on, off:!LAYER_ON.mod||OFFSET.has(m.id), auto:true, canOff:true, rng:[m.t0,m.t1] }); });
-  const key=col+'|'+pi+'|'+JSON.stringify(LAYER_ON)+'|'+OFFSET.size+'|'+[base,mod,evt].map(l=>l.map(x=>x.id+(x.off?'!':'')+(x.link||'')).join(',')).join('|'); if(box._k===key) return; box._k=key; hideTip();
-  const phTxt=x=>x.layer==='base'?'effet de base':x.layer==='mod'?'anim 2D layer':'event';
+  if(SOLO&&SOLO.ph!==p.start) SOLO=null;   /* le mode solo s'arrête quand la lecture quitte la phase */
+  const key=col+'|'+pi+'|'+JSON.stringify(LAYER_ON)+'|'+OFFSET.size+'|'+(SOLO?SOLO.id:'')+'|'+[base,mod,evt].map(l=>l.map(x=>x.id+(x.off?'!':'')+(x.link||'')).join(',')).join('|'); if(box._k===key) return; box._k=key; hideTip();
+  const phTxt=x=>x.layer==='base'?'anim base layer':x.layer==='mod'?'anim secondaire':'event';
   [['base',base],['mod',mod],['evt',evt]].forEach(([l,arr])=>{ const rc=rows[l]; rc.textContent='';
-    arr.forEach(x=>{ const c=document.createElement('span'); c.className='evchip '+x.layer+(x.off?' off':'')+(x.auto?' auto':''); c.style.color=x.color; c.textContent=(x.layer==='mod'?'\u21b3 ':'')+x.name; c._d=(x.layer==='mod'&&x.link?'Chaîné à « '+x.link+' »\n':'')+x.desc; c.dataset.name=x.name; c.dataset.layer=x.layer;
+    arr.forEach(x=>{ const c=document.createElement('span'); const soloOff=SOLO&&!(SOLO.id===x.id||(SOLO.layer==='mod'&&x.layer==='base'&&x.name===SOLO.link)); c.className='evchip '+x.layer+((x.off||soloOff)?' off':'')+(x.auto?' auto':'')+(SOLO&&SOLO.id===x.id?' solo':''); c.style.color=x.color; c.textContent=(x.layer==='mod'?'\u21b3 ':'')+x.name; c._d=(x.layer==='mod'&&x.link?'Chaîné à « '+x.link+' »\n':'')+x.desc; c.dataset.name=x.name; c.dataset.layer=x.layer;
       const pr=document.createElement('b'); pr.className='chipP'; pr.textContent='\u270e'; pr.title='Prompter : préremplit le prompteur pour modifier cet effet';
       pr.addEventListener('click',ev=>{ ev.stopPropagation(); const pIn=document.getElementById('promptIn'); if(!pIn) return; const ctxt='['+x.name+' · '+phTxt(x)+' · phase '+((x.ev?phaseAt(x.ev.on):x.pi)+1)+'] '; pIn.value=ctxt+'Change cet effet de la manière suivante : '; pIn.dispatchEvent(new Event('input',{bubbles:true})); pIn.focus(); pIn.setSelectionRange(pIn.value.length,pIn.value.length); }); c.appendChild(pr);
       if(x.canOff){ const xb=document.createElement('b'); xb.className='chipX'; xb.textContent='\u23fb'; xb.title=x.off?'Réactiver cet élément (ajouté automatiquement)':'Désactiver cet élément (ajouté automatiquement)'; xb.addEventListener('click',ev=>{ ev.stopPropagation(); if(OFFSET.has(x.id)) OFFSET.delete(x.id); else OFFSET.add(x.id); saveOff(); box._k=''; }); c.appendChild(xb); }
       c.addEventListener('mouseenter',ev=>{ showTip(ev); const bx=document.getElementById('evChips'); if(x.layer==='mod'&&x.link) bx.querySelectorAll('.evchip.base').forEach(b=>b.classList.toggle('hl',b.dataset.name===x.link)); else if(x.layer==='base') bx.querySelectorAll('.evchip.mod').forEach(m=>{ const mm=mod.find(z=>z.name===m.dataset.name); m.classList.toggle('hl',!!mm&&mm.link===x.name); }); });
       c.addEventListener('mousemove',moveTip); c.addEventListener('mouseleave',()=>{ hideTip(); document.querySelectorAll('#evChips .hl').forEach(h=>h.classList.remove('hl')); });
-      c.addEventListener('click',()=>{ if(x.rng){ x.fx={ t0:x.rng[0], t1:x.rng[1], pts:1 }; } goToFx(x,au.currentTime||0); });   /* clic sur un encart : Vue Phase, à l'effet */
+      c.addEventListener('click',ev=>{ if(x.rng){ x.fx={ t0:x.rng[0], t1:x.rng[1], pts:1 }; } const same=SOLO&&SOLO.id===x.id; SOLO=(ev.ctrlKey||ev.metaKey)&&!same?{ id:x.id, layer:x.layer, name:x.name, ph:p.start, link:x.link }:null; document.getElementById('evChips')._k=''; goToFx(x,au.currentTime||0); });   /* clic sur un encart : Vue Phase, à l'effet */
       rc.appendChild(c); }); }); }
 /* ---------- Texte lié à la timeline ---------- */
 let shownPhase=-1, shownSub=null, shownEv=null;
@@ -1618,7 +1634,7 @@ function drawTL(t){
   tctx.clearRect(0,0,w,h); tctx.fillStyle='#0f0f16'; tctx.fillRect(0,0,w,h);
   const X=s=>(s-VW0)/(VW1-VW0)*w, top=34, base=h-6-(phaseView?59:0);   /* en Vue Phase : bande de 59 px SOUS l'onde pour les poignées et TROIS rangées de noms d'events (un nom qui en chevauche un autre passe sur la rangée du dessus) */
   if(!window.__stripe){ const sc=document.createElement("canvas"); sc.width=sc.height=10; const sx=sc.getContext("2d"); sx.fillStyle="#ffd21a"; sx.fillRect(0,0,10,10); sx.strokeStyle="#e0241b"; sx.lineWidth=3.2; sx.beginPath(); for(let k=-10;k<=20;k+=10){ sx.moveTo(k,10); sx.lineTo(k+10,0); } sx.stroke(); window.__stripe=tctx.createPattern(sc,"repeat"); }
-  PH.forEach((p,i)=>{ const x0=X(p.start),x1=X(p.end), mk=!!(window.PHMARKED&&window.PHMARKED.has("p"+String(Math.round(p.start)).padStart(5,"0"))); tctx.fillStyle=mk?window.__stripe:barColor(p); tctx.globalAlpha=mk?1:.7; tctx.fillRect(x0,18,x1-x0-1,12); tctx.globalAlpha=.10; tctx.fillRect(x0,top,x1-x0-1,base-top); tctx.globalAlpha=1;
+  PH.forEach((p,i)=>{ const x0=X(p.start),x1=X(p.end), mk=!!(window.PHMARKED&&window.PHMARKED.has("p"+String(Math.round(p.start)).padStart(5,"0"))); tctx.fillStyle=mk?window.__stripe:barColor(p); tctx.globalAlpha=mk?1:(LAYER_ON.base?.7:.14); tctx.fillRect(x0,18,x1-x0-1,12); tctx.globalAlpha=.10; tctx.fillRect(x0,top,x1-x0-1,base-top); tctx.globalAlpha=1;
     if(i===phaseAt(t)){ tctx.strokeStyle='#fff'; tctx.globalAlpha=.8; tctx.strokeRect(x0+.5,18.5,x1-x0-2,11); tctx.globalAlpha=1; }
     if(Math.min(x1,w)-Math.max(x0,0)>26){ tctx.font='bold 13px system-ui'; tctx.textAlign='left'; if(mk){ tctx.lineWidth=3; tctx.strokeStyle='#b3150f'; tctx.strokeText(String(i+1),Math.max(x0,0)+4,14); tctx.fillStyle='#ffe14a'; } else tctx.fillStyle='#fff'; tctx.fillText(String(i+1),Math.max(x0,0)+4,14); } });
   if(selFx){ const q=selFx.range, xa=Math.max(0,X(q[0])), xb=Math.min(w,X(q[1])); if(xb>xa){ tctx.globalAlpha=.2; tctx.fillStyle=selFx.color; tctx.fillRect(xa,top,xb-xa,base-top); tctx.globalAlpha=.95; tctx.fillRect(xa,top,xb-xa,2); tctx.fillRect(xa,top,2,base-top); tctx.fillRect(xb-2,top,2,base-top); tctx.globalAlpha=1; tctx.font='bold 11px system-ui'; tctx.textAlign='left'; tctx.fillStyle='#0f0f16cc'; const tw2=tctx.measureText(selFx.name).width; tctx.fillRect(xa+4,top+4,tw2+8,15); tctx.fillStyle=selFx.color; tctx.fillText(selFx.name,xa+8,top+15); } }
@@ -1632,7 +1648,7 @@ function drawTL(t){
   tctx.beginPath(); tctx.moveTo(0,base); for(let x=0;x<w;x++) tctx.lineTo(x,base-curve.c[x]*(base-top)); tctx.lineTo(w,base); tctx.closePath(); tctx.fillStyle='#d8d8e866'; tctx.fill();
   tctx.beginPath(); for(let x=0;x<w;x++){ const y=base-curve.d[x]*(base-top)*.9; x?tctx.lineTo(x,y):tctx.moveTo(x,y); } tctx.strokeStyle='#ff9a4a'; tctx.lineWidth=1; tctx.stroke(); }
   tctx.fillStyle='#8a8a9a'; tctx.font='11px system-ui'; tctx.textAlign='left'; { const step=[5,10,15,30,60,120,300,600].find(s=>(VW1-VW0)/s<=12)||600; for(let m=Math.ceil(VW0/step)*step;m<=VW1;m+=step){ tctx.fillText(fmt(m),X(m)+3,phaseView?base-3:h-8); tctx.fillStyle='#ffffff18'; tctx.fillRect(X(m),top,1,base-top); tctx.fillStyle='#8a8a9a'; } }
-  lbRects=[]; const lbRow=new Map(); if(phaseView){ tctx.font='bold 10px system-ui'; const rowEnd=[-1e9,-1e9,-1e9]; EV.filter(e=>{ const x=X(e.on); return x>=-20&&x<=w+20; }).sort((a,b)=>a.on-b.on).forEach(e=>{ const x=X(e.on), lb=((window.FXMAP&&FXMAP.eventLabels&&FXMAP.eventLabels[e.name])||e.name)+(dragEv===e?'  00:00.00':''), tw=tctx.measureText(lb).width; let lx=Math.min(Math.max(x,tw/2+3),w-tw/2-3), r=rowEnd.findIndex(en=>lx-tw/2-3>=en); if(r<0){ r=rowEnd.indexOf(Math.min(...rowEnd)); lx=rowEnd[r]+tw/2+3; } rowEnd[r]=lx+tw/2+3; lbRow.set(e,{r,lx}); }); }   /* noms : rangée 0 juste sous la tirette, sinon 1 puis 2 plus bas s'ils se chevauchent ; si les 3 sont prises, le nom est décalé à droite sur la rangée libérée le plus tôt */  EV.forEach(e=>{ const x=X(e.on); if(x<-20||x>w+20) return; const sel=(selEv===e), ecol=evColor(e); if(!LAYER_ON.evt) return; tctx.fillStyle=sel?'#34e08a':ecol;
+  lbRects=[]; const lbRow=new Map(); if(phaseView&&LAYER_ON.evt){ tctx.font='bold 10px system-ui'; const rowEnd=[-1e9,-1e9,-1e9]; EV.filter(e=>{ const x=X(e.on); return x>=-20&&x<=w+20; }).sort((a,b)=>a.on-b.on).forEach(e=>{ const x=X(e.on), lb=((window.FXMAP&&FXMAP.eventLabels&&FXMAP.eventLabels[e.name])||e.name)+(dragEv===e?'  00:00.00':''), tw=tctx.measureText(lb).width; let lx=Math.min(Math.max(x,tw/2+3),w-tw/2-3), r=rowEnd.findIndex(en=>lx-tw/2-3>=en); if(r<0){ r=rowEnd.indexOf(Math.min(...rowEnd)); lx=rowEnd[r]+tw/2+3; } rowEnd[r]=lx+tw/2+3; lbRow.set(e,{r,lx}); }); }   /* noms : rangée 0 juste sous la tirette, sinon 1 puis 2 plus bas s'ils se chevauchent ; si les 3 sont prises, le nom est décalé à droite sur la rangée libérée le plus tôt */  EV.forEach(e=>{ const x=X(e.on); if(x<-20||x>w+20) return; const sel=(selEv===e), ecol=evColor(e); if(!LAYER_ON.evt) return; tctx.fillStyle=sel?'#34e08a':ecol;
     if(e.span){ tctx.globalAlpha=sel?.38:.22; tctx.fillRect(x,top,Math.max(2,X(e.on+e.span)-x),(phaseView?base+4:base)-top); tctx.globalAlpha=1; }   /* événement à durée : bande de sa longueur */
     if(!phaseView){ tctx.fillRect(x-1,top,2,base-top); return; }   /* Vue Piste : seulement la barre (ni nom ni poignée, non déplaçable) */
     tctx.fillRect(x-(sel?1.5:1),top,sel?3:2,base+4-top);   /* Vue Phase : barre ; tirette (poignée de début) et poignée de fin seulement pour l'event SÉLECTIONNÉ (vert) ; les autres : plage cyan sans tirette */

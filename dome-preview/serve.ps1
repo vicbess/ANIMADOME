@@ -333,23 +333,29 @@ public static class Srv {
   }
   static string UploadFile(HttpListenerContext c, string root, string mix, string kind, string name, bool reset) {
     if (!Regex.IsMatch(mix ?? "", @"^[A-Za-z0-9_-]{1,40}$")) return "KO mix invalide";
-    if (kind != "audio" && kind != "track") return "KO type de fichier invalide";
+    if (kind != "audio" && kind != "track" && kind != "descriptif") return "KO type de fichier invalide";
     name = Path.GetFileName(name ?? ""); string ext = Path.GetExtension(name).ToLower();
-    if (Array.IndexOf(new string[] { ".mp3", ".wav", ".flac", ".m4a", ".ogg", ".aif", ".aiff" }, ext) < 0) return "KO format audio non pris en charge";
+    if (kind != "descriptif" && Array.IndexOf(new string[] { ".mp3", ".wav", ".flac", ".m4a", ".ogg", ".aif", ".aiff" }, ext) < 0) return "KO format audio non pris en charge";
     if (!Regex.IsMatch(name, @"^[\p{L}\p{N} ._()\[\]+&'\-]{1,120}$")) return "KO nom de fichier non pris en charge (lettres, chiffres, espaces et . _ - ( ) )";
     string md = Path.GetFullPath(Path.Combine(root, "mixes", mix)); if (!md.StartsWith(root) || !Directory.Exists(md)) return "KO mix introuvable";
     string target;
     if (kind == "audio") { string rel = MixAudioRel(md); if (rel == null || rel.Contains("..")) return "KO mix.json sans fichier audio déclaré"; target = Path.GetFullPath(Path.Combine(md, rel.Replace("/", "\\"))); }
+    else if (kind == "descriptif") {   // texte du descriptif : remplace descriptif-<mix>.txt (l'ancien est sauvegardé dans clean/backups)
+      string mj2 = Path.Combine(md, "mix.json"); var dm = File.Exists(mj2) ? Regex.Match(File.ReadAllText(mj2, Encoding.UTF8), "\"descriptif\"\\s*:\\s*\"([^\"]+)\"") : null;
+      string dn = (dm != null && dm.Success) ? dm.Groups[1].Value : null; if (dn == null || !Regex.IsMatch(dn, @"^descriptif-[A-Za-z0-9_-]+\.txt$")) return "KO nom du descriptif absent de mix.json";
+      target = Path.GetFullPath(Path.Combine(md, dn));
+      if (File.Exists(target)) { string bk = Path.Combine(md, "clean", "backups", "descr" + DateTime.Now.ToString("yyyyMMddHHmmss")); Directory.CreateDirectory(bk); File.Copy(target, Path.Combine(bk, dn), true); }
+    }
     else target = Path.GetFullPath(Path.Combine(md, "tracks", name));
     if (!target.StartsWith(md)) return "KO chemin refusé";
     if (kind == "track" && reset) { string td = Path.GetDirectoryName(target); if (Directory.Exists(td)) foreach (var old in Directory.GetFiles(td)) { try { File.Delete(old); } catch { } } }   // nouveau lot de pistes : on repart d'un dossier vide
-    Directory.CreateDirectory(Path.GetDirectoryName(target)); string part = target + ".part"; long total = 0, limit = 6L * 1024 * 1024 * 1024;
+    Directory.CreateDirectory(Path.GetDirectoryName(target)); string part = target + ".part"; long total = 0, limit = kind == "descriptif" ? 2L * 1024 * 1024 : 6L * 1024 * 1024 * 1024;
     try {
       using (var fs = new FileStream(part, FileMode.Create, FileAccess.Write)) { byte[] buf = new byte[262144]; int n; var s = c.Request.InputStream; while ((n = s.Read(buf, 0, buf.Length)) > 0) { total += n; if (total > limit) throw new Exception("fichier trop volumineux (6 Go max)"); fs.Write(buf, 0, n); } }
       if (total == 0) { File.Delete(part); return "KO fichier vide"; }
       if (File.Exists(target)) File.Delete(target); File.Move(part, target);
     } catch (Exception ex) { try { File.Delete(part); } catch { } return "KO envoi interrompu : " + ex.Message; }
-    return "OK " + (kind == "audio" ? "audio" : "piste") + " enregistré(e) (" + (total / 1048576) + " Mo)";
+    return "OK " + (kind == "audio" ? "audio" : kind == "descriptif" ? "descriptif" : "piste") + " enregistré(e) (" + (kind == "descriptif" ? (total / 1024) + " Ko" : (total / 1048576) + " Mo") + ")";
   }
   static string RunPs(string root, string script, string args, int timeoutMs) {
     var psi = new System.Diagnostics.ProcessStartInfo("powershell.exe", "-NoProfile -ExecutionPolicy Bypass -File \"" + Path.Combine(root, "tools", script) + "\" " + args);

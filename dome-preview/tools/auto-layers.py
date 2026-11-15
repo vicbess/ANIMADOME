@@ -119,7 +119,7 @@ def main():
 
     ph, def_ev = parse_fxmap(mix); ut = user_event_times(mix, def_ev)
     dj = json.load(open(os.path.join(mix, 'descriptif.json'), encoding='utf-8-sig')); phases = dj['phases']
-    mods = []; events = []; mid = 0
+    mods = []; events = []; basewin = []; mid = 0
     def addmod(p0, on, kind, t0, t1, pts, why):
         nonlocal mid; mid += 1; mods.append({'id': 'm%03d' % mid, 'ph': p0, 'on': on, 'kind': kind, 't0': round(t0, 2), 't1': round(t1, 2), 'pts': pts, 'why': why, 'auto': True})
     def curve(sig, a, b, step, fn, eps, mingap):
@@ -179,6 +179,41 @@ def main():
                     if s0 - pts[-1][0] < 6: continue
                     pts.append([round(s0, 1), new]); pts.append([round(s1, 1), pf['pal']]); txt.append('%s %s–%s' % (lab, mmss(s0), mmss(s1)))
                 if len(pts) > 1: addmod(a, pf['n'], 'pal', a, b, pts, 'palette un cran plus chaude / froide selon l\'énergie (' + ', '.join(txt) + ')')
+        # 0) effets de base par SECTIONS de même nature : la pulsation rythmique (Pulsation audio) n'apparaît que dans les passages rythmés ;
+        #    elle revient à l'identique à chaque passage de même nature, tant qu'un autre effet de base continue d'occuper le dôme entre-temps.
+        keep = [f for f in base if f['n'] not in DETAILS and f['n'] != 'Pulsation audio']
+        if 'Pulsation audio' in names and b - a >= 40:
+            W = 4.0; nb = int((b - a) // W)
+            if nb >= 8:
+                cls = []
+                dmed = np.median(D[i0:i1])
+                for k in range(nb):
+                    s0, s1 = int((a + k * W) * FPS), int((a + (k + 1) * W) * FPS)
+                    rr, dd_, ee = R[s0:s1].mean(), D[s0:s1].mean(), E01s[s0:s1].mean()
+                    cls.append('amb' if (rr < 0.25 and dd_ < max(1.2, 0.6 * dmed)) or ee < 0.18 else 'rythme')
+                # lissage : une section dure au moins 12 s (3 fenêtres) ; on fusionne les plus courtes dans leur voisine
+                for _ in range(3):
+                    k = 0
+                    while k < nb:
+                        j = k
+                        while j < nb and cls[j] == cls[k]: j += 1
+                        if j - k < 3 and (k > 0 or j < nb):
+                            rep = cls[k - 1] if k > 0 else cls[j]
+                            for q in range(k, j): cls[q] = rep
+                        k = j
+                secs = []; k = 0
+                while k < nb:
+                    j = k
+                    while j < nb and cls[j] == cls[k]: j += 1
+                    secs.append((cls[k], a + k * W, a + j * W)); k = j
+                amb = [s for s in secs if s[0] == 'amb']; ryt = [s for s in secs if s[0] == 'rythme']
+                if amb and ryt and sum(s[2] - s[1] for s in amb) >= 12:
+                    win = [[round(s[1], 1), round(s[2], 1), 4] for s in ryt]
+                    entry_extra = {}
+                    if not keep:   # rien d'autre ne tient le dôme dans les passages calmes : des braises discrètes prennent le relais (même effet à chaque passage calme)
+                        awin = [[round(s[1], 1), round(s[2], 1), 4] for s in amb]
+                        basewin.append({'ph': a, 'add': {'n': 'Braises', 'mode': 'steady', 'core': True, 'small': True}, 'win': awin, 'why': 'des braises discrètes tiennent le dôme dans les passages calmes (' + ', '.join('%s–%s' % (mmss(w[0]), mmss(w[1])) for w in awin) + '), la pulsation revient dans les passages rythmés'})
+                    basewin.append({'ph': a, 'on': 'Pulsation audio', 'win': win, 'why': 'la pulsation rythmique revient à chaque passage rythmé (' + ', '.join('%s–%s' % (mmss(w[0]), mmss(w[1])) for w in win) + ') et s\'efface dans les passages calmes'})
         # 5) events : seulement dans les phases où l'auteur en a peu posé ; sur les impacts (EvilPenta) et avant (Ruée)
         if want_ev:
             nu = int(((ut >= a) & (ut < b)).sum())
@@ -194,10 +229,11 @@ def main():
                 if len(ut) and np.min(np.abs(ut - t)) < 5: continue
                 if any(abs(x['on'] - t) < 5 for x in events): continue
                 events.append({'name': 'EvilPenta', 'on': round(t, 2), 'span': 4.5, 'why': 'flash sur un impact (le volume bondit d\'au moins 7 dB en un instant)'}); added += 1
-    out = {'v': 1, 'generated': 'auto-layers.py', 'mods': mods, 'events': events}
+    out = {'v': 1, 'generated': 'auto-layers.py', 'base': basewin, 'mods': mods, 'events': events}
     open(os.path.join(mix, 'layers.js'), 'w', encoding='utf-8').write('window.LAYERS=' + json.dumps(out, ensure_ascii=False, separators=(',', ':')) + ';\n')
     kinds = {}
     for m in mods: kinds[m['kind']] = kinds.get(m['kind'], 0) + 1
-    print('mods :', len(mods), kinds, '| events ajoutés :', len(events))
+    print('base :', len(basewin), 'phases à sections |', 'mods :', len(mods), kinds, '| events ajoutés :', len(events))
+    for w in basewin: print('  phase', mmss(w['ph']), w['why'])
 
 if __name__ == '__main__': main()
