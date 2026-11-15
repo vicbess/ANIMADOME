@@ -65,7 +65,7 @@ Le détail du format est dans le [README des mix](https://github.com/vicbess/MIX
 
 ## Travailler avec Claude (facultatif)
 
-La page contient une zone de prompt (« prompt modificateur de phase ») : chaque prompt est écrit dans un fichier local du mix, que `watch-requests.ps1` surveille. Un assistant de code (par exemple [Claude Code](https://claude.com/claude-code) ouvert dans ce dossier) lit les demandes (« ajoute tel event à 5:30 ») et modifie le descriptif, les réglages et l'outil.
+La page contient une zone de prompt (« PROMPTEUR : ask me anything ») : chaque prompt est écrit dans un fichier local du mix, que `watch-requests.ps1` surveille. Un assistant de code (par exemple [Claude Code](https://claude.com/claude-code) ouvert dans ce dossier) lit les demandes (« ajoute tel event à 5:30 ») et modifie le descriptif, les réglages et l'outil.
 
 Tout ce qu'il doit savoir de l'outil (procédure, règles, fichiers) est dans [`CLAUDE.md`](CLAUDE.md), que Claude Code lit automatiquement. Ce qu'il doit savoir de **chaque mix** (intention, palette, règles de l'auteur, décisions durables) est dans le fichier `CONTEXT.md` du mix : il le lit au début de chaque session, le tient à jour, et il est **publié avec les phases** (une pastille « ● contexte mis à jour » prévient quand un collaborateur en a publié une nouvelle version). Pour qu'il traite tes prompts, ouvre-le dans le dossier du projet et demande-lui de lancer le serveur et le veilleur. L'outil fonctionne très bien sans.
 
