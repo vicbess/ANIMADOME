@@ -408,7 +408,7 @@ public static class Srv {
       }
       string rel = Uri.UnescapeDataString(c.Request.Url.AbsolutePath).TrimStart('/'); if (rel == "") rel = "show.html";
       string full = Path.GetFullPath(Path.Combine(root, rel));
-      if (full.StartsWith(root) && !File.Exists(full) && Regex.IsMatch(c.Request.Url.AbsolutePath, @"/clean/phase-\d+\.json$")) { byte[] nb = Encoding.UTF8.GetBytes("null"); c.Response.ContentType = "application/json"; c.Response.ContentLength64 = nb.Length; c.Response.OutputStream.Write(nb, 0, nb.Length); c.Response.Close(); return; }   // pas encore de rapport de nettoyage : réponse vide plutôt qu'une erreur 404 dans la console
+      if (full.StartsWith(root) && !File.Exists(full) && Regex.IsMatch(c.Request.Url.AbsolutePath, @"/(clean/phase-\d+\.json|layers\.js)$")) { byte[] nb = Encoding.UTF8.GetBytes("null"); c.Response.ContentType = c.Request.Url.AbsolutePath.EndsWith(".js") ? "text/javascript" : "application/json"; c.Response.ContentLength64 = nb.Length; c.Response.OutputStream.Write(nb, 0, nb.Length); c.Response.Close(); return; }   // pas encore de rapport de nettoyage : réponse vide plutôt qu'une erreur 404 dans la console
       if (!full.StartsWith(root) || !File.Exists(full)) { c.Response.StatusCode = 404; c.Response.Close(); return; }
       using (var fs = new FileStream(full, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)) {
         long len = fs.Length, start = 0, end = len - 1; string range = c.Request.Headers["Range"];

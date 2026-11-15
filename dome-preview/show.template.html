@@ -21,14 +21,20 @@
   #evChips { display:flex; flex-wrap:wrap; gap:6px; padding-top:11px; }
   #evHint { color:var(--mut); font-size:.78em; font-weight:400; }
   .evchip { border:1px solid currentColor; border-radius:7px; padding:2px 9px; font-size:.82em; font-weight:600; cursor:pointer; background:rgba(255,255,255,.04); white-space:nowrap; position:relative; }
-  #evChips { flex-direction:column; flex-wrap:nowrap; gap:4px; padding-top:5px; } .evrow { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  #evChips { flex-direction:column; flex-wrap:nowrap; gap:7px; padding-top:6px; } .evrow { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
   .evchip.base { border:3px double currentColor; padding:0 8px; }   /* effet de base : double bordure */
   .evchip.mod { border:1px solid currentColor; }   /* anim 2D layer : bordure simple, chaînée à son effet de base (↳) */
   .evchip.evt { border:0; border-radius:999px; padding:2px 11px 2px 8px; background:color-mix(in srgb,currentColor 20%,transparent); }   /* event : pastille pleine teintée */
   .evchip.evt::before { content:'\25C6\00a0'; font-size:.8em; }
   .evchip.off { opacity:.3; } .evchip.hl { box-shadow:0 0 0 2px #fff8; }
   .evchip .chipP { display:none; margin-left:7px; opacity:.85; } .evchip:hover .chipP { display:inline; } .evchip .chipP:hover { opacity:1; text-shadow:0 0 6px currentColor; }
-  #layBtns { display:inline-flex; gap:6px; margin-right:10px; vertical-align:middle; } .laybtn { padding:2px 11px; font-size:.95em; } .laybtn:not(.on) { opacity:.45; text-decoration:line-through; }
+  .evrow { gap:8px; align-items:flex-start; } .evrc { display:flex; flex-wrap:wrap; gap:7px 12px; align-items:center; flex:1; min-height:22px; }
+  .laysw { width:132px; flex:none; display:flex; align-items:center; gap:7px; padding:2px 8px 2px 6px; font-size:.76em; text-align:left; white-space:nowrap; }
+  .laysw .sw { position:relative; width:24px; height:12px; border-radius:7px; background:#4a4a58; flex:none; transition:background .15s; }
+  .laysw .sw::after { content:''; position:absolute; top:2px; left:2px; width:8px; height:8px; border-radius:50%; background:#e6e6ee; transition:left .15s; }
+  .laysw.on .sw { background:#3aa66a; } .laysw.on .sw::after { left:14px; } .laysw:not(.on) { opacity:.6; }
+  .evchip .chipX { display:none; margin-left:7px; opacity:.85; } .evchip:hover .chipX { display:inline; } .evchip .chipX:hover { opacity:1; }
+  .evchip.auto::after { content:'auto'; font-size:.65em; font-weight:400; margin-left:6px; opacity:.6; }
   #chipTip { position:fixed; z-index:95; display:none; max-width:440px; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 11px; font-size:12px; line-height:1.45; color:var(--fg); box-shadow:0 8px 24px #000a; pointer-events:none; white-space:pre-wrap; }
   #textBlock #phText { text-align:left; margin:0 0 .5em; font-size:.95em; cursor:default; }
   .phTim { font-size:.62em; font-weight:500; opacity:.9; }  .mixcol { position:absolute; left:0; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; align-items:stretch; gap:5px; } .mixcol .mixTop { position:static; transform:none; } #btnAudio { align-self:flex-start; width:auto; font-size:12px; line-height:1.25; padding:11px 10px; border-radius:4px; text-align:center; white-space:nowrap; }   /* aligné sous le sélecteur (marge gauche calculée par la page) */ #btnAudio.warn { border-color:var(--acc); color:var(--acc); }
@@ -59,7 +65,7 @@
   .side { font-size:clamp(14px,1.05vw,20px); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px; min-height:0; flex:1; overflow:hidden; display:flex; flex-direction:column; }
   .side > * { flex:none; } .side > #textBlock { flex:1 1 auto; max-height:none; min-height:0; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; scrollbar-color:#4a4a62 transparent; padding-right:6px; font-size:clamp(11px,.78vw,14.5px); }   /* texte long : barre de défilement, la police ne rétrécit plus */
   .ph-time { display:flex; justify-content:center; align-items:baseline; gap:.9em; flex-wrap:wrap; }   /* minuteur de phase et nom de phase sur une seule ligne */
-  #liveLines { flex:none; height:9.6em; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#4a4a62 transparent; } #evSep { display:none; height:2px; margin:8px 0 8px; background:#8a8aa8; border-radius:1px; } #evTitle { color:var(--ev); font-weight:700; font-size:.85em; margin:0 0 2px; } #liveLines p { margin:4px 0 0; }
+  #liveLines { flex:none; height:11.5em; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#4a4a62 transparent; } #evSep { display:none; height:2px; margin:8px 0 8px; background:#8a8aa8; border-radius:1px; } #evTitle { color:var(--ev); font-weight:700; font-size:.85em; margin:0 0 2px; } #liveLines p { margin:4px 0 0; }
   /* texte technique : vue lisible (titres ▸ en gras, le reste en normal) ; un clic bascule en édition du texte brut */
   .ph-techview { white-space:pre-wrap; line-height:1.55; cursor:text; padding:3px 5px; margin:0 0 1.15em -5px; border:1px dashed transparent; border-radius:5px; } .ph-techview:hover { border-color:#3a3a50; }
   .ph-techview .th { font-weight:700; margin-top:.6em; } .ph-techview > div:first-child { margin-top:0; } .ph-techview .tb { font-weight:400; padding-left:1.1em; text-indent:-1.1em; } .ph-techview .tp { font-weight:400; }
@@ -146,7 +152,7 @@
       <p class="ph-edit ph-son" id="phSon" contenteditable="plaintext-only" spellcheck="false" data-ph="Son : analyse audio…" title="Partie son (italique) – cliquer pour modifier"></p>
       <div class="save" id="saveState"></div>
       </div>
-      <div id="liveLines"><div id="evSep"></div><div id="evTitle"><span id="layBtns"><button class="chip laybtn on" data-l="base" title="Effets de base : afficher / couper cette couche dans l'aperçu">Effets de base</button><button class="chip laybtn on" data-l="mod" title="Anim 2D layer : variations chaînées aux effets de base (accélération, intensité, couleur)">Anim 2D layer</button><button class="chip laybtn on" data-l="evt" title="Events : afficher / couper cette couche dans l'aperçu">Events</button></span><span id="evHint">survol : description · clic : voir dans la timeline · ✎ : prompter</span></div><div id="evChips"></div></div>   <!-- sous-étapes et events : toujours visibles, juste au-dessus du prompteur (hors de la zone qui défile) -->
+      <div id="liveLines"><div id="evSep"></div><div id="evTitle"><span id="evHint">clic : voir dans la timeline · ✎ : prompter</span></div><div id="evChips"></div></div>   <!-- sous-étapes et events : toujours visibles, juste au-dessus du prompteur (hors de la zone qui défile) -->
       
       <div class="promptbox">
         <textarea id="promptIn" rows="4" placeholder="PROMPTEUR : ask me anything&#10;&#10;Entrée écrire dans le prompt  |  Échap quitter champ de prompt  |  Ctrl+Espace insérer timecode"></textarea>
@@ -177,7 +183,7 @@
 (function(){ let slug=new URLSearchParams(location.search).get('mix'); try{ slug=slug||localStorage.getItem('animadomeMix'); }catch(e){}
   const m=window.MIXES.find(x=>x.slug===slug)||window.MIXES[0]; window.MIX=m; try{ localStorage.setItem('animadomeMix',m.slug); }catch(e){}
   window.mixPath=n=>(m.dir==='.'?'':m.dir+'/')+n;
-  for(const f of ['features.js','beats.js','gut.js','stems.js','fxmap.js']) document.write('<script src="'+window.mixPath(f)+'"><\/script>'); })();
+  for(const f of ['features.js','beats.js','gut.js','stems.js','fxmap.js','layers.js']) document.write('<script src="'+window.mixPath(f)+'"><\/script>'); })();
 </script>
 <script>
 const DOME = /*DOME_JSON*/;
@@ -401,7 +407,7 @@ const FX = {
 
   'Pulsation audio': (t,w,p,f) => {
     const lvl=p.level??1, pal=PAL[p.pal||'fire'], bm=p.beat??0, sb=srcOf(p,f), base=Math.pow(lerp(sb,Math.max(sb*.5,kickEnv(t,.13,3)),bm),1.15)*(.35+.65*f.rms);
-    for(const L of LED){ const wave=.55+.45*Math.sin(L.r*5.5+(p.dir==='up'?1:-1)*t*2.6+L.bar.id*.02);
+    for(const L of LED){ const wave=.55+.45*Math.sin(L.r*5.5+(p.dir==='up'?1:-1)*(p.tw??t)*2.6+L.bar.id*.02);
       const v=clamp(.03+lvl*(base*wave+.35*f.mid*f.flux))*w; const [h,s]=pal(L.r,L.id); add(L.id,hsv(h,s,v)); } },
 
   /* LavaSpeed (événement à durée, p.span = durée en s, p.out = fondu de sortie) : la lave rush, accélère et EMPLIT PLUS DE CHEMINS en montant vers le centre.
@@ -760,6 +766,7 @@ function applyDescriptif(d){
   EV = (d.events||[]).map(e => { const k=key(e.t), m = FXMAP.events[k]; /* instant réel : déplacé à la main sur la timeline (events-timing.json) > 'at' de fxmap > seconde notée dans le descriptif */ const on=(EVT[k]!==undefined)?EVT[k]:(m&&m.at!==undefined)?m.at:e.t; return { k, t:e.t, on, name:shortName(e.text), text:e.text, dur:m?m.dur:4, span:m?m.span:undefined, span0:m?m.span:undefined, rush:m?m.rush:undefined, txtDur:Math.max(2, m?m.dur:0), fx:m?(Array.isArray(m.fx)?m.fx:[m.fx]).map(x=>Object.assign({},x,{t0:on})):[] }; });
   /* doublons d'events (Maj+clic sur la poignée) : mémorisés dans events-timing.json sous __dups = [{k:'02:21', on:142.3}] */
   (EVT.__dups||[]).forEach(dp=>{ const b=String(dp.k).startsWith('lib:')?evLibEvent(String(dp.k).slice(4),dp.on,dp.span):EV.find(e=>e.k===dp.k&&!e.isDup); if(!b) return; let c=Object.assign({},b,{ isDup:true, on:dp.on, fx:b.fx.map(f=>Object.assign({},f,{t0:dp.on})) }); if(dp.span&&b.span&&!b.isLib) evSetSpan(c,dp.span); if(dp.ov){ c.ov=dp.ov; c.fx.forEach(f=>Object.assign(f,dp.ov)); } EV.push(c); });   /* dp.ov : réglages propres à cette copie (ex. couleur), enregistrés avec elle */
+  ((window.LAYERS||{}).events||[]).forEach(dp=>{ const b=dp.name?EV.find(e=>e.name===dp.name&&!e.isDup):(String(dp.k).startsWith('lib:')?evLibEvent(String(dp.k).slice(4),dp.on,dp.span):EV.find(e=>e.k===dp.k&&!e.isDup)); if(!b) return; const c=Object.assign({},b,{ isDup:true, auto:true, why:dp.why, on:dp.on, fx:b.fx.map(f=>Object.assign({},f,{t0:dp.on})) }); if(dp.span&&b.span&&!b.isLib) evSetSpan(c,dp.span); EV.push(c); });   /* events ajoutés par la passe automatique (layers.js) : jamais enregistrés dans events-timing.json */
   Object.keys(EVT.__spans||{}).forEach(k=>{ const b=EV.find(e=>e.k===k&&!e.isDup); if(b&&b.span) evSetSpan(b,EVT.__spans[k]); });   /* durées étirées à la main sur la timeline */
   EVREM=[]; (EVT.__removed||[]).forEach(k=>{ const i=EV.findIndex(e=>e.k===k&&!e.isDup); if(i>=0){ EVREM.push(EV[i]); EV.splice(i,1); } });   /* events d'origine supprimés à la main */
   shownPhase=-1; shownSub=null; updateTitleGradient(); setTimeout(computePhaseColors,80); if(eventView) eventBankRefresh();
@@ -791,17 +798,33 @@ function baseGain(t){ let g=1; const L=EV.filter(e=>e.fx&&e.fx.some(f=>f.n==='Fa
 /* ---------- Couches d'animation : base (effets de base), mod (« Anim 2D layer » : variations chaînées à un effet de base), evt (events). Un effet de phase est « base » sauf si fx.layer === 'mod' (fx.on = nom de l'effet de base auquel il est chaîné, sinon le premier de la phase). ---------- */
 const LAYER_ON={ base:true, mod:true, evt:true }; try{ Object.assign(LAYER_ON,JSON.parse(localStorage.getItem('animadome_layers')||'{}')); }catch(e){}
 const layerOfFx=fx=>fx&&fx.layer==='mod'?'mod':'base';
+/* layers.js (généré par la passe automatique, effaçable) : variations chaînées aux effets de base (mods) et events ajoutés (auto). Un mod = { id, ph (début de la phase), on (effet de base), kind: level | beat | speed | pal, t0, t1, pts: [[t,valeur],...] (interpolation linéaire ; pal : [[t,'palette']]), why }. */
+const LAYERS=(window.LAYERS&&typeof window.LAYERS==='object')?window.LAYERS:{ mods:[], events:[] };
+const OFFSET=(()=>{ try{ return new Set(JSON.parse(localStorage.getItem('animadome_off_'+(window.MIX&&MIX.slug))||'[]')); }catch(e){ return new Set(); } })();
+const saveOff=()=>{ try{ localStorage.setItem('animadome_off_'+(window.MIX&&MIX.slug),JSON.stringify([...OFFSET])); }catch(e){} };
+const MODIDX=new Map(); (LAYERS.mods||[]).forEach(m=>{ const k=m.ph+'|'+m.on; if(!MODIDX.has(k)) MODIDX.set(k,[]); MODIDX.get(k).push(m); });
+const KIND_LABEL={ level:'Intensité', beat:'Contraste du rythme', speed:'Accélération', pal:'Couleur' };
+function modVal(m,t){ const P=m.pts; if(t<=P[0][0]) return P[0][1]; for(let i=1;i<P.length;i++) if(t<=P[i][0]){ const a=P[i-1], b=P[i], k=(t-a[0])/Math.max(1e-6,b[0]-a[0]); return a[1]+(b[1]-a[1])*k; } return P[P.length-1][1]; }
+function modWarp(m,t){ const P=m.pts; let s=0; for(let i=1;i<P.length;i++){ const a=P[i-1], b=P[i]; if(t<=a[0]) break; const e=Math.min(t,b[0]), k=(e-a[0])/Math.max(1e-6,b[0]-a[0]), ve=a[1]+(b[1]-a[1])*k; s+=(e-a[0])*(a[1]+ve)/2; } return s; }
+/* applique les variations actives à un effet de base : retourne [{fx,w}] (2 entrées pendant un changement de palette : fondu à puissance constante) */
+function applyMods(a,t){ const list=a.ph===undefined?null:MODIDX.get(a.ph+'|'+a.fx.n); if(!list||!LAYER_ON.mod) return [a]; let fx=a.fx, copy=null, pal=null;
+  for(const m of list){ if(OFFSET.has(m.id)||t<m.t0||t>m.t1) continue; if(m.kind==='pal'){ pal=m; continue; } copy=copy||(copy=Object.assign({},fx)); const v=modVal(m,t);
+    if(m.kind==='level') copy.level=(fx.level??1)*v; else if(m.kind==='beat') copy.beat=clamp((fx.beat??.5)*v,0,1); else if(m.kind==='speed') copy.tw=m.t0+modWarp(m,t); }
+  if(copy) fx=copy; if(!pal) return fx===a.fx?[a]:[Object.assign({},a,{fx})];
+  let cur=null, prev=null, x=1; const P=pal.pts; for(let i=0;i<P.length;i++){ if(t>=P[i][0]-2){ prev=cur; cur=P[i]; x=smooth(clamp((t-(P[i][0]-2))/4)); } }
+  if(!cur) return [Object.assign({},a,{fx})]; if(!prev||x>=.999) return [Object.assign({},a,{fx:Object.assign({},fx,{pal:cur[1]})})];
+  return [Object.assign({},a,{fx:Object.assign({},fx,{pal:prev[1]}),w:a.w*Math.cos(x*Math.PI/2)}), Object.assign({},a,{fx:Object.assign({},fx,{pal:cur[1]}),w:a.w*Math.sin(x*Math.PI/2)})]; }
 const FXHUE={ fire:30, ember:10, lava:18, violet:275, ocean:200, sun:45, blue:210 };
 /* couleur d'un effet = celle de sa palette (pal) ; sinon celle de la phase (effets) ou bleu (events). Toujours éclaircie pour rester lisible sur fond sombre (journal et timeline). */
 function fxColor(fx,ph,fallback){ const h=fx&&fx.pal!==undefined?FXHUE[fx.pal]:undefined; if(h!==undefined) return `hsl(${h},88%,66%)`; return fallback||phaseColor(ph); }
 function runFx(t,act,f){ const bg=baseGain(t); let sc=false; const scale=()=>{ sc=true; if(bg<.9999) for(let k=0;k<buf.length;k++) buf[k]*=bg; };
-  for(const a of act){ if(a.off) continue; if(a.ev&&!sc) scale(); const fn=FX[a.fx.n]; if(fn) fn(t,a.w,a.fx,a.fx.slow?featSlow(t):f); } if(!sc) scale(); }
+  for(const a0 of act){ if(a0.off) continue; if(a0.ev&&!sc) scale(); for(const a of applyMods(a0,t)){ const fn=FX[a.fx.n]; if(fn) fn(t,a.w,a.fx,a.fx.slow?featSlow(t):f); } } if(!sc) scale(); }
 FX['Fade']=()=>{};   /* le gain de base est appliqué par runFx */
 function activeFx(t, i){
   const list=[]; if(!PH.length) return list; ensureFades();
   for(let j=Math.max(0,i-1); j<=Math.min(PH.length-1,i+1); j++){ const w=inProg(j,t)*(1-inProg(j+1,t)); if(w<=0.002) continue;
-    PH[j].fx.forEach(fx => { if(evPreviewOnly&&!evPreviewOnly.all&&!evPreviewOnly.needs.includes(fx.n)) return; let w2=w; if(fx.win){ /* fx.win = [[début,fin,fondu]] : l'effet n'est actif que dans ces fenêtres (fondu d'entrée/sortie, 3 s par défaut) */ let ww=0; for(const q of fx.win){ const fd=q[2]??3; ww=Math.max(ww,ssG(clamp((t-q[0])/fd))*ssG(clamp((q[1]-t)/fd))); } if(ww<=.002) return; w2=w*ww; } list.push({fx, w:w2, layer:layerOfFx(fx), off:!LAYER_ON[layerOfFx(fx)]}); }); }
-  EV.forEach(e => { if(t>=e.on-.05 && t<e.on+e.dur) e.fx.forEach(fx => list.push({fx, w:1, ev:e, layer:'evt', off:!LAYER_ON.evt&&!evPreviewOnly&&fx.n!=='Fade'})); });
+    PH[j].fx.forEach(fx => { if(evPreviewOnly&&!evPreviewOnly.all&&!evPreviewOnly.needs.includes(fx.n)) return; let w2=w; if(fx.win){ /* fx.win = [[début,fin,fondu]] : l'effet n'est actif que dans ces fenêtres (fondu d'entrée/sortie, 3 s par défaut) */ let ww=0; for(const q of fx.win){ const fd=q[2]??3; ww=Math.max(ww,ssG(clamp((t-q[0])/fd))*ssG(clamp((q[1]-t)/fd))); } if(ww<=.002) return; w2=w*ww; } list.push({fx, w:w2, ph:PH[j].start, layer:layerOfFx(fx), off:!LAYER_ON[layerOfFx(fx)]}); }); }
+  EV.forEach(e => { if(t>=e.on-.05 && t<e.on+e.dur) e.fx.forEach(fx => list.push({fx, w:1, ev:e, layer:'evt', off:(!LAYER_ON.evt&&!evPreviewOnly&&fx.n!=='Fade')||(e.auto&&OFFSET.has('e'+e.k+'@'+e.on)&&!evPreviewOnly)})); });
   if(!evPreviewOnly&&list.some(a=>a.ev&&a.fx.n==='SlowLava'&&!a.fx.overlay)) return list.filter(a=>a.fx.n==='SlowLava'||a.fx.n==='Noir'||(a.ev&&(a.ev.name==='TriGlitch'||a.ev.name==='Éruption'))).sort((x,y)=>(x.fx.n==='SlowLava'?0:1)-(y.fx.n==='SlowLava'?0:1));   /* mode exclusif : seuls restent les noirs « Rien », TriGlitch et Éruption (qui PRÉVALENT sur SlowLava : dessinés par-dessus) : tant qu'un SlowLava est actif (jusqu'à la fin de sa retombée), AUCUNE autre animation n'est visible */
   return list; }
 
@@ -813,7 +836,15 @@ function computeBuf(t){ const i=phaseAt(t), f=feat(t), act=activeFx(t,i); buf.fi
   { const gc=gradeAt(t); if(gc<.999) applyGrade(gc); }
   return act; }
 const _colCache={};
-function computePhaseColors(){ const sv=Object.assign({},LAYER_ON); LAYER_ON.base=LAYER_ON.mod=LAYER_ON.evt=true; try{ computePhaseColors0(); } finally { Object.assign(LAYER_ON,sv); } }
+const EVCOL={};
+/* couleur d'un event = couleur MOYENNE de ce que rendent ses animations (échantillonnée sur sa durée, seul l'event est rendu) ; sinon palette de son effet, sinon bleu */
+function computeEventColors(){ if(!EV.length) return; const saved=LEDS_PER_BAR, svp=evPreviewOnly, names=[]; EV.forEach(e=>{ if(!names.some(x=>x.name===e.name)) names.push(e); });
+  buildLEDs(4); try{ names.forEach(e=>{ if(e.name in EVCOL) return; evPreviewOnly={all:false,needs:FXMAP&&FXMAP.eventNeeds&&FXMAP.eventNeeds[e.name]||[]}; let R=0,G=0,B=0,Wt=0; const d=Math.max(.5,Math.min(e.dur||2,e.span||e.dur||2)), N=5;
+      for(let k=0;k<N;k++){ computeBuf(e.on+(k+.5)/N*d); for(let id=0;id<LED.length;id++){ const r=Math.min(1,buf[3*id]), g=Math.min(1,buf[3*id+1]), b=Math.min(1,buf[3*id+2]), v=Math.max(r,g,b); if(v<.04) continue; const wt=v*v; R+=r/v*wt; G+=g/v*wt; B+=b/v*wt; Wt+=wt; } }
+      if(Wt<1e-6) return; const r=R/Wt, g=G/Wt, b=B/Wt, mx=Math.max(r,g,b), mn=Math.min(r,g,b), dd=mx-mn; let h=0; if(dd>1e-6){ h=mx===r?((g-b)/dd+(g<b?6:0)):mx===g?((b-r)/dd+2):((r-g)/dd+4); h*=60; }
+      EVCOL[e.name]=`hsl(${Math.round(h)},${Math.round(Math.min(1,Math.max(.55,mx>0?dd/mx:0))*100)}%,68%)`; }); } finally { evPreviewOnly=svp; buildLEDs(saved); } }
+const evColor=e=>EVCOL[e.name]||fxColor(e.fx&&e.fx[0],null,'#7fd4ff');
+function computePhaseColors(){ const sv=Object.assign({},LAYER_ON); LAYER_ON.base=LAYER_ON.mod=LAYER_ON.evt=true; try{ computePhaseColors0(); computeEventColors(); } finally { Object.assign(LAYER_ON,sv); } }
 function computePhaseColors0(){ if(!PH.length) return; const saved=LEDS_PER_BAR; let todo=PH.filter(p=>!_colCache[p.start+':'+p.end+':'+JSON.stringify(p.fx)]); 
   if(todo.length){ buildLEDs(4); const N=6;
     todo.forEach(p=>{ let R=0,G=0,B=0,Wt=0; for(let k=0;k<N;k++){ const t=p.start+(k+.5)/N*(p.end-p.start); computeBuf(t);
@@ -1513,7 +1544,7 @@ function renderDome(t){ show3D(view3d&&!geoView);
   const seen=new Set(), items=[];
   for(const a of act){ if(a.w<=.02) continue; const id=(a.ev?'*'+mmss(a.ev.t)+'* ':'')+a.fx.n; if(seen.has(id)) continue; seen.add(id); items.push({id,a}); }
   // titre des effets en cours : bas à gauche du dôme (élément HTML : reste visible en 2D, 3D et GéoLists)
-  setJournalChips(act, PH[i]);
+  setJournalChips(act, PH[i], t);
 }
 
 /* ---------- Journal des events : un encart par effet de phase (couleur de la phase) et par event (bleu) ; la description détaillée apparaît au survol ---------- */
@@ -1524,25 +1555,37 @@ let _tip=null;
 function showTip(ev){ if(!_tip){ _tip=document.createElement('div'); _tip.id='chipTip'; document.body.appendChild(_tip); } _tip.textContent=ev.currentTarget._d||''; _tip.style.display='block'; moveTip(ev); }
 function moveTip(ev){ if(!_tip) return; const w=_tip.offsetWidth, h=_tip.offsetHeight; let x=Math.min(ev.clientX+14,innerWidth-w-10), y=ev.clientY-h-14; if(y<8) y=ev.clientY+18; _tip.style.left=Math.max(8,x)+'px'; _tip.style.top=y+'px'; }
 function hideTip(){ if(_tip) _tip.style.display='none'; }
-document.querySelectorAll('.laybtn').forEach(b=>{ const l=b.dataset.l; b.classList.toggle('on',!!LAYER_ON[l]); b.setAttribute('aria-pressed',!!LAYER_ON[l]); b.onclick=()=>{ LAYER_ON[l]=!LAYER_ON[l]; b.classList.toggle('on',LAYER_ON[l]); b.setAttribute('aria-pressed',LAYER_ON[l]); try{ localStorage.setItem('animadome_layers',JSON.stringify(LAYER_ON)); }catch(e){} b.blur(); }; });
-function setJournalChips(act,p){
+const LAYROWS=[ ['base','Effets de base'], ['mod','Anim 2D layer'], ['evt','Events'] ];
+function ensureJournalRows(box){ if(box._rows) return box._rows; box.textContent=''; box._rows={};
+  LAYROWS.forEach(([l,label])=>{ const row=document.createElement('div'); row.className='evrow'; const sw=document.createElement('button'); sw.className='chip laysw'+(LAYER_ON[l]?' on':''); sw.dataset.l=l; sw.setAttribute('aria-pressed',!!LAYER_ON[l]); sw.innerHTML='<i class="sw"></i>'+label; sw.title=label+' : afficher / couper cette couche dans l\'aperçu';
+    sw.onclick=()=>{ LAYER_ON[l]=!LAYER_ON[l]; sw.classList.toggle('on',LAYER_ON[l]); sw.setAttribute('aria-pressed',LAYER_ON[l]); try{ localStorage.setItem('animadome_layers',JSON.stringify(LAYER_ON)); }catch(e){} sw.blur(); box._k=''; };
+    const rc=document.createElement('div'); rc.className='evrc'; row.appendChild(sw); row.appendChild(rc); box.appendChild(row); box._rows[l]=rc; }); return box._rows; }
+/* plage de temps d'un effet : fenêtres (win) la plus proche, sinon t0/t1, sinon toute la phase */
+function fxRange(fx,P,t){ if(fx.t1!==undefined&&fx.t0!==undefined&&fx.pts) return [fx.t0,fx.t1]; if(fx.win&&fx.win.length){ const w=fx.win.slice().sort((a,b)=>a[0]-b[0]); const q=w.find(z=>t>=z[0]&&t<z[1])||w.find(z=>z[0]>=t)||w[0]; return [q[0],q[1]]; }
+  if(typeof fx.t0==='number'&&typeof fx.t1==='number'&&fx.t1>fx.t0&&fx.t0>=P.start-1&&fx.t1<=P.end+1) return [Math.max(P.start,fx.t0),Math.min(P.end,fx.t1)]; return [P.start,P.end]; }
+function goToFx(x,t){ hideTip(); if(x.ev){ setPhaseView(true,phaseAt(x.ev.on)); au.currentTime=x.ev.on; selEv=x.ev; selFx=null; return; }
+  const P=PH[x.pi], r=fxRange(x.fx||{},P,t); selFx={ name:x.name, range:r, color:x.color, layer:x.layer }; setPhaseView(true,x.pi); const len=P.end-P.start;
+  phZoom=(r[1]-r[0])<len*.6?{ pi:x.pi, a:Math.max(P.start,r[0]-Math.max(2,(r[1]-r[0])*.15)), b:Math.min(P.end,r[1]+Math.max(2,(r[1]-r[0])*.15)) }:null; au.currentTime=Math.min(Math.max(r[0],P.start),P.end-.05); selEv=null; }
+function setJournalChips(act,p,t){
   const bn=document.getElementById('fxBanner'); if(bn&&bn.style.display!=='none') bn.style.display='none';   /* l'ancien texte sous le dôme fait double emploi avec les encarts */
-  const box=document.getElementById('evChips'); if(!box) return; const col=phaseColor(p), pi=PH.indexOf(p), base=[], mod=[], evt=[], seen=new Set();
+  const box=document.getElementById('evChips'); if(!box) return; const rows=ensureJournalRows(box); box.querySelectorAll('.laysw').forEach(sw=>{ sw.classList.toggle('on',!!LAYER_ON[sw.dataset.l]); }); const col=phaseColor(p), pi=PH.indexOf(p), base=[], mod=[], evt=[], seen=new Set(); t=t??au.currentTime;
   for(const a of act){ if(a.w<=.02) continue;
-    if(a.ev){ const k='e'+a.ev.k+'@'+a.ev.on; if(seen.has(k)) continue; seen.add(k); evt.push({ layer:'evt', name:(window.FXMAP&&FXMAP.eventLabels&&FXMAP.eventLabels[a.ev.name])||a.ev.name, desc:'*'+mmss(a.ev.on)+'*  '+(a.ev.text||''), color:fxColor(a.ev.fx&&a.ev.fx[0],p,'#7fd4ff'), ev:a.ev, off:a.off }); }
-    else { const k='f'+a.fx.n; if(seen.has(k)) continue; seen.add(k); const own=PH.findIndex(q=>q.fx.includes(a.fx)), q=PH[own<0?pi:own]; (a.layer==='mod'?mod:base).push({ layer:a.layer==='mod'?'mod':'base', name:a.fx.n, desc:descForFx(a.fx.n,q), color:fxColor(a.fx,q), pi:own<0?pi:own, on:a.fx.on, off:a.off }); } }
-  const bases=base.map(x=>x.name); mod.forEach(m=>{ m.link=(m.on&&bases.includes(m.on))?m.on:bases[0]||''; });
-  const key=col+'|'+pi+'|'+JSON.stringify(LAYER_ON)+'|'+[base,mod,evt].map(l=>l.map(x=>x.name+(x.off?'!':'')+(x.link||'')).join(',')).join('|'); if(box._k===key) return; box._k=key; box.textContent=''; hideTip();
-  const rowOf=()=>{ const r=document.createElement('div'); r.className='evrow'; return r; };
+    if(a.ev){ const k='e'+a.ev.k+'@'+a.ev.on; if(seen.has(k)) continue; seen.add(k); evt.push({ layer:'evt', id:k, name:(window.FXMAP&&FXMAP.eventLabels&&FXMAP.eventLabels[a.ev.name])||a.ev.name, desc:(a.ev.auto?'[ajouté par la passe automatique] '+(a.ev.why||'')+'\n':'')+'*'+mmss(a.ev.on)+'*  '+(a.ev.text||''), color:evColor(a.ev), ev:a.ev, off:a.off||(a.ev.auto&&OFFSET.has(k)), auto:!!a.ev.auto, canOff:!!a.ev.auto }); }
+    else { const k='f'+a.fx.n; if(seen.has(k)) continue; seen.add(k); const own=PH.findIndex(q=>q.fx.includes(a.fx)), q=PH[own<0?pi:own]; (a.layer==='mod'?mod:base).push({ layer:a.layer==='mod'?'mod':'base', id:k, name:a.fx.n, fx:a.fx, desc:descForFx(a.fx.n,q), color:fxColor(a.fx,q), pi:own<0?pi:own, on:a.fx.on, off:a.off }); } }
+  const bases=base.map(x=>x.name);
+  mod.forEach(m=>{ m.link=(m.on&&bases.includes(m.on))?m.on:bases[0]||''; });
+  (LAYERS.mods||[]).forEach(m=>{ if(m.ph!==p.start||t<m.t0||t>m.t1) return; const bi=base.find(b=>b.name===m.on); mod.push({ layer:'mod', id:m.id, name:KIND_LABEL[m.kind]||m.kind, fx:m, desc:'[passe automatique] '+(m.why||''), color:bi?bi.color:fxColor(null,p), pi, link:m.on, off:!LAYER_ON.mod||OFFSET.has(m.id), auto:true, canOff:true, rng:[m.t0,m.t1] }); });
+  const key=col+'|'+pi+'|'+JSON.stringify(LAYER_ON)+'|'+OFFSET.size+'|'+[base,mod,evt].map(l=>l.map(x=>x.id+(x.off?'!':'')+(x.link||'')).join(',')).join('|'); if(box._k===key) return; box._k=key; hideTip();
   const phTxt=x=>x.layer==='base'?'effet de base':x.layer==='mod'?'anim 2D layer':'event';
-  [base,mod,evt].forEach(arr=>{ if(!arr.length) return; const row=rowOf(); box.appendChild(row);
-    arr.forEach(x=>{ const c=document.createElement('span'); c.className='evchip '+x.layer+(x.off?' off':''); c.style.color=x.color; c.textContent=(x.layer==='mod'?'\u21b3 ':'')+x.name; c._d=(x.layer==='mod'&&x.link?'Chaîné à « '+x.link+' »\n':'')+x.desc; c.dataset.name=x.name; c.dataset.layer=x.layer;
+  [['base',base],['mod',mod],['evt',evt]].forEach(([l,arr])=>{ const rc=rows[l]; rc.textContent='';
+    arr.forEach(x=>{ const c=document.createElement('span'); c.className='evchip '+x.layer+(x.off?' off':'')+(x.auto?' auto':''); c.style.color=x.color; c.textContent=(x.layer==='mod'?'\u21b3 ':'')+x.name; c._d=(x.layer==='mod'&&x.link?'Chaîné à « '+x.link+' »\n':'')+x.desc; c.dataset.name=x.name; c.dataset.layer=x.layer;
       const pr=document.createElement('b'); pr.className='chipP'; pr.textContent='\u270e'; pr.title='Prompter : préremplit le prompteur pour modifier cet effet';
       pr.addEventListener('click',ev=>{ ev.stopPropagation(); const pIn=document.getElementById('promptIn'); if(!pIn) return; const ctxt='['+x.name+' · '+phTxt(x)+' · phase '+((x.ev?phaseAt(x.ev.on):x.pi)+1)+'] '; pIn.value=ctxt+'Change cet effet de la manière suivante : '; pIn.dispatchEvent(new Event('input',{bubbles:true})); pIn.focus(); pIn.setSelectionRange(pIn.value.length,pIn.value.length); }); c.appendChild(pr);
-      c.addEventListener('mouseenter',ev=>{ showTip(ev); if(x.layer==='mod'&&x.link) box.querySelectorAll('.evchip.base').forEach(b=>b.classList.toggle('hl',b.dataset.name===x.link)); else if(x.layer==='base') box.querySelectorAll('.evchip.mod').forEach(m=>{ const mm=mod.find(z=>z.name===m.dataset.name); m.classList.toggle('hl',!!mm&&mm.link===x.name); }); });
-      c.addEventListener('mousemove',moveTip); c.addEventListener('mouseleave',()=>{ hideTip(); box.querySelectorAll('.hl').forEach(h=>h.classList.remove('hl')); });
-      c.addEventListener('click',()=>{ hideTip(); if(x.ev){ setPhaseView(true,phaseAt(x.ev.on)); au.currentTime=x.ev.on; selEv=x.ev; } else { const P=PH[x.pi], t0=au.currentTime||0; setPhaseView(true,x.pi); if(t0<P.start||t0>=P.end) au.currentTime=P.start; } });   /* clic sur un encart : passe en Vue Phase sur cet effet */
-      row.appendChild(c); }); }); }
+      if(x.canOff){ const xb=document.createElement('b'); xb.className='chipX'; xb.textContent='\u23fb'; xb.title=x.off?'Réactiver cet élément (ajouté automatiquement)':'Désactiver cet élément (ajouté automatiquement)'; xb.addEventListener('click',ev=>{ ev.stopPropagation(); if(OFFSET.has(x.id)) OFFSET.delete(x.id); else OFFSET.add(x.id); saveOff(); box._k=''; }); c.appendChild(xb); }
+      c.addEventListener('mouseenter',ev=>{ showTip(ev); const bx=document.getElementById('evChips'); if(x.layer==='mod'&&x.link) bx.querySelectorAll('.evchip.base').forEach(b=>b.classList.toggle('hl',b.dataset.name===x.link)); else if(x.layer==='base') bx.querySelectorAll('.evchip.mod').forEach(m=>{ const mm=mod.find(z=>z.name===m.dataset.name); m.classList.toggle('hl',!!mm&&mm.link===x.name); }); });
+      c.addEventListener('mousemove',moveTip); c.addEventListener('mouseleave',()=>{ hideTip(); document.querySelectorAll('#evChips .hl').forEach(h=>h.classList.remove('hl')); });
+      c.addEventListener('click',()=>{ if(x.rng){ x.fx={ t0:x.rng[0], t1:x.rng[1], pts:1 }; } goToFx(x,au.currentTime||0); });   /* clic sur un encart : Vue Phase, à l'effet */
+      rc.appendChild(c); }); }); }
 /* ---------- Texte lié à la timeline ---------- */
 let shownPhase=-1, shownSub=null, shownEv=null;
 function updateText(t){
@@ -1577,6 +1620,7 @@ function drawTL(t){
   PH.forEach((p,i)=>{ const x0=X(p.start),x1=X(p.end), mk=!!(window.PHMARKED&&window.PHMARKED.has("p"+String(Math.round(p.start)).padStart(5,"0"))); tctx.fillStyle=mk?window.__stripe:barColor(p); tctx.globalAlpha=mk?1:.7; tctx.fillRect(x0,18,x1-x0-1,12); tctx.globalAlpha=.10; tctx.fillRect(x0,top,x1-x0-1,base-top); tctx.globalAlpha=1;
     if(i===phaseAt(t)){ tctx.strokeStyle='#fff'; tctx.globalAlpha=.8; tctx.strokeRect(x0+.5,18.5,x1-x0-2,11); tctx.globalAlpha=1; }
     if(Math.min(x1,w)-Math.max(x0,0)>26){ tctx.font='bold 13px system-ui'; tctx.textAlign='left'; if(mk){ tctx.lineWidth=3; tctx.strokeStyle='#b3150f'; tctx.strokeText(String(i+1),Math.max(x0,0)+4,14); tctx.fillStyle='#ffe14a'; } else tctx.fillStyle='#fff'; tctx.fillText(String(i+1),Math.max(x0,0)+4,14); } });
+  if(selFx){ const q=selFx.range, xa=Math.max(0,X(q[0])), xb=Math.min(w,X(q[1])); if(xb>xa){ tctx.globalAlpha=.2; tctx.fillStyle=selFx.color; tctx.fillRect(xa,top,xb-xa,base-top); tctx.globalAlpha=.95; tctx.fillRect(xa,top,xb-xa,2); tctx.fillRect(xa,top,2,base-top); tctx.fillRect(xb-2,top,2,base-top); tctx.globalAlpha=1; tctx.font='bold 11px system-ui'; tctx.textAlign='left'; tctx.fillStyle='#0f0f16cc'; const tw2=tctx.measureText(selFx.name).width; tctx.fillRect(xa+4,top+4,tw2+8,15); tctx.fillStyle=selFx.color; tctx.fillText(selFx.name,xa+8,top+15); } }
   if(LAYER_ON.mod) PH.forEach(p=>{ const ms=p.fx.filter(f=>f.layer==='mod'); ms.forEach((f,k)=>{ const x0=X(p.start),x1=X(p.end); if(x1<0||x0>w) return; tctx.fillStyle=fxColor(f,p); tctx.globalAlpha=.9; tctx.fillRect(Math.max(0,x0),31+k*3,Math.min(w,x1)-Math.max(0,x0)-1,2); tctx.globalAlpha=1; }); });   /* bande fine sous la barre des phases : anim 2D layer chaînées */
   if(stemAny()&&curve.s){   /* pistes superposées en transparence : synthés (bleu), basse (violet), batterie (orange), et par-dessus les KICKS en jaune clair, bien plus opaques */
     const lay=(a,col,al)=>{ tctx.beginPath(); tctx.moveTo(0,base); for(let x=0;x<w;x++) tctx.lineTo(x,base-a[x]*(base-top)); tctx.lineTo(w,base); tctx.closePath(); tctx.globalAlpha=al; tctx.fillStyle=col; tctx.fill(); tctx.globalAlpha=1; };
@@ -1587,7 +1631,7 @@ function drawTL(t){
   tctx.beginPath(); tctx.moveTo(0,base); for(let x=0;x<w;x++) tctx.lineTo(x,base-curve.c[x]*(base-top)); tctx.lineTo(w,base); tctx.closePath(); tctx.fillStyle='#d8d8e866'; tctx.fill();
   tctx.beginPath(); for(let x=0;x<w;x++){ const y=base-curve.d[x]*(base-top)*.9; x?tctx.lineTo(x,y):tctx.moveTo(x,y); } tctx.strokeStyle='#ff9a4a'; tctx.lineWidth=1; tctx.stroke(); }
   tctx.fillStyle='#8a8a9a'; tctx.font='11px system-ui'; tctx.textAlign='left'; { const step=[5,10,15,30,60,120,300,600].find(s=>(VW1-VW0)/s<=12)||600; for(let m=Math.ceil(VW0/step)*step;m<=VW1;m+=step){ tctx.fillText(fmt(m),X(m)+3,phaseView?base-3:h-8); tctx.fillStyle='#ffffff18'; tctx.fillRect(X(m),top,1,base-top); tctx.fillStyle='#8a8a9a'; } }
-  lbRects=[]; const lbRow=new Map(); if(phaseView){ tctx.font='bold 10px system-ui'; const rowEnd=[-1e9,-1e9,-1e9]; EV.filter(e=>{ const x=X(e.on); return x>=-20&&x<=w+20; }).sort((a,b)=>a.on-b.on).forEach(e=>{ const x=X(e.on), lb=((window.FXMAP&&FXMAP.eventLabels&&FXMAP.eventLabels[e.name])||e.name)+(dragEv===e?'  00:00.00':''), tw=tctx.measureText(lb).width; let lx=Math.min(Math.max(x,tw/2+3),w-tw/2-3), r=rowEnd.findIndex(en=>lx-tw/2-3>=en); if(r<0){ r=rowEnd.indexOf(Math.min(...rowEnd)); lx=rowEnd[r]+tw/2+3; } rowEnd[r]=lx+tw/2+3; lbRow.set(e,{r,lx}); }); }   /* noms : rangée 0 juste sous la tirette, sinon 1 puis 2 plus bas s'ils se chevauchent ; si les 3 sont prises, le nom est décalé à droite sur la rangée libérée le plus tôt */  EV.forEach(e=>{ const x=X(e.on); if(x<-20||x>w+20) return; const sel=(selEv===e), ecol=fxColor(e.fx&&e.fx[0],null,'#7fd4ff'); if(!LAYER_ON.evt) return; tctx.fillStyle=sel?'#34e08a':ecol;
+  lbRects=[]; const lbRow=new Map(); if(phaseView){ tctx.font='bold 10px system-ui'; const rowEnd=[-1e9,-1e9,-1e9]; EV.filter(e=>{ const x=X(e.on); return x>=-20&&x<=w+20; }).sort((a,b)=>a.on-b.on).forEach(e=>{ const x=X(e.on), lb=((window.FXMAP&&FXMAP.eventLabels&&FXMAP.eventLabels[e.name])||e.name)+(dragEv===e?'  00:00.00':''), tw=tctx.measureText(lb).width; let lx=Math.min(Math.max(x,tw/2+3),w-tw/2-3), r=rowEnd.findIndex(en=>lx-tw/2-3>=en); if(r<0){ r=rowEnd.indexOf(Math.min(...rowEnd)); lx=rowEnd[r]+tw/2+3; } rowEnd[r]=lx+tw/2+3; lbRow.set(e,{r,lx}); }); }   /* noms : rangée 0 juste sous la tirette, sinon 1 puis 2 plus bas s'ils se chevauchent ; si les 3 sont prises, le nom est décalé à droite sur la rangée libérée le plus tôt */  EV.forEach(e=>{ const x=X(e.on); if(x<-20||x>w+20) return; const sel=(selEv===e), ecol=evColor(e); if(!LAYER_ON.evt) return; tctx.fillStyle=sel?'#34e08a':ecol;
     if(e.span){ tctx.globalAlpha=sel?.38:.22; tctx.fillRect(x,top,Math.max(2,X(e.on+e.span)-x),(phaseView?base+4:base)-top); tctx.globalAlpha=1; }   /* événement à durée : bande de sa longueur */
     if(!phaseView){ tctx.fillRect(x-1,top,2,base-top); return; }   /* Vue Piste : seulement la barre (ni nom ni poignée, non déplaçable) */
     tctx.fillRect(x-(sel?1.5:1),top,sel?3:2,base+4-top);   /* Vue Phase : barre ; tirette (poignée de début) et poignée de fin seulement pour l'event SÉLECTIONNÉ (vert) ; les autres : plage cyan sans tirette */
@@ -1618,6 +1662,7 @@ tl.addEventListener('wheel',ev=>{ ev.preventDefault(); if(!PH.length) return; co
   if(ev.deltaY<0){ const pi=phaseAt(tc), P=PH[pi]; if(ns<=(P.end-P.start)*1.15){ setPhaseView(true,pi); return; } zoomWin=place(ns); }
   else zoomWin=(ns>=DUR*.92)?null:place(ns);
   saveUI(); },{passive:false});
+let selFx=null;   /* effet choisi dans le journal : { name, range:[début,fin], color, layer } surligné dans la timeline */
 let dragEv=null, resizeEv=null, selEv=null, dragX0=0, dragMoved=false, lbRects=[];   /* selEv : event sélectionné (clic sur sa tirette) : sa poignée de fin apparaît, Suppr le supprime */
 function evNear(ev){ if(!phaseView) return null;   /* pas de déplacement d'events en Vue Piste */
   const r=tl.getBoundingClientRect();   /* clic sur la barre d'un event (à 7 px près, sur toute sa hauteur) : sélection ; ailleurs un clic positionne la lecture */
@@ -1625,7 +1670,7 @@ function evNear(ev){ if(!phaseView) return null;   /* pas de déplacement d'even
 function evEndNear(ev){ const e=selEv; if(!phaseView||!e||!e.span||EV.indexOf(e)<0) return null; const r=tl.getBoundingClientRect(), cy=(ev.clientY-r.top)*(tl.height/r.height); if(cy<tl.height-65) return null; const px=r.left+((e.on+e.span-VW0)/(VW1-VW0))*r.width; return Math.abs(ev.clientX-px)<=10?e:null; }   /* la poignée de fin n'existe que pour l'event sélectionné */
 function evRemove(e){ const i=EV.indexOf(e); if(i<0) return; if(!e.isDup){ EVT.__removed=(EVT.__removed||[]).concat(e.k); EVREM.push(e); } EV.splice(i,1); if(selEv===e) selEv=null; saveEvt(); }   /* copie : supprimée ; event d'origine : caché (EVT.__removed) mais gardé comme modèle dans la banque */
 addEventListener('keydown',ev=>{ if((ev.key==='Delete'||ev.key==='Backspace')&&selEv&&!ev.ctrlKey&&!ev.metaKey&&!/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement||{}).tagName||'')&&!(document.activeElement&&document.activeElement.isContentEditable)){ ev.preventDefault(); evRemove(selEv); } });
-function saveEvt(){ const o={}, cats=EVT.__cats, sp={}, rem=EVT.__removed; EV.forEach(e=>{ if(e.isDup) return; if(e.on!==e.t||EVT[e.k]!==undefined) o[e.k]=e.on; if(e.span&&e.span0&&Math.abs(e.span-e.span0)>.001) sp[e.k]=+e.span.toFixed(2); }); if(Object.keys(sp).length) o.__spans=sp; const dups=EV.filter(e=>e.isDup).map(e=>{ const o2={k:e.k,on:e.on,span:e.span}; if(e.ov) o2.ov=e.ov; return o2; }); if(dups.length) o.__dups=dups; if(cats&&Object.keys(cats).length) o.__cats=cats; if(rem&&rem.length) o.__removed=rem; EVT=o; fetch('/api/event-time?dir='+encodeURIComponent(MIX.dir),{method:'POST',body:JSON.stringify(o)}).catch(()=>{}); if(eventView) eventBankRefresh(); }
+function saveEvt(){ const o={}, cats=EVT.__cats, sp={}, rem=EVT.__removed; EV.forEach(e=>{ if(e.isDup) return; if(e.on!==e.t||EVT[e.k]!==undefined) o[e.k]=e.on; if(e.span&&e.span0&&Math.abs(e.span-e.span0)>.001) sp[e.k]=+e.span.toFixed(2); }); if(Object.keys(sp).length) o.__spans=sp; const dups=EV.filter(e=>e.isDup&&!e.auto).map(e=>{ const o2={k:e.k,on:e.on,span:e.span}; if(e.ov) o2.ov=e.ov; return o2; }); if(dups.length) o.__dups=dups; if(cats&&Object.keys(cats).length) o.__cats=cats; if(rem&&rem.length) o.__removed=rem; EVT=o; fetch('/api/event-time?dir='+encodeURIComponent(MIX.dir),{method:'POST',body:JSON.stringify(o)}).catch(()=>{}); if(eventView) eventBankRefresh(); }
 tl.addEventListener('pointerdown',ev=>{ { const r0=tl.getBoundingClientRect(), cy0=(ev.clientY-r0.top)*tl.height/r0.height; if(ev.button===0&&cy0>=14&&cy0<=32&&!ev.altKey&&!ev.shiftKey&&window.openPhaseMenu){ ev.preventDefault(); window.openPhaseMenu(ev,phaseAt(VW0+clamp((ev.clientX-r0.left)/r0.width)*(VW1-VW0))); return; } }   /* clic sur la barre colorée d'une phase : menu « updater phase X » */
   const e=evNear(ev), ee=evEndNear(ev); try{ tl.setPointerCapture(ev.pointerId); }catch(_){}
   if(phaseView){ const rr=tl.getBoundingClientRect(), cx=(ev.clientX-rr.left)*tl.width/rr.width, cy=(ev.clientY-rr.top)*tl.height/rr.height, hit=lbRects.slice().reverse().find(q=>cx>=q.x0&&cx<=q.x1&&cy>=q.y0&&cy<=q.y1); if(hit){ if(ev.altKey){ ev.preventDefault(); evRemove(hit.e); } else selEv=hit.e; return; } }   /* clic sur le NOM d'un event : le sélectionne (Alt+clic : le supprime) */
@@ -1633,7 +1678,7 @@ tl.addEventListener('pointerdown',ev=>{ { const r0=tl.getBoundingClientRect(), c
   if(ee){ resizeEv=ee; return; }   /* poignée de fin de l'event sélectionné : étirement */
   if(e){ selEv=e; if(ev.shiftKey){ const c=Object.assign({},e,{ isDup:true, fx:e.fx.map(f=>Object.assign({},f)) }); EV.push(c); selEv=c; dragEv=c; dragX0=ev.clientX; dragMoved=true; return; }   /* Maj+clic : duplique l'event et le laisse glisser à sa nouvelle place */
     dragEv=e; dragX0=ev.clientX; dragMoved=false; return; }
-  selEv=null; dragging=true; seekFromEvent(ev); });tl.addEventListener('pointermove',ev=>{ if(resizeEv){ const r=tl.getBoundingClientRect(), tt=VW0+Math.min(1,Math.max(0,(ev.clientX-r.left)/r.width))*(VW1-VW0); evSetSpan(resizeEv,Math.max(.2,Math.min(DUR-resizeEv.on,Math.round((tt-resizeEv.on)*20)/20))); return; } if(dragEv){ if(!dragMoved&&Math.abs(ev.clientX-dragX0)<4) return; dragMoved=true; const r=tl.getBoundingClientRect(), tt=VW0+Math.min(1,Math.max(0,(ev.clientX-r.left)/r.width))*(VW1-VW0); dragEv.on=Math.round(tt*20)/20; dragEv.fx.forEach(f=>f.t0=dragEv.on); return; } if(dragging){ seekFromEvent(ev); return; } tl.style.cursor=(evNear(ev)||evEndNear(ev))?'ew-resize':'pointer'; });
+  selEv=null; selFx=null; dragging=true; seekFromEvent(ev); });tl.addEventListener('pointermove',ev=>{ if(resizeEv){ const r=tl.getBoundingClientRect(), tt=VW0+Math.min(1,Math.max(0,(ev.clientX-r.left)/r.width))*(VW1-VW0); evSetSpan(resizeEv,Math.max(.2,Math.min(DUR-resizeEv.on,Math.round((tt-resizeEv.on)*20)/20))); return; } if(dragEv){ if(!dragMoved&&Math.abs(ev.clientX-dragX0)<4) return; dragMoved=true; const r=tl.getBoundingClientRect(), tt=VW0+Math.min(1,Math.max(0,(ev.clientX-r.left)/r.width))*(VW1-VW0); dragEv.on=Math.round(tt*20)/20; dragEv.fx.forEach(f=>f.t0=dragEv.on); return; } if(dragging){ seekFromEvent(ev); return; } tl.style.cursor=(evNear(ev)||evEndNear(ev))?'ew-resize':'pointer'; });
 tl.addEventListener('pointerup',()=>{ dragging=false; if(dragEv){ const mv=dragMoved; dragEv=null; if(mv) saveEvt(); } if(resizeEv){ resizeEv=null; saveEvt(); } });
 
 /* ---------- Contrôles ---------- */
