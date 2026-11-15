@@ -21,7 +21,7 @@
   #evChips { display:flex; flex-wrap:wrap; gap:6px; padding-top:11px; }
   #evHint { color:var(--mut); font-size:.78em; font-weight:400; }
   .evchip { border:1px solid currentColor; border-radius:7px; padding:2px 9px; font-size:.82em; font-weight:600; cursor:pointer; background:rgba(255,255,255,.04); white-space:nowrap; position:relative; }
-  #evChips { flex-direction:column; flex-wrap:nowrap; gap:7px; padding-top:6px; } .evrow { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  #evChips { flex-direction:column; flex-wrap:nowrap; gap:13px; padding-top:8px; } .evrow { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
   .evchip.base { border:3px double currentColor; padding:0 8px; }   /* effet de base : double bordure */
   .evchip.mod { border:1px solid currentColor; }   /* anim 2D layer : bordure simple, chaînée à son effet de base (↳) */
   .evchip.evt { border:0; border-radius:999px; padding:2px 11px 2px 8px; background:color-mix(in srgb,currentColor 20%,transparent); }   /* event : pastille pleine teintée */
@@ -65,7 +65,7 @@
   .side { font-size:clamp(14px,1.05vw,20px); background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px; min-height:0; flex:1; overflow:hidden; display:flex; flex-direction:column; }
   .side > * { flex:none; } .side > #textBlock { flex:1 1 auto; max-height:none; min-height:0; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; scrollbar-color:#4a4a62 transparent; padding-right:6px; font-size:clamp(11px,.78vw,14.5px); }   /* texte long : barre de défilement, la police ne rétrécit plus */
   .ph-time { display:flex; justify-content:center; align-items:baseline; gap:.9em; flex-wrap:wrap; }   /* minuteur de phase et nom de phase sur une seule ligne */
-  #liveLines { flex:none; height:11.5em; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#4a4a62 transparent; } #evSep { display:none; height:2px; margin:8px 0 8px; background:#8a8aa8; border-radius:1px; } #evTitle { color:var(--ev); font-weight:700; font-size:.85em; margin:0 0 2px; } #liveLines p { margin:4px 0 0; }
+  #liveLines { flex:none; height:13em; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#4a4a62 transparent; } #evSep { display:none; height:2px; margin:8px 0 8px; background:#8a8aa8; border-radius:1px; } #evTitle { color:var(--ev); font-weight:700; font-size:.85em; margin:0 0 2px; } #liveLines p { margin:4px 0 0; }
   /* texte technique : vue lisible (titres ▸ en gras, le reste en normal) ; un clic bascule en édition du texte brut */
   .ph-techview { white-space:pre-wrap; line-height:1.55; cursor:text; padding:3px 5px; margin:0 0 1.15em -5px; border:1px dashed transparent; border-radius:5px; } .ph-techview:hover { border-color:#3a3a50; }
   .ph-techview .th { font-weight:700; margin-top:.6em; } .ph-techview > div:first-child { margin-top:0; } .ph-techview .tb { font-weight:400; padding-left:1.1em; text-indent:-1.1em; } .ph-techview .tp { font-weight:400; }
@@ -126,8 +126,8 @@
   #play { min-width:120px; background:#2a1a10; border-color:#6a3a1a; }
   label { color:var(--mut); font-size:12px; display:flex; gap:6px; align-items:center; }
   #time { font-variant-numeric:tabular-nums; color:var(--fg); }
-  #tl.ph { height:calc(clamp(80px,10vh,130px) + 59px); margin-top:max(4px,calc(clamp(16px,3vh,44px) - 30px)); }   /* Vue Phase : la timeline est plus haute de 34 px (poignées et noms sous l'onde) */
-  #tl { margin-top:8px; cursor:pointer; touch-action:none; width:100%; height:clamp(80px,10vh,130px); margin-top:clamp(16px,3vh,44px); }
+  #tl.ph { height:calc(var(--tlH,clamp(80px,10vh,130px)) + 59px); margin-top:max(4px,calc(clamp(16px,3vh,44px) - 30px)); }   /* Vue Phase : la timeline est plus haute de 34 px (poignées et noms sous l'onde) */
+  #tl { margin-top:8px; cursor:pointer; touch-action:none; width:100%; height:var(--tlH,clamp(80px,10vh,130px)); margin-top:clamp(16px,3vh,44px); }
   .hint { color:var(--mut); font-size:12px; margin-top:6px; text-align:center; }
   .keys { color:#6a6a7a; font-size:clamp(9px,.72vw,12px); margin-top:6px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .keys b { color:#aab0c4; font-weight:600; }
   .stemChk { display:flex; gap:14px; align-items:center; font-size:12px; color:var(--mut); } .stemChk label { cursor:pointer; gap:5px; color:#aab0c4; } .stemChk input { accent-color:var(--c); margin:0; } .stemChk i { width:9px; height:9px; border-radius:2px; display:inline-block; }
@@ -152,7 +152,7 @@
       <p class="ph-edit ph-son" id="phSon" contenteditable="plaintext-only" spellcheck="false" data-ph="Son : analyse audio…" title="Partie son (italique) – cliquer pour modifier"></p>
       <div class="save" id="saveState"></div>
       </div>
-      <div id="liveLines"><div id="evSep"></div><div id="evTitle"><span id="evHint">clic : voir dans la timeline · ✎ : prompter</span></div><div id="evChips"></div></div>   <!-- sous-étapes et events : toujours visibles, juste au-dessus du prompteur (hors de la zone qui défile) -->
+      <div id="liveLines"><div id="evSep"></div><div id="evTitle"><span id="evHint">clic : voir dans la timeline · Ctrl+clic : solo temporaire · ✎ : prompter</span></div><div id="evChips"></div></div>   <!-- sous-étapes et events : toujours visibles, juste au-dessus du prompteur (hors de la zone qui défile) -->
       
       <div class="promptbox">
         <textarea id="promptIn" rows="4" placeholder="PROMPTEUR : ask me anything&#10;&#10;Entrée écrire dans le prompt  |  Échap quitter champ de prompt  |  Ctrl+Espace insérer timecode"></textarea>
@@ -1717,7 +1717,7 @@ document.getElementById('prev').onclick=()=>gotoPhase(-1); document.getElementBy
 const mixSel=document.getElementById('mixSel');
 MIXES.forEach(m=>{ const o=document.createElement('option'); o.value=m.slug; o.textContent=m.title; if(m===MIX) o.selected=true; mixSel.appendChild(o); });
 mixSel.onchange=e=>{ const u=new URL(location.href); u.searchParams.set('mix',e.target.value); location.href=u.toString(); };{ const nb=document.getElementById('showNumBtn'); nb.onclick=()=>{ showNum=!showNum; nb.classList.toggle('on',showNum); }; }
-document.getElementById('nled').onchange=e=>buildLEDs(+e.target.value);
+document.getElementById('nled').onchange=e=>{ buildLEDs(+e.target.value); try{ localStorage.setItem('animadome_nled',e.target.value); }catch(x){} };
 /* une case cochée ou un slider relâché ne garde pas le focus : les touches (Espace, flèches...) restent des raccourcis et ne re-cochent rien */
 addEventListener('change',e=>{ const x=e.target; if(x&&x.tagName==='INPUT'&&/^(checkbox|range)$/.test(x.type)) x.blur(); },true);
 addEventListener('keydown',e=>{ const tg=e.target; if((tg.tagName==='INPUT'&&!/^(checkbox|range|button)$/.test(tg.type))||tg.tagName==='SELECT'||tg.tagName==='TEXTAREA'||tg.isContentEditable) return;
@@ -1851,8 +1851,24 @@ function saveUI(){ try{ localStorage.setItem(uiKey,JSON.stringify({ event:eventV
     (s.sel||[]).forEach(id=>barSel.add(id)); (s.geoOn||[]).forEach(k=>{ if(GEO.lists[k]) geoOn.add(k); });
     if(s.par){ const b=[...document.querySelectorAll('.par')].find(x=>x.textContent.indexOf(s.par==='even'?'Pairs':'Impairs')===0); if(b) b.click(); }
     if(s.geo) geoSetView(true); else if(s.event) eventSetView(true); geoSyncChips(); geoRecompute(); geoUpdateFormula(); }catch(e){} })();
+/* ---------- Poignées de redimensionnement : taille du dôme (donc de la fenêtre de phase, qui prend le reste) et hauteur de la timeline ; mémorisées ; double-clic = automatique ---------- */
+(function(){ const root=document.documentElement, stage=document.querySelector('.stage'), ASP=836/874, K1='animadome_domeH', K2='animadome_tlH';
+  const lsGet=k=>{ try{ return +localStorage.getItem(k)||0; }catch(e){ return 0; } }, lsSet=(k,v)=>{ try{ if(v) localStorage.setItem(k,v); else localStorage.removeItem(k); }catch(e){} };
+  const applyD=h=>{ if(h) root.style.setProperty('--domeH',h+'px'); else root.style.removeProperty('--domeH'); }, applyT=h=>{ if(h) root.style.setProperty('--tlH',h+'px'); else root.style.removeProperty('--tlH'); };
+  applyD(lsGet(K1)); applyT(lsGet(K2)); if(!stage) return;
+  const mk=(id,cur,title)=>{ const e=document.createElement('div'); e.id=id; e.title=title; e.style.cssText='position:absolute;z-index:30;cursor:'+cur+';background:transparent;border-radius:4px;transition:background .15s;touch-action:none'; e.onmouseenter=()=>{ e.style.background='#ffffff26'; }; e.onmouseleave=()=>{ if(!e._d) e.style.background='transparent'; }; document.body.appendChild(e); return e; };
+  const hv=mk('splitV','col-resize','Glisser : agrandir / réduire le dôme (la fenêtre de phase prend le reste) · double-clic : taille automatique'), hh=mk('splitH','row-resize','Glisser : hauteur de la timeline · double-clic : taille automatique');
+  const place=()=>{ const narrow=innerWidth<=820; hv.style.display=hh.style.display=narrow?'none':'block'; if(narrow) return; const sx=scrollX, sy=scrollY, d=cv.getBoundingClientRect(), r=tl.getBoundingClientRect();
+    hv.style.left=(sx+d.right+3)+'px'; hv.style.top=(sy+d.top)+'px'; hv.style.width='10px'; hv.style.height=d.height+'px'; hh.style.left=(sx+r.left)+'px'; hh.style.width=r.width+'px'; hh.style.height='10px'; hh.style.top=(sy+r.top-12)+'px'; };
+  const drag=(el,onMove,onEnd)=>{ el.addEventListener('pointerdown',ev=>{ ev.preventDefault(); el._d=1; el.style.background='#ffffff40'; try{ el.setPointerCapture(ev.pointerId); }catch(e){} const st={ x:ev.clientX, y:ev.clientY, h:tl.clientHeight-(phaseView?59:0) }; el._st=st; });
+    el.addEventListener('pointermove',ev=>{ if(el._d) onMove(ev,el._st); }); const up=()=>{ if(!el._d) return; el._d=0; el.style.background='transparent'; onEnd(); place(); }; el.addEventListener('pointerup',up); el.addEventListener('pointercancel',up); };
+  let curD=lsGet(K1), curT=lsGet(K2);
+  drag(hv,(ev)=>{ const r=stage.getBoundingClientRect(); let w=ev.clientX-r.left-8; w=Math.max(335,Math.min(w,r.width-260-16)); curD=Math.round(w*ASP); applyD(curD); place(); },()=>lsSet(K1,curD));
+  drag(hh,(ev,st)=>{ curT=Math.round(Math.max(60,Math.min(420,st.h+(st.y-ev.clientY)))); applyT(curT); place(); },()=>lsSet(K2,curT));
+  hv.addEventListener('dblclick',()=>{ curD=0; applyD(0); lsSet(K1,0); place(); }); hh.addEventListener('dblclick',()=>{ curT=0; applyT(0); lsSet(K2,0); place(); });
+  addEventListener('resize',place); addEventListener('scroll',place,{passive:true}); setInterval(place,700); setTimeout(place,300); })();
 setInterval(saveUI,500); addEventListener('pagehide',saveUI);
-document.getElementById('nled').value='24'; buildLEDs(24);   /* défaut léger pour les ordinateurs moins rapides ; vue 2D par défaut aussi */
+{ let n='24'; try{ const s=localStorage.getItem('animadome_nled'); if(s&&['4','24','42','60'].includes(s)) n=s; }catch(x){} document.getElementById('nled').value=n; buildLEDs(+n); }   /* défaut léger pour les ordinateurs moins rapides ; vue 2D par défaut aussi */
 loadDescriptif().then(()=>{ requestAnimationFrame(frame); setTimeout(()=>runSelfCheck(),900); });
 setInterval(loadDescriptif, 2500);
 </script>
