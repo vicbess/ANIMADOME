@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.3.0 — 2026-11-15
+
+Couches d'animation et nouveaux events.
+- Trois couches dans le journal : Anim base layer, Anim secondaire (variations chaînées : intensité, accélération, contraste du rythme, couleur) et Events, avec un interrupteur par couche (qui coupe aussi la timeline), encarts colorés, Ctrl+clic = mode solo temporaire, clic = aller à l'effet dans la timeline, bouton prompter
+- Passe automatique (tools/auto-layers.py -> layers.js, annulable en supprimant le fichier) : variations, events ajoutés et calés sur le rythme (premier temps, kicks, attaques marquées ; fin sur une mesure ou une phrase)
+- 6 nouveaux events dans la banque : OndeDeChoc, Spirale, Balayage (Geometric / Basics), Marée, Bulles (Water), Cendres (Volcano)
+- Poignées de redimensionnement du dôme (la fenêtre de phase garde sa hauteur) et de la timeline ; LEDs par barre mémorisées
+- Select Audio Files : avertissement si les durées diffèrent, possibilité de joindre le descriptif écrit
+- Zone de prompt renommée PROMPTEUR : ask me anything ; ligne de phase et boutons à droite ; plus d'erreur 404 pour un rapport de nettoyage absent
+
 ## v1.2.0 — 2026-11-15
 
 Nouvelle analyse du son, bien plus précise.
