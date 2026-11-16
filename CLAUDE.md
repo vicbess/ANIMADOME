@@ -19,9 +19,23 @@ Chaque mix a un fichier **`dome-preview/mixes/<mix>/CONTEXT.md`** : intention ar
 - Le rythme des mix est souvent peu conventionnel (sons non standard, bruitages, petits sons séparés) : ne pas supposer un beat régulier ; quand les pistes séparées d'un mix sont disponibles, **analyser chaque piste à part** plutôt que le mélange.
 ## Couches d'animation (outil 2.0 en construction)
 Trois couches, activables séparément par les interrupteurs du journal : **Anim base layer** (anciens « effets de phase » : un canvas qui suit le tempo principal, même effet sur les passages de même nature), **Anim 2D layer** (variations chaînées à un effet de base : accélération, intensité, couleur ; dans `fxmap.js` : `layer:'mod'`, `on:'<nom de l'effet de base>'`, sinon le premier de la phase) et **Events** (inchangés : tout détail ponctuel est un event rangé dans la banque, sans doublon). Les couleurs des encarts viennent de la palette de l'effet (`pal`) ; on garde la palette du mix sauf raison créative. Le tempo suit les changements de tempo à l'intérieur d'une phase. Chaque élément doit rester séparable (désactivable, modifiable). mixes/<mix>/layers.js (généré par 	ools/auto-layers.py, d'après nalysis2.js) contient les fenêtres d'apparition / effets ajoutés des effets de base (ase), les variations automatiques (mods : intensité, accélération, contraste du rythme, couleur) et les events ajoutés (events, jamais écrits dans events-timing.json). mixes/<mix>/events-plan.json (facultatif) liste des events choisis à la main d'après le descriptif et l'analyse ; uto-layers.py les fusionne dans layers.js. **Pour annuler la passe automatique : supprimer layers.js** ; chaque élément automatique se désactive aussi un par un (⏻ dans le journal).
+**Trous d'export** : si les pistes séparées fournies sont muettes alors que le mix joue, `tools/fill-gaps.py <mix>` (`--list` pour seulement les lister) analyse le mix sur ces passages et complète `analysis2.js`, `beats.js` et `stems.js` ; à relancer après chaque nouvelle analyse. **Phase réglée à la main** : `mixes/<mix>/layers-plan.json` (`{ "<début en s>": { mods, base, noAutoEvents } }`) remplace les variations automatiques de cette phase ; dans `events-plan.json`, `snap:false` garde un event à l'instant exact donné (déjà calé sur l'analyse) et `ov` lui passe des réglages (ex. `strikes`, `ticks`).
 ## Connaissances son et lumière
 Le skill **nimadome-son-lumiere** (.claude/skills/animadome-son-lumiere/SKILL.md) rassemble ce qu'un technicien son et lumière doit savoir ici : pilotage sACN/DMX, alimentation, gamma et couleur, photosensibilité, synchronisation, analyse audio, ambisonie. Consulte-le avant de régler un effet destiné au dôme réel ou de parler d'export.
 
+## Quel modèle pour quelle tâche (économie de tokens)
+Règle écrite en **niveaux**, jamais en noms ni en versions de modèles : « supérieur » = le modèle le plus capable disponible dans la session ; « courant » = le modèle par défaut, juste suffisant.
+| Tâche | Niveau |
+|---|---|
+| Concept d'une phase, code de nouveaux effets, choix et placement des events (travail artistique) | supérieur |
+| Analyse du son, trous d'export, fiche rythmique | courant |
+| Câblage (`fxmap.js`, descriptif, plans), reconstruction, mesures de vérification | courant |
+| Maintenance de l'outil, interface, publications | courant |
+- **Tu es sur le modèle courant et la demande est artistique** : avant de commencer, dis à l'utilisateur en une phrase que cette tâche mérite le modèle supérieur et qu'il peut basculer avec le sélecteur de modèle ; s'il préfère continuer, continue.
+- **Tu es sur le modèle supérieur** : ne garde pour toi que le travail artistique ; confie les étapes mécaniques (analyse, fiche, câblage, vérification) à un sous-agent lancé sur un modèle moins cher, désigné par son alias de niveau (il suit les versions tout seul), avec une consigne complète. Si la demande n'a rien d'artistique, signale qu'elle peut se faire sur le modèle courant.
+- **Méthode pour refaire ou affiner une phase** (dans cet ordre) : 1) `python tools/fill-gaps.py <mix> --list` puis, s'il y a des trous, sans `--list` ; 2) `python tools/phase-brief.py <mix> <n>` et lire **la fiche** (`mixes/<mix>/briefs/phase-NN.md`), pas l'analyse brute ; 3) lire `dome-preview/docs/moteur-effets.md`, pas le template entier ; 4) concevoir, coder, placer ; 5) `aniCheckPhase(n)` dans la page ; 6) l'auteur juge à l'œil avec le son.
+- **Une session neuve par phase** : elle démarre avec ce fichier, le `CONTEXT.md` du mix et la fiche de la phase ; ne pas enchaîner plusieurs phases dans une longue session.
+- N'affiche jamais de longues listes brutes (départs de sons, tableaux d'analyse) : résume par script avant de lire.
 ## Lancer
 ```
 powershell -ExecutionPolicy Bypass -File dome-preview\serve.ps1 -Port 8765     (serveur, à garder ouvert)
@@ -58,6 +72,7 @@ Les boutons « Éditer la description » et « Nettoyer l'anim de la phase » en
 ## Règles à respecter
 - **Events** : le nom d'un **type** d'event est unique (18 caractères max) ; plusieurs occurrences d'un même type partagent ce nom (par exemple les « Ruée »). Catégories de la banque : *Volcano*, *Geometric*, *Basics*. Les descriptions de la banque (`eventTypes`) ne contiennent **ni timing ni couleur**.
 - **Ajouter / déplacer un event sur la timeline** : passe par la page (variables `EV`, `evLibEvent`, puis `saveEvt()` depuis la console du navigateur), **jamais en éditant `events-timing.json` pendant que la page est ouverte** (elle le réécrit).
+- **Noms d'animations** (effets de base, anims secondaires, events) : courts, **12 caractères au plus si possible, sans espace** (ex. `BattementDnB` et non « Battement DnB »), pour ne pas déborder dans le journal.
 - Un effet ajouté dans `FX` doit rester léger (viser moins de 2 ms par image, à mesurer) et fonctionner pour 4 à 60 LEDs par barre.
 - Phases : ≤ 3 familles de couleurs par phase sauf intention contraire ; ne supprime jamais en silence ce que l'utilisateur a demandé.
 - La vue 2D est la référence exacte (futur export) ; la vue 3D est une visualisation, des approximations y sont acceptables.

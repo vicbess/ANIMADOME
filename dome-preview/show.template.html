@@ -7,17 +7,17 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@800;900&display=swap" rel="stylesheet">
 <style>
-  :root { --domeH0:calc(100vh - 10vh - var(--hdr) - 96px - 2*clamp(14px,2.6vh,36px) - clamp(8px,3vh,36px)); --domeH:var(--domeH0); --hdr:clamp(24px,3.1vw,56px); --bg:#0b0b10; --fg:#dcdce4; --mut:#8a8a9a; --panel:#15151d; --line:#2a2a38; --acc:#ff7a2f; --ev:#7fd4ff; }
+  :root { --domeH0:calc(100vh - clamp(80px,10vh,130px) + 54px - var(--hdr) - 96px - 2*clamp(14px,2.6vh,36px) - clamp(8px,3vh,36px) - var(--tlExtra,0px)); --domeH:var(--domeH0); --hdr:clamp(24px,3.1vw,56px); --bg:#0b0b10; --fg:#dcdce4; --mut:#8a8a9a; --panel:#15151d; --line:#2a2a38; --acc:#ff7a2f; --ev:#7fd4ff; }
   * { box-sizing:border-box; }
-  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.45 system-ui,sans-serif; display:flex; flex-direction:column; align-items:center; padding:10px 16px 24px; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.45 system-ui,sans-serif; display:flex; flex-direction:column; align-items:center; padding:10px 16px 10px; }
   .wrap { width:100%; max-width:2400px; }
   header { margin:clamp(14px,2.6vh,36px) 0; position:relative; display:flex; justify-content:center; align-items:center; gap:12px; flex-wrap:wrap; }
   h1 { display:flex; justify-content:space-between; width:42vw; max-width:42vw; margin:0 auto; font-family:"Orbitron","Eurostile","Bank Gothic","Trebuchet MS",Impact,sans-serif; font-weight:900; font-size:var(--hdr); line-height:1; white-space:nowrap;
        background:var(--tg,linear-gradient(90deg,#b9a8d6,#e8e8f0)); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 0 12px #ffffff14); }
   #dome3d { position:absolute; left:0; top:0; width:100%; height:100%; display:none; z-index:1; touch-action:none; background:#000; }
   .vsel { display:flex; gap:4px; align-items:center; } .vlab { color:var(--mut); font-size:11px; margin-right:4px; letter-spacing:.04em; min-width:30px; } .vsel[hidden] { display:none; }
-  .fxBanner { position:absolute; left:2%; bottom:2%; max-width:76%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; z-index:2; pointer-events:none; line-height:1.3; font:700 17px system-ui; text-align:left; }
-  .ovInfo { color:var(--mut); font-size:11px; line-height:1.3; position:absolute; right:1.5%; bottom:1.5%; z-index:2; text-align:right; pointer-events:none; }
+  .fxBanner { position:absolute; left:2%; bottom:5.5%; max-width:76%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; z-index:2; pointer-events:none; line-height:1.3; font:700 17px system-ui; text-align:left; }
+  .ovInfo { color:var(--mut); font-size:11px; line-height:1.3; position:absolute; left:1.5%; bottom:1.5%; z-index:2; text-align:left; pointer-events:none; }
   #evChips { display:flex; flex-wrap:wrap; gap:6px; padding-top:11px; }
   #evHint { color:var(--mut); font-size:.78em; font-weight:400; }
   .evchip { border:1px solid currentColor; border-radius:7px; padding:2px 9px; font-size:.82em; font-weight:600; cursor:pointer; background:rgba(255,255,255,.04); white-space:nowrap; position:relative; }
@@ -34,7 +34,6 @@
   .laysw .sw::after { content:''; position:absolute; top:2px; left:2px; width:8px; height:8px; border-radius:50%; background:#e6e6ee; transition:left .15s; }
   .laysw.on .sw { background:#3aa66a; } .laysw.on .sw::after { left:14px; } .laysw:not(.on) { opacity:.6; }
   .evchip .chipX { display:none; margin-left:7px; opacity:.85; } .evchip:hover .chipX { display:inline; } .evchip .chipX:hover { opacity:1; }
-  .evchip.auto::after { content:'auto'; font-size:.65em; font-weight:400; margin-left:6px; opacity:.6; }
   #chipTip { position:fixed; z-index:95; display:none; max-width:440px; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:8px 11px; font-size:12px; line-height:1.45; color:var(--fg); box-shadow:0 8px 24px #000a; pointer-events:none; white-space:pre-wrap; }
   #textBlock #phText { text-align:left; margin:0 0 .5em; font-size:.95em; cursor:default; }
   .phTim { font-size:.62em; font-weight:500; opacity:.9; }  .mixcol { position:absolute; left:0; top:50%; transform:translateY(-50%); display:flex; flex-direction:column; align-items:stretch; gap:5px; } .mixcol .mixTop { position:static; transform:none; } #btnAudio { align-self:flex-start; width:auto; font-size:12px; line-height:1.25; padding:11px 10px; border-radius:4px; text-align:center; white-space:nowrap; }   /* aligné sous le sélecteur (marge gauche calculée par la page) */ #btnAudio.warn { border-color:var(--acc); color:var(--acc); }
@@ -610,6 +609,7 @@ function walkPath(startV, dir, minLen, maxLen, seed){ const r=rng(seed), segs=[]
   return { v0:startV, segs }; }
 const cracks = (function(){ const st=interior.filter(v=>radV(v)>.55), out=[]; for(let i=0;i<70;i++) out.push(walkPath(st[Math.floor(h32(i*11+1)*st.length)],-1,4,8,100+i)); return out; })();
 const bolts  = (function(){ const st=interior.filter(v=>radV(v)<.35), out=[]; for(let i=0;i<40;i++) out.push(walkPath(st[Math.floor(h32(i*17+3)*st.length)],+1,6,10,500+i)); return out; })();
+const _fd = new Map();   /* tracés des éclairs « Foudre », par graine */
 const seeps = (function(){ const st=interior.filter(v=>radV(v)<.35), out=[]; for(let i=0;i<14;i++) out.push(walkPath(st[Math.floor(h32(i*23+5)*st.length)],+1,8,12,900+i)); return out; })();
 // Obstacles que la lave contourne dans l'eau : 7 par coulée, positions aléatoires (graine fixe)
 const R_PLAN=412;
@@ -629,7 +629,9 @@ function slPaths(){ if(_slp) return _slp; const A=new Set(addr.map(b=>b.id)), rd
   /* entrelacement : les 15 canaux de base sont répartis régulièrement parmi les canaux de remplissage (sinon ils partiraient tous au tout début) */
   const nb0=outer.length?Math.min(order.length,order.filter((p,i)=>i<outer.length).length):0, bases=order.slice(0,nb0), fill=order.slice(nb0), mixed=[]; let bi=0, fi=0; for(let i=0;i<order.length;i++){ const wantBase=bi<bases.length&&(fi>=fill.length||(bi+.5)/bases.length<=(i+.5)/order.length); if(wantBase) mixed.push(bases[bi++]); else mixed.push(fill[fi++]); }
   return _slp=mixed.map((segs,j)=>({segs,j})); }let _SLG=null; const slg=()=>_SLG||(_SLG=gradStops('#ff1400@0>#ff8c0a@0.45>#ffe58a@0.75>#ffffff@1'));   /* paresseux : gradStops dépend de constantes déclarées plus bas */let GAIN=1, GNOIR=1, HOLEKEEP=false, NOIRKEEP=false, Gerbes_cache={}, slowKeep=new Uint8Array(0);   /* GNOIR = gain des events « Rien » (Noir) : il n'éteint pas le flocon central quand « Trou de lave » est actif (HOLEKEEP) */
-function applyGain(){ const gm=GAIN*GNOIR; if(gm>=.9999) return; const H=HOLEKEEP&&holeInfo(); for(let id=0;id<LED.length;id++){ const g=(H&&H.mask[id])?GAIN:(NOIRKEEP&&slowKeep[id]?GAIN:gm); buf[3*id]*=g; buf[3*id+1]*=g; buf[3*id+2]*=g; } }   // gain global de luminance (multiplicatif, appliqué après tous les effets) : teinte et saturation inchangées
+/* POST : fonctions déposées par un effet pour s'exécuter APRÈS tous les autres effets et events (ex. VoixAnneau, qui remplace ce qui se trouve sur son anneau). GFREE[id] (0..1) : part d'une LED soustraite au gain général (pulsations), posée par ces fonctions pour l'image en cours. */
+let POST=[], GFREE=new Float32Array(0), GFREE_ON=false;
+function applyGain(){ if(POST.length){ const q=POST; POST=[]; for(const fn of q) fn(); } const fr=GFREE_ON&&GFREE.length===LED.length; GFREE_ON=false; const gm=GAIN*GNOIR; if(gm>=.9999) return; const H=HOLEKEEP&&holeInfo(); for(let id=0;id<LED.length;id++){ let g=(H&&H.mask[id])?GAIN:(NOIRKEEP&&slowKeep[id]?GAIN:gm); if(fr&&GFREE[id]>0) g+=(GNOIR-g)*GFREE[id]; buf[3*id]*=g; buf[3*id+1]*=g; buf[3*id+2]*=g; } }   // gain global de luminance (multiplicatif, appliqué après tous les effets) : teinte et saturation inchangées
 Object.assign(FX, {
   // Battement général (« heartbeat ») : toutes les LEDs pulsent ensemble en luminance, calées sur les kicks du mix. Amplitude a0 -> a1 entre t0 et t1.
   'Battement': (t,w,p) => { /* p.onset = instant où le battement démarre dans le son : avant, très discret (a0 -> 6 %) ; après, franc (p.aOn) puis montée jusqu'à a1 en fin de phase ; fondu de 2,5 s autour de l'attaque */
@@ -637,7 +639,7 @@ Object.assign(FX, {
     const wk0=p.gap?(()=>{ const m=majorKicks(p.minS??1,p.gap), mw=p.minW??.35, sp=p.spread??.5, key='W'+mw+'/'+sp; if(!m[key]) m[key]=m.T.map((x,i)=>i?Math.min(1,Math.max(mw,(x-m.T[i-1])/sp)):1); const k=lastIdx(m.T,t-AVL); return k<0?1:m[key][k]; })():1, wk=wk0+(1-wk0)*rs; GAIN*=1-w*a2*wk*(1-env2); },
   // Coulées de lave qui déferlent du HAUT (sommet = centre) vers le BAS (bord) : vagues uniformes et/ou coulées serpentantes
   'Coulées': (t,w,p,f) => {
-    const lvl=p.level??1, sf=p.soft??0, mode=p.mode||'both', kb=kickEnv(t,.15,3), wu=mode==='snake'?0:(mode==='uniform'?1:.7), ws=mode==='uniform'?0:1, NS=8, per=3;
+    const lvl=p.level??1, sf=p.soft??0, mode=p.mode||'both', kb=kickEnv(t,.15,3), wu=mode==='snake'?0:(mode==='uniform'?1:.7), ws=mode==='uniform'?0:1, NS=8, per=3, t1=t; if(p.tw!==undefined) t=p.tw;   /* p.tw : temps accéléré par une variation « Accélération » (les kicks restent lus au temps réel) */
     for(const L of LED){ let v=0, hot=0;
       if(wu>0){ const wv=sf?Math.pow(.5+.5*Math.sin(6.2832*(L.r*1.6 - t*.3)),1.5):Math.pow(.5+.5*Math.sin(6.2832*(L.r*2.0 - t*(.35+.8*f.flux))),2.4); v+=wu*wv*(sf?(.6+.4*f.bass):(.55+.45*Math.max(f.bass,kb))); hot=Math.max(hot,wv); }   /* soft : vitesse CONSTANTE (la vitesse liée au flux faisait sauter la phase de l'onde = effet de flashs), onde plus large, amplitude lissée sur les basses seules */
       if(ws>0){ for(let i=0;i<NS;i++){ const ph=t/per+i/NS, cyc=Math.floor(ph), head=(ph-cyc)*1.3-.05; if(L.r>head||L.r<head-.55) continue;
@@ -708,6 +710,69 @@ Object.assign(FX, {
       const v=lvl*w*(.24+.4*(.5+.5*w1)+.22*(.5+.5*w2))*(.7+.3*f.rms); let hue=lerp(188,232,.5+.5*w2)+40*f.high*(.5+.5*w1);
       add(L.id, hsv(hue-18*LS+14*dimS,.9-.4*LS,clamp(v*(1+.8*LS)*Math.pow(1-dimS,1.3))));
       if(he>0.02 && h32(L.id*7+Math.floor(t*20))<.18*f.high) add(L.id, hsv(195,.2,he*w)); } },
+
+  /* ---------- « Recul sur la montagne » (v1.4) : Montagne (anim de base) et quatre events : Foudre, Aurore, ÉchoCristal, Panache ---------- */
+  /* Montagne : la montagne vue de loin. Cratère rougeoyant au sommet qui respire lentement (et suit la basse), lueurs lentes rouge sombre / orange qui glissent sur les flancs, cinq veines de lave à peine visibles, et trois taches de couleur inhabituelle (violet, rose, bleu) qui dérivent dans le « ciel » du bord et s'ouvrent avec la voix.
+     p.beat (0..1) : part du rythme dans le cratère (il bat sur les kicks) ; p.tw : temps accéléré (variation « Accélération ») ; p.touch : force des taches de couleur. */
+  'Montagne': (t,w,p,f) => { const lv=(p.level??1)*w; if(lv<=.003) return; const tt=p.tw??t, i=Math.min(NF-1,Math.max(0,Math.floor((t-AVL)*10))), vo=(E.vocals[Math.max(0,i-3)]+E.vocals[i]+E.vocals[Math.min(NF-1,i+3)])/3, bt=clamp(p.beat??0), kb=kickEnv(t,.24,2),
+      breath=.62+.2*Math.sin(tt*.55)+.18*E.bassN[i], crat=breath*(1-bt*.35)+bt*.8*kb, touch=(p.touch??1)*(.25+.75*vo), HU=[285,328,214], bl=[];
+    for(let k=0;k<3;k++){ const a=tt*(.021+.006*k)*(k%2?-1:1)+k*2.2+1.3*Math.sin(tt*.031+k), rr=.74+.14*Math.sin(tt*.043+k*1.9); bl.push(rr*Math.cos(a),rr*Math.sin(a)); }
+    for(const L of LED){ if(L._c===undefined){ L._c=Math.cos(L.theta); L._s=Math.sin(L.theta); }
+      const r=L.r, g=Math.exp(-(r*r)/.029), n=vnoise(3+L._c*1.7+r*2.4-tt*.045,3+L._s*1.7), n2=vnoise(L._c*r*3.1+tt*.02+4,L._s*r*3.1-tt*.017+9), m=clamp((n*.65+n2*.35-.3)*1.9),
+        vein=Math.pow(Math.max(0,Math.cos(5*L.theta+1.1*Math.sin(r*5+.3))),14)*clamp((r-.12)*4)*(1-r*.55)*(.5+.5*Math.sin(6.2832*(r*1.3-tt*.06)+L.theta)),
+        fl=(.035+.2*m*m)*(1-.3*r)*(.75+.25*breath)+.13*vein;
+      let hue=lerp(40,14,clamp(r/.2)), sat=lerp(.78,1,clamp(r/.14)); if(g<.5){ hue=lerp(hue,lerp(1,16,m)+12*vein,1-g*2); sat=1; }
+      add(L.id,hsv(hue,sat,clamp(g*crat*.95+fl*(1-g))*lv));
+      if(r>.4&&touch>.02){ const x=r*L._c, y=r*L._s; for(let k=0;k<3;k++){ const dx=x-bl[2*k], dy=y-bl[2*k+1], d2=dx*dx+dy*dy; if(d2>.2) continue; const q=Math.exp(-d2/.05)*touch*.3*(.6+.4*n2); if(q>.01) add(L.id,hsv(HU[k]+10*(n-.5),.8,q*lv)); } } } },
+  /* BattementDnB (anim secondaire) : pulsation GÉNÉRALE du dôme, en luminance, sur CHAQUE kick (profonde) et chaque caisse claire / frappe (plus légère). La profondeur suit l'activité de la batterie : aucun assombrissement quand elle se tait. p.depth (profondeur max), p.snare (poids des frappes), p.tau / p.tauS (retombées), p.minS / p.minH (forces minimales). */
+  'BattementDnB': (t,w,p) => { const tr=t-AVL; let act=0; for(const i of recent(BT.kick,BT.kickS,t,2.4,p.minS??1)) act+=1-(tr-BT.kick[i])/2.4; for(const i of recent(BT.hit,BT.hitS,t,2.4,p.minH??2)) act+=.5*(1-(tr-BT.hit[i])/2.4);
+    const a=(p.depth??.5)*clamp(act/1.6); if(a<.01) return; const env=Math.min(1,1.4*Math.max(kickEnv(t,p.tau??.17,p.minS??1),(p.snare??.7)*hitEnv(t,p.tauS??.12,p.minH??2))); GAIN*=1-w*a*(1-env); },
+  /* Grondement (anim secondaire) : chaque variation de la basse ou des synthés (wobble dubstep) envoie des ondulations du cratère vers le bord, en trois lobes qui changent d'orientation à chaque kick ; rien quand la basse est stable. p.gain / p.gainO : sensibilité à la basse / aux synthés. */
+  'Grondement': (t,w,p,f) => { const x=(t-AVL)*10, i=Math.min(NF-2,Math.max(0,Math.floor(x))), u=x-i, g=(A,B)=>Math.max(0,lerp(A[i],A[i+1],u)-lerp(B[i],B[i+1],u)), wob=clamp(g(E.bassS,ES.bassS)*(p.gain??4)+g(E.other,ES.other)*(p.gainO??3)); if(wob<.04) return;
+    const lv=(p.level??1)*w*wob*.34, rot=h32(lastIdx(BT.kick,t-AVL)*7+3)*6.2832;
+    for(const L of LED){ const rip=.5+.5*Math.sin(6.2832*(L.r*2.6-t*2.4)), v=rip*rip*(.6+.4*Math.cos(3*(L.theta-rot)))*(1-.45*L.r)*lv; if(v<.012) continue; add(L.id,hsv(lerp(8,44,clamp(wob*rip)),1,v)); } },
+  /* Surchauffe : la pression monte avant un drop. Des anneaux convergent du bord vers le sommet de plus en plus vite, un voile de chaleur gagne tout le dôme en blanchissant, un scintillement s'accélère, puis tout se coupe juste avant la fin. p.ticks = [[instant relatif, durée du trajet], ...] (calés sur les temps) ; sans ticks : cadence qui double trois fois sur la durée. */
+  'Surchauffe': (t,w,p,f) => { const t0=p.t0, span=p.span??8, age=t-t0; if(age<0||age>span+.05) return; const u=clamp(age/span), lv=(p.level??1)*w*(1-.9*ssG(clamp((age-(span-.2))/.16))); let tk=p.ticks;
+    if(!tk){ tk=p._tk; if(!tk){ tk=[]; let a=0, d=span/6; while(a<span-.2){ tk.push([a,Math.max(.22,d*.9)]); a+=d; if(a>span*.45) d=Math.max(.17,d*.8); } Object.defineProperty(p,'_tk',{ value:tk, enumerable:false }); } }
+    const veil=Math.pow(u,2.2)*.3, hue=lerp(16,50,u), sat=lerp(1,.28,u*u), fl=Math.floor(t*(14+22*u)), pS=.02+.24*u*u, act=[]; for(const q of tk){ const a=age-q[0]; if(a>=0&&a<=q[1]) act.push(1.05-1.12*(a/q[1])); }
+    for(const L of LED){ let v=veil*(1-.25*L.r); for(const pos of act){ const d=(L.r-pos)/.085; if(d*d<6) v+=Math.exp(-d*d)*(.3+.55*u); } if(h32(L.id*11+fl)<pS) v+=.3*u; v*=lv; if(v<.012) continue; add(L.id,hsv(hue,sat,clamp(v))); } },
+  /* VoixAnneau (anim de base) : la VOIX est traitée sur un anneau de barres (p.list / p.ring, par défaut Circles anneau 4), décorrélé du reste du dôme tant qu'elle chante. Chaque barre de l'anneau se remplit comme une barre de volume selon le niveau de la voix (remplissage coloré, pointe et étincelles blanches) ; seule la voix la plus forte de la phase remplit une barre en entier (p.range = étendue en dB, p.curve = courbe) ; la partie non remplie laisse voir l'animation du dessous. Quand la voix se tait, l'anneau revient en fondu à l'animation du dessous ; dès qu'elle revient, fondu vers la barre de volume. Dessiné après tous les autres effets et events, et soustrait à la pulsation générale. p.hue, p.gate (seuil de présence de la voix), p.wave (retard d'un tour d'anneau, s). */
+  'VoixAnneau': (t,w,p,f) => { const VV=SD&&SD.vocals&&SD.vocals.v; if(!VV) return; const N=VV.length, dbAt=tt=>{ const x=(tt-AVL)*10, i=Math.min(N-2,Math.max(0,Math.floor(x))); return lerp(VV[i],VV[i+1],x-i); };
+    /* volume maximum de la voix SUR LA PHASE (lissé sur 0,3 s) : lui seul remplit une barre jusqu'au bout */
+    const P=PH[phaseAt(t)]; if(!P) return; const mk='vamax'+P.start+'/'+P.end, mx=(Gerbes_cache[mk]=Gerbes_cache[mk]||(()=>{ let m=-120; for(let i=Math.max(1,Math.floor(P.start*10));i<Math.min(N-1,Math.floor(P.end*10));i++){ const v=(VV[i-1]+VV[i]+VV[i+1])/3; if(v>m) m=v; } return { v:m }; })()).v, rg=p.range??26;
+    let pr=0; for(let k=-4;k<=4;k++) pr+=clamp(1+(dbAt(t+k*.2)-mx)/rg); pr/=9; const m=ssG(clamp((pr-(p.gate??.12))/.16))*w*(p.level??1); if(m<.01) return; const key='va'+(p.list||'Circles')+'/'+(p.ring??4)+'/'+LEDS_PER_BAR;
+    const S=(Gerbes_cache[key]=Gerbes_cache[key]||(()=>{ const o=[]; (GEO.lists[p.list||'Circles']||[]).filter(el=>el.ring===(p.ring??4)).forEach(el=>el.bars.forEach(id=>{ const b=bars[id], a0=Math.atan2(b.pa[1]-CENTER.y,b.pa[0]-CENTER.x), a1=Math.atan2(b.pb[1]-CENTER.y,b.pb[0]-CENTER.x); o.push({ led0:b.led0, fwd:adiff(a1,a0)>=0, ph:((Math.atan2((b.pa[1]+b.pb[1])/2-CENTER.y,(b.pa[0]+b.pb[0])/2-CENTER.x)/6.2832)+1)%1 }); })); return o; })()); if(!S.length) return;
+    const hue=p.hue??275, wave=p.wave??.22, n=LEDS_PER_BAR, tick=Math.floor(t*16);
+    POST.push(()=>{ if(GFREE.length!==LED.length) GFREE=new Float32Array(LED.length); else GFREE.fill(0); GFREE_ON=true;
+      for(const b of S){ const lev=Math.pow(clamp(1+(dbAt(t-b.ph*wave)-mx)/rg),p.curve??1.3); if(lev<=.01) continue;
+        for(let k=0;k<n;k++){ const id=b.led0+k, u=((b.fwd?k:n-1-k)+.5)/n; if(u>lev) continue;   /* partie non remplie : l'animation du dessous reste visible */
+          const tip=Math.exp(-Math.pow((lev-u)/.07,2)), sp=h32(id*13+tick)<.05?1:0, c=hsv(hue,.88*(1-.85*Math.max(tip*.8,sp)),.5+.3*u+.2*tip);
+          buf[3*id]=buf[3*id]*(1-m)+c[0]*m; buf[3*id+1]=buf[3*id+1]*(1-m)+c[1]*m; buf[3*id+2]=buf[3*id+2]*(1-m)+c[2]*m; GFREE[id]=m; } } }); },
+  /* Foudre : un éclair ramifié suit les barres depuis le bord vers l'intérieur du dôme (tronc + 2 branches), flash bref puis rémanence qui vacille, halo dans le ciel autour de lui. p.strikes = instants des frappes (s, relatifs au début) : chaque frappe trace un nouvel éclair ailleurs. */
+  'Foudre': (t,w,p,f) => { const t0=p.t0, st=p.strikes||[0], a0=t-t0; if(a0<-.02||a0>st[st.length-1]+1.2) return; const sd=(p.seed??Math.floor(t0*10))|0, lv=(p.level??1)*w, key=sd+'/'+st.length+'/'+LEDS_PER_BAR; let P=_fd.get(key);
+    if(!P){ P=st.map((s,k)=>{ const rim=interior.filter(v=>radV(v)>.7), v0=rim[Math.floor(h32(sd*7+k*131+1)*rim.length)], main=walkPath(v0,-1,7,11,sd*13+k*17+5), paths=[[main,1]]; let cur=v0, cx=0, cy=0, nb=0; const vs=[];
+        main.segs.forEach(sg=>{ cur=sg.fwd?sg.bar.b:sg.bar.a; vs.push(cur); cx+=(sg.bar.pa[0]+sg.bar.pb[0])/2; cy+=(sg.bar.pa[1]+sg.bar.pb[1])/2; nb++; });
+        for(let b=0;b<2&&vs.length>3;b++){ const at=1+Math.floor(h32(sd*3+k*11+b*7)*(vs.length-3)); paths.push([walkPath(vs[at],+1,2,4,sd*29+k*5+b*3+2),.55,at+1]); }
+        return { paths, cx:cx/Math.max(1,nb), cy:cy/Math.max(1,nb) }; }); if(_fd.size>60) _fd.clear(); _fd.set(key,P); }
+    st.forEach((s,k)=>{ const age=a0-s; if(age<0||age>1.2) return; const B=P[k], fl=(age<.09?1:Math.exp(-(age-.09)/.2))*(1+.45*Math.sin(age*75)*Math.exp(-age/.14)), glow=Math.exp(-age/.3), col=hsv(214,lerp(.06,.55,clamp(age/.5)),clamp(fl)*lv);
+      for(const q of B.paths){ const main=B.paths[0][0], dl=q[2]?q[2]/main.segs.length*.07:0, head=clamp((age-dl)/.07)*q[0].segs.length; if(head<=0) continue; const c=q[1]===1?col:[col[0]*q[1],col[1]*q[1],col[2]*q[1]]; eachPathLED(q[0],head,id=>add(id,c)); }
+      if(glow>.03){ const s2=R*R*.11; for(const L of LED){ const dx=L.x-B.cx, dy=L.y-B.cy, d2=dx*dx+dy*dy; if(d2>s2*5) continue; const q=Math.exp(-d2/s2)*.15*glow*lv; if(q>.008) add(L.id,hsv(232,.6,q)); } } }); },
+  /* Aurore : des voiles de couleur inhabituelle (violet, rose, bleu) ondulent lentement sur le pourtour du dôme, en rideaux striés ; leur éclat suit la voix. p.hues = [teintes]. */
+  'Aurore': (t,w,p,f) => { const t0=p.t0, span=p.span??12, age=t-t0; if(age<0||age>span+2.5) return; const i=Math.min(NF-1,Math.max(0,Math.floor((t-AVL)*10))), vo=(E.vocals[Math.max(0,i-3)]+E.vocals[i]+E.vocals[Math.min(NF-1,i+3)])/3,
+      amp=ssG(clamp(age/3))*(1-ssG(clamp((age-span)/2.5)))*(p.level??1)*w*(.45+.55*vo)*.46, HU=p.hues||[285,328,214], rot=age*.05+h32(Math.floor(t0*10)+11)*6.2832; if(amp<.01) return;
+    for(const L of LED){ if(L.r<.3) continue; const a=L.theta+rot, c1=.5+.5*Math.sin(3*a+1.2*Math.sin(age*.21)+L.r*2.2), c2=.5+.5*Math.sin(7*a-age*.33+4*L.r), ray=.6+.4*Math.sin(L.r*16-age*1.1+5*Math.sin(2*a)), v=Math.pow(c1,2.2)*(.55+.45*c2)*ray*clamp((L.r-.3)*3.2)*amp; if(v<.012) continue;
+      const hx=Math.min(1.999,(.5+.5*Math.sin(2*a+age*.11))*2), k=Math.floor(hx); add(L.id,hsv(lerp(HU[k],HU[k+1],ssG(hx-k)),.82,clamp(v))); } },
+  /* ÉchoCristal : de petits éclats s'allument un à un, chacun sur une note, puis s'éteignent en douceur. p.ticks = [[instant relatif, angle, rayon, force], ...] (calés à la main sur les notes) ; sans ticks : huit éclats réguliers sur la durée. */
+  'ÉchoCristal': (t,w,p,f) => { const t0=p.t0, span=p.span??6, age=t-t0; if(age<-.05||age>span+1.8) return; const lv=(p.level??1)*w; let tk=p.ticks;
+    if(!tk){ tk=p._tk; if(!tk){ tk=[]; for(let k=0;k<8;k++) tk.push([k*span/8,k*2.39996,.3+.5*h32(k*7+Math.floor(t0*10)),1]); Object.defineProperty(p,'_tk',{ value:tk, enumerable:false }); } }
+    for(const q of tk){ const a=age-q[0]; if(a<0||a>1.7) continue; const e=(a<.035?a/.035:Math.exp(-(a-.035)/.42))*(q[3]??1)*lv; if(e<.02) continue; const pr=q[2], cT=Math.cos(q[1]), sT=Math.sin(q[1]), rad=.075+.05*clamp(a/1.2), sat=lerp(.12,.6,clamp(a/.9));
+      for(const L of LED){ if(Math.abs(L.r-pr)>rad*2.6) continue; if(L._c===undefined){ L._c=Math.cos(L.theta); L._s=Math.sin(L.theta); } const d2=L.r*L.r+pr*pr-2*L.r*pr*(L._c*cT+L._s*sT); if(d2>rad*rad*6) continue; const v=Math.exp(-d2/(rad*rad))*e; if(v>.015) add(L.id,hsv(lerp(318,338,pr),sat,clamp(v))); } } },
+  /* Panache : un panache de fumée s'élève du cratère et s'étire lentement vers un côté du dôme, éclairé par en dessous (rouge sombre près du sommet, plus pâle au loin), avec de minuscules éclats bleutés dans sa masse sur les aigus. p.ang : direction (rad), sinon tirée au hasard. */
+  'Panache': (t,w,p,f) => { const t0=p.t0, span=p.span??18, age=t-t0; if(age<0||age>span+3) return; const lv=(p.level??1)*w*ssG(clamp(age/4))*(1-ssG(clamp((age-span)/3))); if(lv<.01) return;
+    const ang=p.ang??(h32(Math.floor(t0*10)+5)*6.2832), ca=Math.cos(ang), sa=Math.sin(ang), reach=lerp(.25,1.05,ssG(clamp(age/(span*.8)))), hi=E.high[Math.min(NF-1,Math.max(0,Math.floor((t-AVL)*10)))];
+    for(const L of LED){ if(L._c===undefined){ L._c=Math.cos(L.theta); L._s=Math.sin(L.theta); } const x=L.r*L._c, y=L.r*L._s, al=x*ca+y*sa; if(al<-.12||al>reach) continue; const ac=y*ca-x*sa, wd=.1+.34*clamp(al), d=(ac+.08*Math.sin(al*7-age*.5))/wd; if(d*d>4) continue;
+      const n=vnoise(al*4.2-age*.22+7,ac*4.2+age*.05+3), body=Math.exp(-d*d)*clamp((n-.28)*2.2)*clamp((reach-al)*5)*clamp((al+.12)*6), v=body*.36*lv; if(v<.012) continue;
+      add(L.id,hsv(lerp(14,-8,clamp(al)),lerp(.9,.5,clamp(al)),v)); if(n>.72&&h32(L.id*7+Math.floor(t*11))<.04+.3*hi) add(L.id,hsv(218,.3,body*.5*lv)); } },
 
   /* ---------- Nouveaux events (v1.3) : Onde de choc, Spirale, Balayage, Marée, Bulles, Cendres. Tous lisent p.t0 (début), p.span (durée), p.pal, p.level. Distances calculées en coordonnées polaires (L.r : 0 = sommet, 1 = bord). ---------- */
   /* Onde de choc : un anneau de lumière part du sommet vers le bord à l'impact de départ, puis à chaque kick marqué de l'event */
@@ -834,7 +899,7 @@ const OFFSET=(()=>{ try{ return new Set(JSON.parse(localStorage.getItem('animado
 const saveOff=()=>{ try{ localStorage.setItem('animadome_off_'+(window.MIX&&MIX.slug),JSON.stringify([...OFFSET])); }catch(e){} };
 const BASEADD=new Map(); (LAYERS.base||[]).forEach(b=>{ if(!b.add) return; const fx=Object.assign({},b.add,{ win:b.win, layer:'base', auto:true, why:b.why }); if(!BASEADD.has(b.ph)) BASEADD.set(b.ph,[]); BASEADD.get(b.ph).push(fx); });   /* effets de base ajoutés par la passe automatique (par ex. des braises dans les passages calmes) : jamais écrits dans fxmap.js */
 const MODIDX=new Map(); (LAYERS.mods||[]).forEach(m=>{ const k=m.ph+'|'+m.on; if(!MODIDX.has(k)) MODIDX.set(k,[]); MODIDX.get(k).push(m); });
-const KIND_LABEL={ level:'Intensité', beat:'Contraste du rythme', speed:'Accélération', pal:'Couleur' };
+const KIND_LABEL={ level:'Intensité', beat:'Rythme', speed:'Accélération', pal:'Couleur' };
 function modVal(m,t){ const P=m.pts; if(t<=P[0][0]) return P[0][1]; for(let i=1;i<P.length;i++) if(t<=P[i][0]){ const a=P[i-1], b=P[i], k=(t-a[0])/Math.max(1e-6,b[0]-a[0]); return a[1]+(b[1]-a[1])*k; } return P[P.length-1][1]; }
 function modWarp(m,t){ const P=m.pts; let s=0; for(let i=1;i<P.length;i++){ const a=P[i-1], b=P[i]; if(t<=a[0]) break; const e=Math.min(t,b[0]), k=(e-a[0])/Math.max(1e-6,b[0]-a[0]), ve=a[1]+(b[1]-a[1])*k; s+=(e-a[0])*(a[1]+ve)/2; } return s; }
 /* applique les variations actives à un effet de base : retourne [{fx,w}] (2 entrées pendant un changement de palette : fondu à puissance constante) */
@@ -1148,15 +1213,20 @@ const LIBALIAS={ 'Pulsation':'PulseSlow' };
 /* Events de bibliothèque propres à l'outil (disponibles dans tous les mix) : rangés dans leurs listes de l'Event Bank */
 const TOOL_LIB={
   'LeverDeSoleil':{ cat:'Nature', span:20, d:"Un soleil apparaît du côté est du dôme puis monte lentement vers le sommet en éclairant de plus en plus l'eau, qui s'éclaircit.", fx:{ n:'Lever de soleil', delay:5, eastDeg:0 } },
+  'Foudre':{ cat:'Nature', span:1.6, d:"Un éclair ramifié zèbre le dôme en suivant les barres, du bord vers l'intérieur, avec un bref halo dans le ciel autour de lui ; il peut refrapper plusieurs fois, chaque fois ailleurs.", fx:{ n:'Foudre' }, tail:1.25 },
+  'Aurore':{ cat:'Nature', span:12, d:"Des voiles de lumière ondulent lentement sur le pourtour du dôme, en rideaux striés ; leur éclat suit la voix.", fx:{ n:'Aurore', pal:'violet' }, tail:2.6 },
+  'ÉchoCristal':{ cat:'Nature', span:6, d:"De petits éclats s'allument un à un, chacun sur une note, et s'éteignent en douceur ; quand le motif se répète, la figure revient en tournant autour du dôme.", fx:{ n:'ÉchoCristal', pal:'violet' }, tail:1.85 },
+  'Panache':{ cat:'Volcano', span:18, d:"Un panache de fumée s'élève du sommet et s'étire lentement vers un côté du dôme, éclairé par en dessous, avec de minuscules éclats dans sa masse sur les aigus.", fx:{ n:'Panache', pal:'ember' }, tail:3.1 },
+  'Surchauffe':{ cat:'Volcano', span:8, d:"La pression monte : des anneaux convergent du bord vers le sommet de plus en plus vite, un voile de chaleur gagne tout le dôme, un scintillement s'accélère, puis tout se coupe juste avant le drop.", fx:{ n:'Surchauffe', pal:'fire' }, tail:.1 },
   'OndeDeChoc':{ cat:'Geometric', span:4, d:"Un anneau de lumière part du sommet vers le bord à l'impact de départ, puis à chaque kick marqué pendant l'event.", fx:{ n:'Onde de choc', pal:'fire' } },
-  'Spirale':{ cat:'Geometric', span:5, d:"Une tête lumineuse tourne en spirale du bord vers le sommet (deux bras) en laissant une longue traîne qui s'éteint.", fx:{ n:'Spirale', pal:'fire' } },
-  'Balayage':{ cat:'Basics', span:3, d:"Une bande de lumière traverse le dôme d'un côté à l'autre en laissant une brève rémanence ; le sens est tiré au hasard à chaque occurrence.", fx:{ n:'Balayage', pal:'lava' } },
-  'Marée':{ cat:'Water', span:9, d:"Un large front d'eau traverse le dôme et laisse derrière lui une lueur liquide qui ondule, avec de l'écume sur les aigus, puis se retire doucement.", fx:{ n:'Marée', pal:'ocean' } },
-  'Bulles':{ cat:'Water', span:9, d:"Des bulles montent lentement du bord vers le sommet, avec une légère dérive, et éclatent en petits éclairs.", fx:{ n:'Bulles', pal:'ocean' } },
-  'Cendres':{ cat:'Volcano', span:12, d:"Des cendres tièdes dérivent du sommet vers le bord, par petits points qui vacillent, très discrètes.", fx:{ n:'Cendres', pal:'ember' } },
+  'Spirale':{ cat:'Geometric', span:5, d:"Une tête lumineuse tourne en spirale du bord vers le sommet (deux bras) en laissant une longue traîne qui s'éteint.", fx:{ n:'Spirale', pal:'fire' }, tail:1.25 },
+  'Balayage':{ cat:'Basics', span:3, d:"Une bande de lumière traverse le dôme d'un côté à l'autre en laissant une brève rémanence ; le sens est tiré au hasard à chaque occurrence.", fx:{ n:'Balayage', pal:'lava' }, tail:.85 },
+  'Marée':{ cat:'Water', span:9, d:"Un large front d'eau traverse le dôme et laisse derrière lui une lueur liquide qui ondule, avec de l'écume sur les aigus, puis se retire doucement.", fx:{ n:'Marée', pal:'ocean' }, tail:2.05 },
+  'Bulles':{ cat:'Water', span:9, d:"Des bulles montent lentement du bord vers le sommet, avec une légère dérive, et éclatent en petits éclairs.", fx:{ n:'Bulles', pal:'ocean' }, tail:4.55 },
+  'Cendres':{ cat:'Volcano', span:12, d:"Des cendres tièdes dérivent du sommet vers le bord, par petits points qui vacillent, très discrètes.", fx:{ n:'Cendres', pal:'ember' }, tail:1.55 },
   'EauDeNuit':{ cat:'Water', span:10, d:"Fond uniforme et sombre sur tout le dôme, sans vague ; seule une autre source de lumière (comme le soleil) en modifie les teintes.", fx:{ n:'Eau de nuit' } } };
 const libDef=name=>(window.FXMAP&&FXMAP.eventLib&&FXMAP.eventLib[name])||TOOL_LIB[name];   /* anciens noms d'events de bibliothèque -> nouveaux (copies déjà enregistrées) */
-function evLibEvent(name,on,span){ name=LIBALIAS[name]||name; const def=libDef(name); if(def){ const sp=span||def.span||2; return { k:'lib:'+name, t:on, on, name, text:name+' : '+def.d, dur:sp+.3, span:sp, txtDur:Math.max(2,sp), isLib:true, fx:[Object.assign({},def.fx,{span:sp,t0:on})] }; } const b=BANK[name]; if(!b) return null; const sp=span||4; return { k:'lib:'+name, t:on, on, name, text:name+' : '+b.d, dur:sp+.3, span:sp, txtDur:Math.max(2,sp), isLib:true, fx:[{ n:'Bank', eff:name, grad:'Blanc', speed:1, level:1, span:sp, t0:on }] }; }
+function evLibEvent(name,on,span){ name=LIBALIAS[name]||name; const def=libDef(name); if(def){ const sp=span||def.span||2; return { k:'lib:'+name, t:on, on, name, text:name+' : '+def.d, dur:sp+(def.tail??.3), span:sp, txtDur:Math.max(2,sp), isLib:true, fx:[Object.assign({},def.fx,{span:sp,t0:on})] }; } const b=BANK[name]; if(!b) return null; const sp=span||4; return { k:'lib:'+name, t:on, on, name, text:name+' : '+b.d, dur:sp+.3, span:sp, txtDur:Math.max(2,sp), isLib:true, fx:[{ n:'Bank', eff:name, grad:'Blanc', speed:1, level:1, span:sp, t0:on }] }; }
 const evCatOf=name=>((EVT&&EVT.__cats)||{})[name]||(window.FXMAP&&FXMAP.eventCategory&&FXMAP.eventCategory[name])||(TOOL_LIB[name]&&TOOL_LIB[name].cat)||'Basics';   /* rangement choisi à la souris (EVT.__cats, enregistré dans events-timing.json) > catégorie par défaut de fxmap.js > Basics */
 function evScaled(s,d){ const k=(s.span||0)>0?d/s.span:1; return Object.assign({},s,{span:(s.span?d:s.span),dur:(s.dur?s.dur*k:d),fx:(s.fx||[]).map(f=>Object.assign({},f,('span' in f)?{span:d}:{}))}); }
 function evPreviewStart(src){ const d=Math.max(src.dur||0,src.span||0,1); evPrev={ ev:src, name:src.name, tStart:Math.max(0,src.on-1.5), tEnd:src.on+d+2, wall:performance.now() }; }
@@ -1193,19 +1263,21 @@ function syncTabs(){ document.getElementById('tabDesc').classList.toggle('on',!e
 /* ---------- Rendu du dôme ---------- */
 let showNum=false, lastFx='';
 /* ---------- Pipette : en Vue Anim, survoler une LED allumée affiche son code RGB (valeur réellement dessinée) ; au-dessus du noir / d'une LED éteinte, rien ---------- */
-const pickTip=(function(){ const d=document.createElement('div'); d.id='pickTip'; d.hidden=true; d.style.cssText='position:fixed;z-index:50;pointer-events:none;background:rgba(14,14,20,.94);border:1px solid #4a4a62;border-radius:6px;padding:4px 8px 4px 6px;font:600 12px/1.3 ui-monospace,Consolas,monospace;color:#e8e8f0;display:flex;align-items:center;gap:7px;white-space:nowrap'; d.innerHTML='<i style="width:14px;height:14px;border-radius:3px;border:1px solid #888;display:inline-block"></i><span></span>'; document.body.appendChild(d); return d; })();
+const pickTip=(function(){ const d=document.createElement('div'); d.id='pickTip'; d.hidden=true; (document.querySelector('.domewrap')||document.body).appendChild(d); d.style.cssText='position:absolute;right:1.5%;bottom:1.5%;z-index:3;pointer-events:none;background:rgba(14,14,20,.94);border:1px solid #4a4a62;border-radius:6px;padding:4px 8px 4px 6px;font:600 12px/1.3 ui-monospace,Consolas,monospace;color:#e8e8f0;display:flex;align-items:center;gap:7px;white-space:nowrap'; d.innerHTML='<i style="width:14px;height:14px;border-radius:3px;border:1px solid #888;display:inline-block"></i><span>RGB — — —</span>'; d.hidden=false; return d; })();
+const pickIdle=()=>{ pickTip.firstChild.style.background='transparent'; pickTip.lastChild.textContent='RGB — — —'; };   /* le cadre reste affiché (Vue Anim 2D) ; sans LED allumée sous la souris, il montre des tirets */
+const setPickVis=v=>{ pickTip.style.display=v?'flex':'none'; };
 let pickPos=null;
-function updatePick(){ if(!pickPos||geoView){ pickTip.hidden=true; return; }
+function updatePick(){ if(!pickPos||geoView){ pickIdle(); return; }
   const r=cv.getBoundingClientRect(), cx=(pickPos.x-r.left)*cv.width/r.width, cy=(pickPos.y-r.top)*cv.height/r.height, x=(cx-CENTER.x)/VIEW_SCALE+CENTER.x, y=(cy-OFF-CENTER.y)/VIEW_SCALE+CENTER.y;
   let best=null, bd=64; for(const L of LED){ if(geoVisible&&!geoVisible.has(L.bar.id)) continue; const dx=L.x-x, dy=L.y-y, q=dx*dx+dy*dy; if(q<bd){ bd=q; best=L; } }
-  if(!best){ pickTip.hidden=true; return; }
+  if(!best){ pickIdle(); return; }
   const R0=buf[3*best.id], G0=buf[3*best.id+1], B0=buf[3*best.id+2];
-  if((R0+G0+B0)<.02){ pickTip.hidden=true; return; }   /* noir : pas d'info */
+  if((R0+G0+B0)<.02){ pickIdle(); return; }   /* noir : pas d'info */
   const m=Math.max(R0,G0,B0,1), k=m>1?1/m:1, c=[R0,G0,B0].map(v=>Math.round(255*clamp(v*k))), hx='#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');
   pickTip.firstChild.style.background=hx; pickTip.lastChild.textContent='RGB '+c.join(' · ')+'  '+hx;
-  pickTip.hidden=false; const w=pickTip.offsetWidth, h=pickTip.offsetHeight; pickTip.style.left=Math.min(innerWidth-w-6,pickPos.x+16)+'px'; pickTip.style.top=Math.min(innerHeight-h-6,pickPos.y+16)+'px'; }
+}
 cv.addEventListener('pointermove',ev=>{ pickPos={x:ev.clientX,y:ev.clientY}; updatePick(); });
-cv.addEventListener('pointerleave',()=>{ pickPos=null; pickTip.hidden=true; });/* ---------- Vue 3D (visualisation seule : la vue 2D reste la référence exacte pour l'export) ----------
+cv.addEventListener('pointerleave',()=>{ pickPos=null; pickIdle(); });/* ---------- Vue 3D (visualisation seule : la vue 2D reste la référence exacte pour l'export) ----------
    Les positions 3D sont déduites du plan 2D : azimut = angle dans le plan, angle depuis le zénith proportionnel au rayon (après
    annulation de la compression « vue du dessous » P). Toutes les dimensions réglables sont dans D3 (unités : rayon de la sphère = 1). */
 const D3 = {
@@ -1221,7 +1293,7 @@ const D3 = {
 let oy3=.5, op3=.3, dist3=D3.SIDE_DIST, view3d=false, cam3='centre', yaw3=0, pitch3=.6, fov3=D3.FOV_CENTRE, G3=null;
 try{ view3d=localStorage.getItem('animadome.view3d')==='1'; const c=localStorage.getItem('animadome.cam3'); if(c==='side') cam3='free'; else if(c==='top'||c==='free'||c==='centre') cam3=c; }catch(e){}
 const c3=document.getElementById('dome3d');
-function show3D(on){ if(on&&G3) G3.dirty=true; c3.style.display=on?'block':'none'; cv.style.visibility=on?'hidden':'visible'; }
+function show3D(on){ if(on&&G3) G3.dirty=true; c3.style.display=on?'block':'none'; cv.style.visibility=on?'hidden':'visible'; setPickVis(!on&&!geoView); }
 function m4mul(a,b){ const o=new Float32Array(16); for(let i=0;i<4;i++) for(let j=0;j<4;j++){ let s=0; for(let k=0;k<4;k++) s+=a[k*4+j]*b[i*4+k]; o[i*4+j]=s; } return o; }
 function m4persp(fovDeg,asp,n,f){ const t=1/Math.tan(fovDeg*Math.PI/360), o=new Float32Array(16); o[0]=t/asp; o[5]=t; o[10]=(f+n)/(n-f); o[11]=-1; o[14]=2*f*n/(n-f); return o; }
 function m4look(e,c,u){ let zx=e[0]-c[0], zy=e[1]-c[1], zz=e[2]-c[2], zl=Math.hypot(zx,zy,zz); zx/=zl; zy/=zl; zz/=zl;
@@ -1565,7 +1637,16 @@ function selfCheck(){ const pb=[]; try{
 let _chk=[]; function runSelfCheck(extra){ _chk=selfCheck().concat(extra||[]); let b=document.getElementById('chkBadge'); if(!_chk.length){ if(b) b.remove(); return; } console.warn('Auto-vérification :\n- '+_chk.join('\n- '));
   if(!b){ b=document.createElement('button'); b.id='chkBadge'; b.className='chip'; b.style.color='#ffb36b'; b.onclick=()=>{ const m=document.createElement('div'); m.id='verModal'; m.innerHTML='<div class="vm-box"><div class="vm-h"><b>Points à vérifier</b><button class="chip vm-x">×</button></div><div class="vm-b"><div class="vm-t">'+_chk.map(x=>'• '+String(x).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))).join('<br>')+'</div></div></div>'; const old=document.getElementById('verModal'); if(old) old.remove(); document.body.appendChild(m); m.querySelector('.vm-x').onclick=()=>m.remove(); m.addEventListener('pointerdown',ev=>{ if(ev.target===m) m.remove(); }); }; document.getElementById('btnAudio').parentElement.after(b); }
   b.textContent='⚠ '+_chk.length+' point'+(_chk.length>1?'s':'')+' à vérifier'; b.title='Contrôles automatiques de l\'outil : clique pour le détail'; }
-function renderDome(t){ show3D(view3d&&!geoView);
+/* Vérification d'une phase (console du navigateur ou outil d'automatisation) : aniCheckPhase(11) rend toute la phase hors écran et retourne un bilan court :
+   erreurs, images invalides, coût par image, effets et events actifs, pulsation sur les kicks (rapport de luminosité « sur le kick / 0,25 s après » : > 1,3 = le dôme pulse), luminosité par tranche de 5 s. */
+window.aniCheckPhase=function(n){ const P=PH[n-1]; if(!P) return { erreur:'phase inconnue' }; const errs=[], fx=new Set(), cost=[], lum=[]; let bad=0;
+  const mean=t=>{ computeBuf(t); let s=0; for(let k=0;k<buf.length;k++){ const v=buf[k]; if(v!==v){ bad++; break; } s+=v; } return s/buf.length*GAIN; };
+  for(let t=P.start;t<P.end;t+=.2){ try{ const t0=performance.now(), m=mean(t); cost.push(performance.now()-t0); activeFx(t,phaseAt(t)).forEach(a=>{ if(!a.off) fx.add(a.fx.n); }); const k=Math.floor((t-P.start)/5); lum[k]=Math.max(lum[k]||0,m); }catch(e){ errs.push(mmss(t)+' '+e.message); if(errs.length>5) break; } }
+  cost.sort((a,b)=>a-b); const kk=[]; for(let i=0;i<BT.kick.length;i++){ const x=BT.kick[i]; if(x>=P.start+1&&x<P.end-1) kk.push(x); } const st=Math.max(1,Math.floor(kk.length/40)), rat=[];
+  for(let i=0;i<kk.length;i+=st){ const a=mean(kk[i]+AVL+.03), b=mean(kk[i]+AVL+.25); if(b>.004) rat.push(a/b); } rat.sort((a,b)=>a-b);
+  return { phase:n, de:mmss(P.start), a:mmss(P.end), leds:LED.length, erreurs:errs, imagesInvalides:bad, msMedian:+(cost[cost.length>>1]||0).toFixed(2), msMax:+(cost[cost.length-1]||0).toFixed(2), effets:[...fx].join(', '),
+    events:EV.filter(e=>e.on>=P.start&&e.on<P.end).map(e=>e.name+'@'+mmss(e.on)).join(' '), kicks:kk.length, pulsationKicks:rat.length?+rat[rat.length>>1].toFixed(2):null, luminositeMaxPar5s:lum.map(v=>+(v||0).toFixed(2)).join(' ') }; };
+function renderDome(t){ show3D(view3d&&!geoView); setPickVis(!view3d&&!geoView);
   if(geoView){ ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H+OFF); ctx.save(); ctx.translate(GDX,OFF); ctx.translate(CENTER.x,CENTER.y); ctx.scale(VIEW_SCALE*GZ,VIEW_SCALE*GZ); ctx.translate(-CENTER.x,-CENTER.y); drawGeoView(); ctx.restore(); drawGeoBanner(); return; }
   const i=phaseAt(t), f=feat(t), act=activeFx(t,i); buf.fill(0);
   { GAIN=1; GNOIR=1; HOLEKEEP=false; NOIRKEEP=false; if(slowKeep.length!==LED.length) slowKeep=new Uint8Array(LED.length); else slowKeep.fill(0); if(gradeSkip.length!==LED.length) gradeSkip=new Uint8Array(LED.length); else gradeSkip.fill(0); runFx(t,act,f);
@@ -1888,8 +1969,12 @@ function saveUI(){ try{ localStorage.setItem(uiKey,JSON.stringify({ event:eventV
     if(s.geo) geoSetView(true); else if(s.event) eventSetView(true); geoSyncChips(); geoRecompute(); geoUpdateFormula(); }catch(e){} })();
 /* ---------- Poignées de redimensionnement : taille du dôme (donc de la fenêtre de phase, qui prend le reste) et hauteur de la timeline ; mémorisées ; double-clic = automatique ---------- */
 (function(){ const root=document.documentElement, stage=document.querySelector('.stage'), ASP=836/874, K1='animadome_domeH', K2='animadome_tlH';
-  const lsGet=k=>{ try{ return +localStorage.getItem(k)||0; }catch(e){ return 0; } }, lsSet=(k,v)=>{ try{ if(v) localStorage.setItem(k,v); else localStorage.removeItem(k); }catch(e){} };
-  const applyD=h=>{ if(h) root.style.setProperty('--domeH',h+'px'); else root.style.removeProperty('--domeH'); }, applyT=h=>{ if(h) root.style.setProperty('--tlH',h+'px'); else root.style.removeProperty('--tlH'); };
+  /* tailles réglées à la souris : gardées seulement pour la session en cours (sessionStorage) ; au démarrage de l'outil, l'interface remplit toujours 100 % de l'espace. Les anciennes valeurs mémorisées durablement sont effacées. */
+  try{ localStorage.removeItem(K1); localStorage.removeItem(K2); }catch(e){}
+  const lsGet=k=>{ try{ return +sessionStorage.getItem(k)||0; }catch(e){ return 0; } }, lsSet=(k,v)=>{ try{ if(v) sessionStorage.setItem(k,v); else sessionStorage.removeItem(k); }catch(e){} };
+  /* plafond : la taille mémorisée (sur un grand écran) ne doit jamais pousser la timeline hors de l'écran (Full HD) ; recalculé au redimensionnement de la fenêtre */
+  let rawD=0; const capD=h=>{ if(!h) return 0; const st=document.querySelector('.stage'), tlh=(document.getElementById('tl')||{}).offsetHeight||140, top=st?st.getBoundingClientRect().top+scrollY:140; return Math.max(320,Math.min(h,Math.round(innerHeight-top-tlh-60))); };
+  const applyD=h=>{ rawD=h; h=capD(h); if(h) root.style.setProperty('--domeH',h+'px'); else root.style.removeProperty('--domeH'); }, applyT=h=>{ if(h){ root.style.setProperty('--tlH',h+'px'); root.style.setProperty('--tlExtra',Math.max(0,h-Math.min(130,Math.max(80,innerHeight*.1)))+'px'); } else { root.style.removeProperty('--tlH'); root.style.removeProperty('--tlExtra'); } if(rawD) applyD(rawD); };   /* une timeline plus haute réduit d'autant le dôme (donc aussi la fenêtre de texte) : la page ne dépasse jamais l'écran */
   applyD(lsGet(K1)); applyT(lsGet(K2)); if(!stage) return;
   const mk=(id,cur,title)=>{ const e=document.createElement('div'); e.id=id; e.title=title; e.style.cssText='position:absolute;z-index:30;cursor:'+cur+';background:transparent;border-radius:4px;transition:background .15s;touch-action:none'; e.onmouseenter=()=>{ e.style.background='#ffffff26'; }; e.onmouseleave=()=>{ if(!e._d) e.style.background='transparent'; }; document.body.appendChild(e); return e; };
   const hv=mk('splitV','col-resize','Glisser : agrandir / réduire le dôme (la fenêtre de phase prend le reste) · double-clic : taille automatique'), hh=mk('splitH','row-resize','Glisser : hauteur de la timeline · double-clic : taille automatique');
@@ -1897,7 +1982,7 @@ function saveUI(){ try{ localStorage.setItem(uiKey,JSON.stringify({ event:eventV
     hv.style.left=(sx+d.right+3)+'px'; hv.style.top=(sy+d.top)+'px'; hv.style.width='10px'; hv.style.height=d.height+'px'; hh.style.left=(sx+r.left)+'px'; hh.style.width=r.width+'px'; hh.style.height='10px'; hh.style.top=(sy+r.top-12)+'px'; };
   const drag=(el,onMove,onEnd)=>{ el.addEventListener('pointerdown',ev=>{ ev.preventDefault(); el._d=1; el.style.background='#ffffff40'; try{ el.setPointerCapture(ev.pointerId); }catch(e){} const st={ x:ev.clientX, y:ev.clientY, h:tl.clientHeight-(phaseView?59:0) }; el._st=st; });
     el.addEventListener('pointermove',ev=>{ if(el._d) onMove(ev,el._st); }); const up=()=>{ if(!el._d) return; el._d=0; el.style.background='transparent'; onEnd(); place(); }; el.addEventListener('pointerup',up); el.addEventListener('pointercancel',up); };
-  let curD=lsGet(K1), curT=lsGet(K2);
+  let curD=lsGet(K1), curT=lsGet(K2); addEventListener('resize',()=>{ applyT(curT); if(rawD){ applyD(rawD); } place(); }); setTimeout(()=>{ if(rawD){ applyD(rawD); place(); } },300);
   drag(hv,(ev)=>{ const r=stage.getBoundingClientRect(); let w=ev.clientX-r.left-8; w=Math.max(335,Math.min(w,r.width-260-16)); curD=Math.round(w*ASP); applyD(curD); place(); },()=>lsSet(K1,curD));
   drag(hh,(ev,st)=>{ curT=Math.round(Math.max(60,Math.min(420,st.h+(st.y-ev.clientY)))); applyT(curT); place(); },()=>lsSet(K2,curT));
   hv.addEventListener('dblclick',()=>{ curD=0; applyD(0); lsSet(K1,0); place(); }); hh.addEventListener('dblclick',()=>{ curT=0; applyT(0); lsSet(K2,0); place(); });

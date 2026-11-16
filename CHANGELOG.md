@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.4.0 — 2026-11-16
+
+Interface et outils pour travailler phase par phase.
+- Poignée au-dessus de la timeline : elle réduit en conséquence le dôme et la fenêtre de texte ; au démarrage l'interface remplit 100 % de l'espace (les tailles réglées à la souris ne durent que la session) ; plus de marge inutile en bas
+- Pipette RGB : cadre fixe en bas à droite du schéma 2D (masqué en 3D et GéoLists) ; le texte « barres adressables » passe à gauche
+- Nouveaux effets : Montagne, BattementDnB (pulsation générale sur chaque kick et caisse claire), Grondement (variations de basse), VoixAnneau (la voix remplit un anneau comme une barre de volume, pleine au volume maximum de la phase) ; nouveaux events Foudre, Aurore, ÉchoCristal, Panache, Surchauffe
+- tools/fill-gaps.py : comble les trous d'export (passages où les pistes fournies sont muettes) en analysant le mix lui-même
+- tools/phase-brief.py : fiche rythmique d'une phase ; aniCheckPhase(n) dans la page : bilan de vérification ; docs/moteur-effets.md : aide-mémoire du moteur d'effets
+- auto-layers.py : layers-plan.json (phase réglée à la main), events-plan snap:false, échelle d'énergie inchangée par les trous comblés
+- CLAUDE.md : règles de choix du modèle par niveau, méthode phase par phase, noms d'animations de 12 caractères au plus
+
 ## v1.3.0 — 2026-11-15
 
 Couches d'animation et nouveaux events.

@@ -94,9 +94,11 @@ def main():
     def pw(t, key='rms'):
         if t is None: return np.zeros(n)
         a = np.array(t['env'][key][:n], float); a = np.pad(a, (0, max(0, n - len(a))), constant_values=-120); return 10 ** (a / 10)
-    P = pw(music) + pw(bruit) + pw(echo)
+    P = sum(pw(t) for t in A['tracks'])   # toutes les pistes, y compris la piste MIX_TROUS ajoutée par fill-gaps.py (passages absents des pistes fournies)
     Edb = 10 * np.log10(P + 1e-12); E = smooth(Edb, 3 * FPS)
-    lo, hi = np.percentile(E, 5), np.percentile(E, 98); E01 = np.clip((E - lo) / (hi - lo + 1e-9), 0, 1)
+    # l'échelle d'énergie (5e et 98e centiles) reste celle des pistes fournies seules : combler un trou ne change donc rien aux autres phases
+    E0 = smooth(10 * np.log10(sum(pw(t) for t in A['tracks'] if t['name'] != 'MIX_TROUS') + 1e-12), 3 * FPS)
+    lo, hi = np.percentile(E0, 5), np.percentile(E0, 98); E01 = np.clip((E - lo) / (hi - lo + 1e-9), 0, 1)
     E01s = np.clip((smooth(Edb, 7 * FPS) - lo) / (hi - lo + 1e-9), 0, 1)   # version lente pour les variations d'intensité (les montées, pas chaque coup de batterie)
     # densité des frappes de batterie (kick + caisse claire) sur 6 s
     dr = np.zeros(n)
@@ -120,8 +122,14 @@ def main():
     ph, def_ev = parse_fxmap(mix); ut = user_event_times(mix, def_ev)
     dj = json.load(open(os.path.join(mix, 'descriptif.json'), encoding='utf-8-sig')); phases = dj['phases']
     mods = []; events = []; basewin = []; mid = 0
+    # layers-plan.json (facultatif) : phases réglées à la main d'après l'analyse. { "<début de phase en s>": { "base": [...], "mods": [...], "noAutoEvents": true } }
+    # Pour ces phases, les variations et fenêtres automatiques sont remplacées par celles du plan (les numéros des autres variations ne changent pas).
+    lp = os.path.join(mix, 'layers-plan.json'); LRAW = json.load(open(lp, encoding='utf-8-sig')) if os.path.exists(lp) else {}; LPLAN = {int(float(k)): v for k, v in LRAW.items() if not k.startswith('_')}
+    IDSHIFT = {int(float(k)): int(v) for k, v in LRAW.get('_idShift', {}).items()}   # numéros de variations à sauter après une phase (quand une phase modifiée ne produit plus une variation qu'elle produisait) : les numéros suivants restent ceux d'avant, donc les éléments désactivés à la main (⏻) aussi
     def addmod(p0, on, kind, t0, t1, pts, why):
-        nonlocal mid; mid += 1; mods.append({'id': 'm%03d' % mid, 'ph': p0, 'on': on, 'kind': kind, 't0': round(t0, 2), 't1': round(t1, 2), 'pts': pts, 'why': why, 'auto': True})
+        nonlocal mid; mid += 1
+        if int(p0) in LPLAN: return
+        mods.append({'id': 'm%03d' % mid, 'ph': p0, 'on': on, 'kind': kind, 't0': round(t0, 2), 't1': round(t1, 2), 'pts': pts, 'why': why, 'auto': True})
     def curve(sig, a, b, step, fn, eps, mingap):
         ts = np.arange(a, b + 1e-6, step); raw = [[float(t), float(fn(sig[min(n - 1, int(t * FPS))]))] for t in ts]
         pts = rdp(raw, eps); out = [pts[0]]
@@ -129,7 +137,7 @@ def main():
             if p[0] - out[-1][0] >= mingap or p is pts[-1]: out.append(p)
         return [[round(x, 1), round(v, 2)] for x, v in out]
     for p in phases:
-        a, b = float(p['start']), float(p['end']); fx = ph.get(int(a))
+        a, b = float(p['start']), float(p['end']); fx = ph.get(int(a)); mid += IDSHIFT.get(int(a), 0)
         if not fx or b - a < 20: continue
         base = [f for f in fx if f['layer'] != 'mod']; names = [f['n'] for f in base]
         main = next((m for m in MAIN_ORDER if m in names), None) or next((f['n'] for f in base if f['n'] not in DETAILS), None)
@@ -213,10 +221,10 @@ def main():
                     entry_extra = {}
                     if not keep:   # rien d'autre ne tient le dôme dans les passages calmes : des braises discrètes prennent le relais (même effet à chaque passage calme)
                         awin = [[round(s[1], 1), round(s[2], 1), 4] for s in amb]
-                        basewin.append({'ph': a, 'add': {'n': 'Braises', 'mode': 'steady', 'core': True, 'small': True}, 'win': awin, 'why': 'des braises discrètes tiennent le dôme dans les passages calmes (' + ', '.join('%s–%s' % (mmss(w[0]), mmss(w[1])) for w in awin) + '), la pulsation revient dans les passages rythmés'})
-                    basewin.append({'ph': a, 'on': 'Pulsation audio', 'win': win, 'why': 'la pulsation rythmique revient à chaque passage rythmé (' + ', '.join('%s–%s' % (mmss(w[0]), mmss(w[1])) for w in win) + ') et s\'efface dans les passages calmes'})
+                        if int(a) not in LPLAN: basewin.append({'ph': a, 'add': {'n': 'Braises', 'mode': 'steady', 'core': True, 'small': True}, 'win': awin, 'why': 'des braises discrètes tiennent le dôme dans les passages calmes (' + ', '.join('%s–%s' % (mmss(w[0]), mmss(w[1])) for w in awin) + '), la pulsation revient dans les passages rythmés'})
+                    if int(a) not in LPLAN: basewin.append({'ph': a, 'on': 'Pulsation audio', 'win': win, 'why': 'la pulsation rythmique revient à chaque passage rythmé (' + ', '.join('%s–%s' % (mmss(w[0]), mmss(w[1])) for w in win) + ') et s\'efface dans les passages calmes'})
         # 5) events : seulement dans les phases où l'auteur en a peu posé ; sur les impacts (EvilPenta) et avant (Ruée)
-        if want_ev:
+        if want_ev and not LPLAN.get(int(a), {}).get('noAutoEvents'):
             nu = int(((ut >= a) & (ut < b)).sum())
             if nu >= 3: continue
             j0 = int(a * FPS); jmp = []
@@ -233,6 +241,9 @@ def main():
                 i = int(t * FPS); rise = Edb[i - 4 * FPS:i - FPS].mean() - Edb[i - 10 * FPS:i - 7 * FPS].mean()
                 if rise >= 3 and t - 3.2 > a and not (len(ut) and np.min(np.abs(ut - (t - 3.2))) < 4) and not any(abs(x['on'] - (t - 3.2)) < 4 for x in events):   # montée avant l'impact : la lave s'emballe juste avant
                     events.append({'name': 'Ruée', 'on': round(t - 3.2, 2), 'span': 2.3, 'why': 'montée de volume (+%.0f dB en 6 s) juste avant un impact : la lave s\'emballe' % rise})
+    for p0, v in sorted(LPLAN.items()):
+        for k, b_ in enumerate(v.get('base', [])): basewin.append(dict(b_, ph=float(p0)))
+        for k, m_ in enumerate(v.get('mods', [])): mods.append(dict(m_, id='p%d_%d' % (p0, k + 1), ph=float(p0), auto=True))
     # events écrits à la main d'après le descriptif et l'analyse (events-plan.json) : ils priment sur les flashs automatiques voisins
     pp = os.path.join(mix, 'events-plan.json')
     if os.path.exists(pp):
@@ -242,13 +253,14 @@ def main():
         for x in plan:
             ev = {'name': x['name'], 'on': float(x['on']), 'span': x.get('span'), 'why': x.get('why', '')}
             if x.get('ov'): ev['ov'] = x['ov']
+            if x.get('snap') is False: ev['_nosnap'] = True   # déjà calé à la main sur l'analyse (temps exacts) : ne pas recaler
             events.append(ev)
         events.sort(key=lambda x: x['on'])
     # ---- calage rythmique : début sur un temps fort (premier temps, sinon temps, sinon kick, sinon attaque marquée) ; fin sur le premier temps / l'attaque suivants,
     #      pour que la durée de l'event épouse une mesure ou une phrase (un event court dans un passage sans rythme est ÉTIRÉ jusqu'à la prochaine attaque marquée)
     Bt = np.array(A['beats']); Db = np.array(A['downbeats'])
     kk_all = np.array([t for t, *_ in A['drums'].get('kick', [])])
-    mo = np.array([o[0] for o in music['onsets'] if o[1] >= 0.3]) if music.get('onsets') else np.array([])   # toutes les attaques de la musique : dans un passage sans kick, ce sont elles qui donnent le rythme (ex. une pulsation lente toutes les 5,6 s)
+    mo = np.array(sorted([o[0] for t_ in A['tracks'] if t_ is music or t_['name'] == 'MIX_TROUS' for o in t_['onsets'] if o[1] >= 0.3]))   # toutes les attaques de la musique : dans un passage sans kick, ce sont elles qui donnent le rythme (ex. une pulsation lente toutes les 5,6 s)
     ob = np.array([o[0] for o in (bruit['onsets'] if bruit else []) if o[1] >= 0.8])
     strong = np.sort(np.concatenate([mo, ob])) if len(mo) + len(ob) else np.array([])
     def near(arr, t, tol):
@@ -281,7 +293,9 @@ def main():
         else:
             if t + s > phase_end(t) - 0.1: t = max(t - 0.0, phase_end(t) - s - 0.1)
         ev['on'] = round(t, 2); ev['span'] = round(s, 2)
-    for ev in events: snap_event(ev)
+    for ev in events:
+        if ev.pop('_nosnap', False): ev['on'] = round(ev['on'], 2); continue
+        snap_event(ev)
     events.sort(key=lambda x: x['on'])
     out = {'v': 1, 'generated': 'auto-layers.py', 'base': basewin, 'mods': mods, 'events': events}
     open(os.path.join(mix, 'layers.js'), 'w', encoding='utf-8').write('window.LAYERS=' + json.dumps(out, ensure_ascii=False, separators=(',', ':')) + ';\n')
