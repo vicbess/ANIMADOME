@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.0.0 — 2026-11-18
+
+Vue Cinematic, repères IA / outil et mode d'emploi plus clair.
+- Vue Cinematic (version YouTube du dôme) intégrée à l'onglet de gauche : fonds animés (étoiles, volcan et lave, 20 000 lieues sous les mers, roche, géode, glacier, forêt, jour venteux, ruissellements, glitch, noir, et un mode Automatique qui suit la couleur du dôme), halos, glints, vagues et échos sur les kicks, traînées de vitesse, Lens Dirt, grain, rotation lente, logo, titre du mix et « Artiste et morceau » (liste de chapitres « Artistes et morceaux », texte YouTube copiable)
+- Record : enregistrement MP4 image par image en arrière-plan (intervalle au choix, Full HD ou 4K, 30 ou 60 i/s, H.264 réglé pour la fluidité), les vues 2D et 3D restent utilisables ; aperçu plein écran F11 ; cache de lecture automatique
+- Panneau de réglages Cinematic dans le volet de droite (fond, effets, nomenclature, format, enregistrement) ; le descriptif et l'Event Bank s'effacent dans cette vue ; la vue choisie est rétablie au rechargement
+- Repères d'avertissement : badge jaune IA (ce qui envoie un prompt à une IA, boutons grisés sans IA connectée, proposition de la connecter) et badge orange clé à molette (outil à installer : ffmpeg, Git, outils d'analyse du son, installation proposée avec confirmation de la commande)
+- Phases de Pyrobeats refaites et publiées ; nouveaux effets de fond et d'events
+- Interface : ordre des vues 2D / 3D / GéoLists, séparateur de la timeline, texte des raccourcis, en-tête réorganisé (version au-dessus de PUBLISH, barre d'enregistrement à droite)
+- Docs : README, CLAUDE.md (mode Cinematic, repères IA / outil, veilleur au démarrage), docs/moteur-effets.md ; skill motion-design (MIT) inclus
+
 ## v1.4.0 — 2026-11-16
 
 Interface et outils pour travailler phase par phase.

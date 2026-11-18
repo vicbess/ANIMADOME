@@ -387,9 +387,118 @@ public static class Srv {
       return "{\"running\":" + (running ? "true" : "false") + ",\"exit\":" + code + ",\"log\":" + Json(sb.ToString()) + "}";
     }
   }
+  // ---- Outils nécessaires : état (ffmpeg, Git, outils d'analyse du son) et installation à la demande (winget / script), lancée seulement par le bouton « Installer » de la page ----
+  static string FindPyForAnalysis(string root) {
+    string py = Path.Combine(RepoRoot(root), "audio-analysis", "venv", "Scripts", "python.exe"); if (File.Exists(py)) return py;
+    string pa = Environment.GetEnvironmentVariable("PATH") ?? "";
+    foreach (string d in pa.Split(';')) { try { if (d.Trim().Length == 0 || d.IndexOf("WindowsApps", StringComparison.OrdinalIgnoreCase) >= 0) continue; string f = Path.Combine(d.Trim(), "python.exe"); if (File.Exists(f)) return f; } catch (Exception) { } }
+    return null;
+  }
+  static bool AnalysisToolsOk(string root) {   // contrôle rapide (présence des dossiers des modules, sans les importer) ; le vrai contrôle reste celui de la fenêtre d'analyse
+    string py = FindPyForAnalysis(root); if (py == null) return false;
+    string dir = Path.GetDirectoryName(py), sp = Path.GetFullPath(Path.Combine(dir, "..", "Lib", "site-packages")); if (!Directory.Exists(sp)) sp = Path.Combine(dir, "Lib", "site-packages"); if (!Directory.Exists(sp)) return false;
+    foreach (string m in new string[] { "numpy", "scipy", "librosa", "soundfile", "torch", "demucs", "beat_this", "mdxnet_infer" }) { if (!Directory.Exists(Path.Combine(sp, m)) && !File.Exists(Path.Combine(sp, m + ".py"))) return false; }
+    return true;
+  }
+  static bool GitOk(string root) { try { int c; Git(RepoRoot(root), "--version", out c); return c == 0; } catch (Exception) { return false; } }
+  static string ToolsStatus(string root) { return "{\"ffmpeg\":" + (FindFfmpeg() != null ? "true" : "false") + ",\"git\":" + (GitOk(root) ? "true" : "false") + ",\"analysis\":" + (AnalysisToolsOk(root) ? "true" : "false") + "}"; }
+  static System.Diagnostics.Process _ti; static StringBuilder _tiLog = new StringBuilder(); static object _tiLock = new object(); static string _tiName = "";
+  static string ToolInstall(string root, string tool) {
+    lock (_tiLock) {
+      if (_ti != null && !_ti.HasExited) return "KO une installation est déjà en cours (" + _tiName + ")";
+      string args;
+      if (tool == "ffmpeg") args = "-NoProfile -Command \"winget install --id Gyan.FFmpeg -e --silent --accept-package-agreements --accept-source-agreements\"";
+      else if (tool == "git") args = "-NoProfile -Command \"winget install --id Git.Git -e --silent --accept-package-agreements --accept-source-agreements\"";
+      else if (tool == "analysis") args = "-NoProfile -ExecutionPolicy Bypass -File \"" + Path.Combine(root, "tools", "install-analysis.ps1") + "\"";
+      else return "KO outil inconnu";
+      _tiLog.Clear();
+      var psi = new System.Diagnostics.ProcessStartInfo("powershell.exe", args); psi.UseShellExecute = false; psi.CreateNoWindow = true; psi.RedirectStandardOutput = true; psi.RedirectStandardError = true; psi.StandardOutputEncoding = Encoding.UTF8; psi.StandardErrorEncoding = Encoding.UTF8; psi.WorkingDirectory = root;
+      var p = new System.Diagnostics.Process(); p.StartInfo = psi;
+      System.Diagnostics.DataReceivedEventHandler h = (s0, ev) => { if (ev.Data != null) lock (_tiLock) { _tiLog.AppendLine(ev.Data); if (_tiLog.Length > 20000) _tiLog.Remove(0, _tiLog.Length - 12000); } };
+      p.OutputDataReceived += h; p.ErrorDataReceived += h; p.Start(); p.BeginOutputReadLine(); p.BeginErrorReadLine(); _ti = p; _tiName = tool;
+      return "OK installation lancée";
+    }
+  }
+  static string ToolInstallStatus() {
+    lock (_tiLock) {
+      bool running = _ti != null && !_ti.HasExited; int code = (_ti != null && _ti.HasExited) ? _ti.ExitCode : -1; string log = _tiLog.ToString(); if (log.Length > 3000) log = log.Substring(log.Length - 3000);
+      return "{\"running\":" + (running ? "true" : "false") + ",\"exit\":" + code + ",\"tool\":" + Json(_tiName) + ",\"log\":" + Json(log) + "}";
+    }
+  }
+  // ---- Enregistrement vidéo hors ligne : la page envoie des images JPEG, ffmpeg les assemble avec le son en MP4 (dossier mixes/<mix>/exports) ----
+  static System.Diagnostics.Process _rec; static Stream _recIn; static string _recOut = ""; static int _recFrames = 0; static StringBuilder _recLog = new StringBuilder(); static object _recLock = new object();
+  static string FindFfmpeg() {
+    string pa = Environment.GetEnvironmentVariable("PATH") ?? "";
+    foreach (string d in pa.Split(';')) { try { if (d.Trim().Length == 0) continue; string f = Path.Combine(d.Trim(), "ffmpeg.exe"); if (File.Exists(f)) return f; } catch (Exception) { } }
+    try { string pk = Path.Combine(Environment.GetEnvironmentVariable("LOCALAPPDATA") ?? "", "Microsoft\\WinGet\\Packages"); if (Directory.Exists(pk)) { string[] fs = Directory.GetFiles(pk, "ffmpeg.exe", SearchOption.AllDirectories); if (fs.Length > 0) return fs[0]; } } catch (Exception) { }
+    return null;
+  }
+  static string CleanName(string s, string dflt) { if (s == null) return dflt; StringBuilder b = new StringBuilder(); foreach (char ch in s) { if (char.IsLetterOrDigit(ch) || ch == '-' || ch == '_') b.Append(ch); } return b.Length == 0 ? dflt : b.ToString(); }
+  static string RecHandle(HttpListenerContext c, string ap, string root) {
+    lock (_recLock) {
+      var q = c.Request.QueryString; var inv = System.Globalization.CultureInfo.InvariantCulture;
+      if (ap == "/api/rec-start") {
+        if (_rec != null && !_rec.HasExited) return "KO un enregistrement est déjà en cours";
+        string ff = FindFfmpeg(); if (ff == null) return "KO ffmpeg introuvable (installe-le ou ajoute-le au PATH)";
+        string mix = CleanName(q["mix"], ""); if (mix.Length == 0) return "KO mix manquant";
+        string name = CleanName(q["name"], "video"); double fps = double.Parse(q["fps"] ?? "30", inv), from = double.Parse(q["from"] ?? "0", inv), dur = double.Parse(q["dur"] ?? "10", inv);
+        string dir = Path.Combine(Path.Combine(Path.Combine(root, "mixes"), mix), "exports"); string dq = q["dir"];
+        if (!string.IsNullOrEmpty(dq) && Directory.Exists(dq)) dir = dq; else Directory.CreateDirectory(dir);   // dossier choisi par « Select output », sinon mixes/<mix>/exports
+        _recOut = Path.Combine(dir, name + ".mp4");
+        string aud = (q["audio"] ?? "").Replace('/', '\\'); string audPath = "";
+        if (aud.Length > 0 && aud.IndexOf("..") < 0) audPath = Path.Combine(Path.Combine(Path.Combine(root, "mixes"), mix), aud);
+        bool hasAud = audPath.Length > 0 && File.Exists(audPath);
+        StringBuilder a = new StringBuilder();
+        a.Append("-y -f image2pipe -framerate ").Append(fps.ToString(inv)).Append(" -c:v mjpeg -i - ");
+        if (hasAud) a.Append("-ss ").Append(from.ToString(inv)).Append(" -t ").Append(dur.ToString(inv)).Append(" -i \"").Append(audPath).Append("\" -map 0:v -map 1:a -c:a aac -b:a 192k -ar 48000");
+        // réglages pour une lecture fluide partout (téléphone, WhatsApp, navigateur) : profil High niveau 4.1, débit plafonné (le grain fait exploser les pointes), images clés toutes les 2 s, cadence constante, couleurs BT.709 correctement étiquetées
+        a.Append(" -vf \"scale=in_range=full:out_range=tv:out_color_matrix=bt709,format=yuv420p\" -c:v libx264 -preset slow -profile:v high -level 4.1 -crf 20 -maxrate 9M -bufsize 18M -g ").Append(((int)Math.Round(fps * 2)).ToString()).Append(" -bf 2 -colorspace bt709 -color_primaries bt709 -color_trc bt709 -r ").Append(fps.ToString(inv)).Append(" -fps_mode cfr -movflags +faststart ");
+        if (hasAud) a.Append("-shortest ");
+        a.Append("\"").Append(_recOut).Append("\"");
+        var psi = new System.Diagnostics.ProcessStartInfo(ff, a.ToString()); psi.UseShellExecute = false; psi.RedirectStandardInput = true; psi.RedirectStandardError = true; psi.CreateNoWindow = true;
+        _recLog.Length = 0; _recFrames = 0; _rec = System.Diagnostics.Process.Start(psi); _recIn = _rec.StandardInput.BaseStream;
+        _rec.ErrorDataReceived += delegate(object so, System.Diagnostics.DataReceivedEventArgs ev) { if (ev.Data != null) { lock (_recLog) { _recLog.AppendLine(ev.Data); if (_recLog.Length > 4000) _recLog.Remove(0, _recLog.Length - 3000); } } };
+        _rec.BeginErrorReadLine();
+        return "OK " + _recOut;
+      }
+      if (ap == "/api/rec-frame") {
+        if (_rec == null || _rec.HasExited) return "KO ffmpeg arrêté";
+        byte[] bb; using (MemoryStream ms = new MemoryStream()) { c.Request.InputStream.CopyTo(ms); bb = ms.ToArray(); }
+        try { _recIn.Write(bb, 0, bb.Length); _recIn.Flush(); _recFrames++; } catch (Exception ex) { return "KO " + ex.Message; }
+        return "OK " + _recFrames;
+      }
+      if (ap == "/api/rec-pick") {   // boîte de dialogue Windows « choisir un dossier » (le serveur tourne sur le même PC)
+        try {
+          string scr = "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.Form; $f.TopMost = $true; $d = New-Object System.Windows.Forms.FolderBrowserDialog; $d.Description = 'Dossier d export des videos'; if ($d.ShowDialog($f) -eq 'OK') { [Console]::Out.Write($d.SelectedPath) }";
+          string enc = Convert.ToBase64String(Encoding.Unicode.GetBytes(scr));
+          var pp = new System.Diagnostics.ProcessStartInfo("powershell.exe", "-NoProfile -STA -ExecutionPolicy Bypass -EncodedCommand " + enc); pp.UseShellExecute = false; pp.RedirectStandardOutput = true; pp.CreateNoWindow = true;
+          using (var pr = System.Diagnostics.Process.Start(pp)) { string o = pr.StandardOutput.ReadToEnd(); pr.WaitForExit(300000); return o.Trim(); }
+        } catch (Exception ex) { return "KO " + ex.Message; }
+      }
+      if (ap == "/api/rec-text") {   // petit fichier texte (liste de chapitres) : dans le dossier du mix (where=mix) ou dans le dossier d'export
+        string mixT = CleanName(q["mix"], ""); if (mixT.Length == 0) return "KO mix manquant";
+        string nameT = CleanName(q["name"], "chapitres"); string txT;
+        using (StreamReader srT = new StreamReader(c.Request.InputStream, new UTF8Encoding(false))) txT = srT.ReadToEnd();
+        if (txT.Length > 200000) return "KO texte trop long";
+        string mixDirT = Path.Combine(Path.Combine(root, "mixes"), mixT); string dirT = (q["where"] == "mix") ? mixDirT : (q["dir"] ?? "");
+        if (string.IsNullOrEmpty(dirT) || !Directory.Exists(dirT)) { dirT = Path.Combine(mixDirT, "exports"); Directory.CreateDirectory(dirT); }
+        string fT = Path.Combine(dirT, nameT + ".txt"); File.WriteAllText(fT, txT, new UTF8Encoding(false)); return "OK " + fT;
+      }
+      if (ap == "/api/rec-end") { try { if (_recIn != null) _recIn.Close(); } catch (Exception) { } return "OK"; }
+      if (ap == "/api/rec-cancel") { try { if (_rec != null && !_rec.HasExited) _rec.Kill(); } catch (Exception) { } return "OK"; }
+      if (ap == "/api/rec-status") {
+        bool run = _rec != null && !_rec.HasExited; int code = (_rec != null && _rec.HasExited) ? _rec.ExitCode : -1; string lg; lock (_recLog) { lg = _recLog.ToString(); }
+        return "{\"running\":" + (run ? "true" : "false") + ",\"frames\":" + _recFrames + ",\"exit\":" + code + ",\"out\":" + Json(_recOut) + ",\"log\":" + Json(lg.Length > 600 ? lg.Substring(lg.Length - 600) : lg) + "}";
+      }
+      return "KO route inconnue";
+    }
+  }
   static void Handle(HttpListenerContext c, string root) {
     try {
       string ap = c.Request.Url.AbsolutePath;
+      if (ap == "/api/ai-status") { bool aiAlive = false; try { string hb = Path.Combine(root, ".ai-alive"); if (File.Exists(hb)) aiAlive = (DateTime.UtcNow - File.GetLastWriteTimeUtc(hb)).TotalSeconds < 90; } catch (Exception) { } byte[] aib = Encoding.UTF8.GetBytes(aiAlive ? "1" : "0"); c.Response.ContentType = "text/plain"; c.Response.Headers["Cache-Control"] = "no-store"; c.Response.ContentLength64 = aib.Length; c.Response.OutputStream.Write(aib, 0, aib.Length); c.Response.Close(); return; }   // une IA est « branchée » tant que le veilleur watch-requests.ps1 a donné signe de vie (fichier .ai-alive) il y a moins de 90 s
+      if (ap == "/api/tools-status" || ap == "/api/tool-install" || ap == "/api/tool-install-status") { string tr = c.Request.Headers["X-Animadome"] != "1" ? "KO requête refusée" : ap == "/api/tools-status" ? ToolsStatus(root) : ap == "/api/tool-install" ? (c.Request.HttpMethod == "POST" ? ToolInstall(root, c.Request.QueryString["tool"]) : "KO POST requis") : ToolInstallStatus(); byte[] tb = Encoding.UTF8.GetBytes(tr); c.Response.ContentType = (tr.StartsWith("{") ? "application/json" : "text/plain") + "; charset=utf-8"; c.Response.Headers["Cache-Control"] = "no-store"; c.Response.ContentLength64 = tb.Length; c.Response.OutputStream.Write(tb, 0, tb.Length); c.Response.Close(); return; }
+      if (ap.StartsWith("/api/rec-")) { string rr = (c.Request.Headers["X-Animadome"] != "1" || c.Request.HttpMethod != "POST") ? "KO requête refusée" : RecHandle(c, ap, root); byte[] rrb = Encoding.UTF8.GetBytes(rr); c.Response.ContentType = (ap == "/api/rec-status" ? "application/json" : "text/plain") + "; charset=utf-8"; c.Response.ContentLength64 = rrb.Length; c.Response.OutputStream.Write(rrb, 0, rrb.Length); c.Response.Close(); return; }
       if (ap == "/api/upload") {
         string up = c.Request.Headers["X-Animadome"] != "1" || c.Request.HttpMethod != "POST" ? "KO requête refusée" : UploadFile(c, root, c.Request.QueryString["mix"], c.Request.QueryString["kind"], c.Request.QueryString["name"], c.Request.QueryString["reset"] == "1");
         byte[] ub = Encoding.UTF8.GetBytes(up); c.Response.ContentType = "text/plain; charset=utf-8"; c.Response.ContentLength64 = ub.Length; c.Response.OutputStream.Write(ub, 0, ub.Length); c.Response.Close(); return;

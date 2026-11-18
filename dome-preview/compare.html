@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Comparatif de variantes</title>
+<style>
+  html,body{margin:0;height:100%;background:#0b0b0d;color:#ddd;font:14px system-ui,sans-serif}
+  #bar{display:flex;gap:10px;align-items:center;padding:8px 12px;background:#17171b;flex-wrap:wrap}
+  #bar button{background:#2a2a31;color:#eee;border:1px solid #444;border-radius:6px;padding:6px 12px;cursor:pointer;font:inherit}
+  #bar button:hover{background:#3a3a44}
+  #pos{flex:1;min-width:200px}
+  #clock{font-variant-numeric:tabular-nums;min-width:64px}
+  #grid{display:flex;height:calc(100% - 50px)}
+  .col{flex:1;display:flex;flex-direction:column;min-width:0;border-left:1px solid #222}
+  .col h2{margin:0;padding:6px;text-align:center;font-size:15px;font-weight:600;background:#121215}
+  .col iframe{flex:1;border:0;width:100%;background:#000}
+</style>
+</head>
+<body>
+<div id="bar">
+  <button id="play">▶ Lecture</button>
+  <button id="restart">⏮ Début de la phase</button>
+  <select id="ph" title="Aller à une phase (✦ = refaite)"></select>
+  <span id="clock">--:--</span>
+  <input id="pos" type="range" step="0.1">
+  <span id="hint"></span>
+</div>
+<div id="grid"></div>
+<script>
+if(location.protocol==='file:') location.replace('http://localhost:8765/compare.html'+location.search);   // ouverte comme fichier, la page ne peut pas charger le mix : on passe par le serveur local
+// Comparatif : la même page (show.html) chargée plusieurs fois avec ?variant=nom, lecture synchronisée.
+// Réglages par l'adresse : ?variants=original,faible,moyen&from=2104&to=2214&mix=pyrobeats (le son vient de la première variante).
+const q=new URLSearchParams(location.search), names=(q.get('variants')||'original,actuel').split(','), T0=+(q.get('from')||0), T1=+(q.get('to')||2977), mix=q.get('mix')||'pyrobeats', DONE=(q.get('done')||'1,2,3,4,5,6,7,8,9,11,12,27,29').split(',').map(Number), SND=Math.max(0,names.indexOf(q.get('sound')||names[0]));   /* tout le mix par défaut ; done = phases refaites (✦) ; sound = version qui donne le son */
+const grid=document.getElementById('grid'), pos=document.getElementById('pos'), clock=document.getElementById('clock'), frames=[];
+pos.min=T0; pos.max=T1; pos.value=T0;
+for(const n of names){ const c=document.createElement('div'); c.className='col'; c.innerHTML='<h2>'+n+'</h2>'; const f=document.createElement('iframe'); f.src='show.html?mix='+encodeURIComponent(mix)+(n==='actuel'?'':'&variant='+encodeURIComponent(n));   /* « actuel » = la version en place, sans variante */
+  f.addEventListener('load',()=>{ const d=f.contentDocument, st=d.createElement('style'); st.textContent='html,body{overflow:hidden!important} body *{visibility:hidden!important} #dome{visibility:visible!important;display:block!important;position:fixed!important;left:0;top:0;width:100vw!important;height:100vh!important;object-fit:contain;background:#000;z-index:99999}'; d.head.appendChild(st);
+    try{ f.contentWindow.eval('view3d=false; loopOn=false; eventView=false;'); }catch(e){}   /* vue 2D, sans boucle de phase ni aperçu de la banque */ const a=d.getElementById('au'); a.muted=true; f._au=a; seek(+pos.value); });
+  c.appendChild(f); grid.appendChild(c); frames.push(f); }
+const aus=()=>frames.map(f=>f._au).filter(Boolean), mmss=t=>Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');
+function seek(t){ for(const a of aus()) try{ a.currentTime=t; }catch(e){} }
+let playing=false;
+function setPlay(on){ playing=on; for(const a of aus()){ if(on) a.play().catch(()=>{}); else a.pause(); } document.getElementById('play').textContent=on?'⏸ Pause':'▶ Lecture'; }
+document.getElementById('play').onclick=()=>setPlay(!playing);
+let PHS=null; const sel=document.getElementById('ph');
+const curPh=t=>PHS?PHS.findIndex(p=>t>=p.start&&t<p.end):-1;
+function loadPhases(){ if(PHS||!frames[0]||!frames[0].contentWindow) return; try{ const P=frames[0].contentWindow.eval('PH'); if(!P||!P.length) return; PHS=P.map(p=>({start:+p.start,end:+p.end,title:p.title||''}));
+  sel.innerHTML=PHS.map((p,i)=>'<option value="'+i+'">'+(DONE.includes(i+1)?'✦ ':'')+(i+1)+' · '+mmss(p.start)+' · '+p.title+'</option>').join(''); }catch(e){} }
+sel.onchange=()=>{ const p=PHS[+sel.value]; seek(p.start); pos.value=p.start; };
+document.getElementById('restart').onclick=()=>{ const i=curPh(+pos.value); const s=i>=0?PHS[i].start:T0; seek(s); pos.value=s; };
+pos.oninput=()=>seek(+pos.value);
+setInterval(()=>{ loadPhases(); const A=aus(); if(!A.length) return; const m=A[0], t=m.currentTime; A.forEach((a,i)=>{ a.muted=i!==SND; if(i>0&&Math.abs(a.currentTime-t)>.07) a.currentTime=t; if(playing&&a.paused) a.play().catch(()=>{}); if(!playing&&!a.paused) a.pause(); });
+  if(t>=T1&&playing) setPlay(false); else if(t<T0-.5) seek(T0);   /* pas de bouclage : la lecture s'arrête en fin de plage */
+  if(document.activeElement!==pos) pos.value=t; clock.textContent=mmss(t); const i=curPh(t); if(i>=0&&document.activeElement!==sel) sel.value=i; },200);
+document.getElementById('hint').textContent='son : '+names[SND]+' · ✦ = phase refaite';
+</script>
+</body>
+</html>

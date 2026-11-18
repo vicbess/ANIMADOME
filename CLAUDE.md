@@ -23,19 +23,25 @@ Trois couches, activables séparément par les interrupteurs du journal : **Anim
 ## Connaissances son et lumière
 Le skill **nimadome-son-lumiere** (.claude/skills/animadome-son-lumiere/SKILL.md) rassemble ce qu'un technicien son et lumière doit savoir ici : pilotage sACN/DMX, alimentation, gamma et couleur, photosensibilité, synchronisation, analyse audio, ambisonie. Consulte-le avant de régler un effet destiné au dôme réel ou de parler d'export.
 
+**Mouvement** : le skill `motion-design` (.claude/skills/motion-design/) donne le vocabulaire du motion design (anticipation, accélération / décélération, chevauchement, chorégraphie) ; il parle d'interfaces, ses durées ne s'appliquent pas aux LEDs. L'essentiel transposé au dôme, les pièges rencontrés et la méthode de comparaison de versions (`compare.html`) sont dans `dome-preview/docs/moteur-effets.md` : ce fichier est la mémoire partagée de l'outil, **complète-le** quand tu apprends quelque chose d'utile à la session suivante (ne le garde pas dans ta mémoire privée).
+
 ## Quel modèle pour quelle tâche (économie de tokens)
 Règle écrite en **niveaux**, jamais en noms ni en versions de modèles : « supérieur » = le modèle le plus capable disponible dans la session ; « courant » = le modèle par défaut, juste suffisant.
 | Tâche | Niveau |
 |---|---|
-| Concept d'une phase, code de nouveaux effets, choix et placement des events (travail artistique) | supérieur |
+| Concept d'une phase, code de nouveaux effets, choix et placement des events (travail artistique) | supérieur, effort moyen (comparatif fait sur le plus haut modèle disponible alors : l'effort faible donnait un résultat plus plat ; à revérifier à chaque changement de modèle supérieur, voir le `CONTEXT.md` du mix) |
 | Analyse du son, trous d'export, fiche rythmique | courant |
 | Câblage (`fxmap.js`, descriptif, plans), reconstruction, mesures de vérification | courant |
 | Maintenance de l'outil, interface, publications | courant |
 - **Tu es sur le modèle courant et la demande est artistique** : avant de commencer, dis à l'utilisateur en une phrase que cette tâche mérite le modèle supérieur et qu'il peut basculer avec le sélecteur de modèle ; s'il préfère continuer, continue.
 - **Tu es sur le modèle supérieur** : ne garde pour toi que le travail artistique ; confie les étapes mécaniques (analyse, fiche, câblage, vérification) à un sous-agent lancé sur un modèle moins cher, désigné par son alias de niveau (il suit les versions tout seul), avec une consigne complète. Si la demande n'a rien d'artistique, signale qu'elle peut se faire sur le modèle courant.
-- **Méthode pour refaire ou affiner une phase** (dans cet ordre) : 1) `python tools/fill-gaps.py <mix> --list` puis, s'il y a des trous, sans `--list` ; 2) `python tools/phase-brief.py <mix> <n>` et lire **la fiche** (`mixes/<mix>/briefs/phase-NN.md`), pas l'analyse brute ; 3) lire `dome-preview/docs/moteur-effets.md`, pas le template entier ; 4) concevoir, coder, placer ; 5) `aniCheckPhase(n)` dans la page ; 6) l'auteur juge à l'œil avec le son.
+- **Méthode pour refaire ou affiner une phase** (dans cet ordre) : 1) `python tools/fill-gaps.py <mix> --list` puis, s'il y a des trous, sans `--list` ; 2) `python tools/phase-brief.py <mix> <n>` et lire **la fiche** (`mixes/<mix>/briefs/phase-NN.md`), pas l'analyse brute ; 3) lire `dome-preview/docs/moteur-effets.md` (dont « Méthode validée pour refaire une phase » et « Pièges rencontrés »), pas le template entier ; 4) concevoir, coder, placer ; 5) `aniCheckPhase(n)` dans la page ; 6) l'auteur juge à l'œil avec le son.
 - **Une session neuve par phase** : elle démarre avec ce fichier, le `CONTEXT.md` du mix et la fiche de la phase ; ne pas enchaîner plusieurs phases dans une longue session.
 - N'affiche jamais de longues listes brutes (départs de sons, tableaux d'analyse) : résume par script avant de lire.
+## Mode Cinematic (version YouTube du dôme)
+Code : bloc « Vue Cinematic » de `show.template.html` (avant `function frame()`), enregistrement MP4 dans `serve.ps1` (`RecHandle`, ffmpeg), logo et textures dans `dome-preview/assets/`. Chaque effet et chaque fond est une **fonction pure du temps** (déterminisme : le rendu hors ligne, le cache de lecture et l'aperçu doivent donner la même image) ; viser nettement moins de 16 ms par image. Pièges et méthode : `dome-preview/docs/moteur-effets.md`. Travail de ce mode : session dédiée, niveau supérieur à effort moyen ; **si la session tourne sur un niveau plus faible, demander confirmation à l'auteur avant de commencer**.
+## Repères « IA » et « outil » dans l'interface
+Un badge jaune **IA** (classe `aiWarn`, `data-ai` sur le bouton) marque tout ce qui envoie un prompt à une IA : il ne disparaît jamais (il prévient d'une dépense de tokens) et le bouton est grisé tant qu'aucune IA n'est détectée (le veilleur `watch-requests.ps1` écrit `dome-preview/.ai-alive`, lu par `/api/ai-status`). **Lance le veilleur en tâche de fond au début de la session** pour que l'outil te voie « connecté ». Un badge orange **clé à molette** (`toolWarn`, `data-tool`) marque un outil à installer (ffmpeg, Git, outils d'analyse) : `/api/tools-status`, `/api/tool-install` (jamais sans confirmation de l'utilisateur dans la fenêtre d'installation). Tout nouveau bouton qui dépend d'une IA ou d'un outil doit porter le badge correspondant.
 ## Lancer
 ```
 powershell -ExecutionPolicy Bypass -File dome-preview\serve.ps1 -Port 8765     (serveur, à garder ouvert)
@@ -70,7 +76,7 @@ Pour un prompt :
 Les boutons « Éditer la description » et « Nettoyer l'anim de la phase » envoient aussi des prompts (`[EDIT]`, `[CLEAN]`) : relis la phase, applique, et pour `[CLEAN]` écris le rapport dans `clean/` en demandant confirmation.
 
 ## Règles à respecter
-- **Events** : le nom d'un **type** d'event est unique (18 caractères max) ; plusieurs occurrences d'un même type partagent ce nom (par exemple les « Ruée »). Catégories de la banque : *Volcano*, *Geometric*, *Basics*. Les descriptions de la banque (`eventTypes`) ne contiennent **ni timing ni couleur**.
+- **Events** : le nom d'un **type** d'event est unique (18 caractères max) ; plusieurs occurrences d'un même type partagent ce nom (par exemple les « Ruée »). Catégories de la banque : *Volcano*, *Geometric*, *Basics*, *Water*, *Sky*, *Stone*. Les descriptions de la banque (`eventTypes`) ne contiennent **ni timing ni couleur**.
 - **Ajouter / déplacer un event sur la timeline** : passe par la page (variables `EV`, `evLibEvent`, puis `saveEvt()` depuis la console du navigateur), **jamais en éditant `events-timing.json` pendant que la page est ouverte** (elle le réécrit).
 - **Noms d'animations** (effets de base, anims secondaires, events) : courts, **12 caractères au plus si possible, sans espace** (ex. `BattementDnB` et non « Battement DnB »), pour ne pas déborder dans le journal.
 - Un effet ajouté dans `FX` doit rester léger (viser moins de 2 ms par image, à mesurer) et fonctionner pour 4 à 60 LEDs par barre.

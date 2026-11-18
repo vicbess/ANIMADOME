@@ -9,6 +9,7 @@ $mixes = @(Get-Mixes | ForEach-Object {
 $base = @{}; $changedAt = @{}
 foreach ($m in $mixes) { if (Test-Path $m.txt) { $base[$m.slug] = (Get-Item $m.txt).LastWriteTimeUtc } }
 while ($true) {
+  try { [System.IO.File]::WriteAllText((Join-Path $Root '.ai-alive'), (Get-Date).ToString('o')) } catch {}   # signe de vie : la page grise les boutons qui nécessitent une IA tant que ce fichier n'est pas récent
   foreach ($m in $mixes) {
     $doneIds = @{}
     if (Test-Path $m.done) { try { $o = [System.IO.File]::ReadAllText($m.done, [System.Text.Encoding]::UTF8) | ConvertFrom-Json; $o.PSObject.Properties | ForEach-Object { $doneIds[$_.Name] = $true } } catch {} }

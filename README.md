@@ -37,8 +37,10 @@ Lire et utiliser l'outil ne demande aucun compte. **Publier** (une version de l'
 - **GéoLists** : visualiseur de formes géométriques du dôme (triangles, pentagones, cercles, lignes…), avec sélection par barres et une formule réutilisable pour décrire une sélection.
 - **Timeline** : un mix découpé en phases ; chaque phase combine des effets continus et des **events** ponctuels (posés, déplacés, étirés, dupliqués sur la timeline). Un clic sur la barre colorée d'une phase ouvre son menu.
 - **Journal des effets** : un encart par effet ou event actif (bleu pour les events) ; la description détaillée apparaît au survol.
-- **Event Bank** : catalogue d'events classés en *Volcano*, *Geometric* et *Basics*.
+- **Event Bank** : catalogue d'events classés en *Volcano*, *Geometric*, *Basics*, *Water*, *Sky* et *Stone*.
 - **Descriptif** : un fichier texte par mix décrit chaque phase et ses events `*mm:ss*` ; l'outil le relit à chaque modification.
+- **Vue Cinematic** (version YouTube du dôme) : le dôme sur un fond animé (étoiles, volcan, océan, roche, géode, glacier, forêt…, ou « Automatique » selon la couleur du dôme), avec halos, glints, vagues sur les kicks, logo, titre du mix et noms des morceaux (« Artistes et morceaux »). Le panneau de réglages est dans le volet de droite ; **F11** = aperçu en plein écran. **Record** enregistre le mix (ou l'intervalle choisi) en MP4 Full HD ou 4K, image par image, en arrière-plan (les vues 2D et 3D restent utilisables) ; ffmpeg est requis. Aucune IA n'est utilisée à l'enregistrement.
+- **Repères d'avertissement** : un badge jaune **IA** signale ce qui envoie un prompt à une IA (donc dépense des tokens) ; il reste toujours affiché, et les boutons correspondants sont grisés tant qu'aucune IA n'est connectée (un clic propose de la connecter). Un badge orange **clé à molette** signale un outil à installer (ffmpeg, Git, outils d'analyse du son) : un clic propose l'installation, avec confirmation de la commande exacte, et le badge disparaît quand l'outil est présent.
 
 ## Mettre à jour l'outil
 
@@ -67,7 +69,7 @@ Le détail du format est dans le [README des mix](https://github.com/vicbess/MIX
 
 La page contient une zone de prompt (« PROMPTEUR : ask me anything ») : chaque prompt est écrit dans un fichier local du mix, que `watch-requests.ps1` surveille. Un assistant de code (par exemple [Claude Code](https://claude.com/claude-code) ouvert dans ce dossier) lit les demandes (« ajoute tel event à 5:30 ») et modifie le descriptif, les réglages et l'outil.
 
-Tout ce qu'il doit savoir de l'outil (procédure, règles, fichiers) est dans [`CLAUDE.md`](CLAUDE.md), que Claude Code lit automatiquement. Ce qu'il doit savoir de **chaque mix** (intention, palette, règles de l'auteur, décisions durables) est dans le fichier `CONTEXT.md` du mix : il le lit au début de chaque session, le tient à jour, et il est **publié avec les phases** (une pastille « ● contexte mis à jour » prévient quand un collaborateur en a publié une nouvelle version). Pour qu'il traite tes prompts, ouvre-le dans le dossier du projet et demande-lui de lancer le serveur et le veilleur. L'outil fonctionne très bien sans.
+Tout ce qu'il doit savoir de l'outil (procédure, règles, fichiers) est dans [`CLAUDE.md`](CLAUDE.md), que Claude Code lit automatiquement. Ce qu'il doit savoir de **chaque mix** (intention, palette, règles de l'auteur, décisions durables) est dans le fichier `CONTEXT.md` du mix : il le lit au début de chaque session, le tient à jour, et il est **publié avec les phases** (une pastille « ● contexte mis à jour » prévient quand un collaborateur en a publié une nouvelle version). Pour qu'il traite tes prompts, ouvre-le dans le dossier du projet et demande-lui de lancer le serveur et le veilleur. L'outil fonctionne très bien sans. La page considère qu'une IA est **connectée** tant que le veilleur `watch-requests.ps1` tourne (il écrit un signe de vie dans `dome-preview/.ai-alive`) : c'est vérifié au chargement de la page ou au clic sur un bouton grisé.
 
 ## Organisation du dépôt
 
@@ -76,6 +78,7 @@ ANIMADOME/
 ├─ setup.ps1                 premier démarrage (Git, identité, mix, audio)
 ├─ CLAUDE.md                 consignes pour un assistant
 ├─ CHANGELOG.md              versions publiées
+├─ .claude/skills/           connaissances pour un assistant (son et lumière, motion design)
 ├─ dome-preview/
 │  ├─ show.template.html     source de la page (effets, vues, interface)
 │  ├─ show.html              page générée
@@ -85,7 +88,10 @@ ANIMADOME/
 │  ├─ watch-requests.ps1     veilleur de prompts
 │  ├─ parse-descriptif.ps1   lecture du descriptif
 │  ├─ lancer-apercu.bat      lance le serveur et la page
-│  ├─ tools/                 scripts d'analyse du son (facultatifs)
+│  ├─ assets/                logo et textures de la vue Cinematic
+│  ├─ docs/moteur-effets.md  aide-mémoire du moteur d'effets (mémoire de l'outil)
+│  ├─ compare.html           comparaison de versions d'une phase côte à côte
+│  ├─ tools/                 scripts d'analyse du son et leur installation (facultatifs)
 │  └─ mixes/                 dépôt séparé des mix (non suivi par ce dépôt)
 ├─ LICENSE                   MIT
 └─ README.md
@@ -116,4 +122,4 @@ PyTorch avec CUDA est conseillé (sur une GTX 1080, un mix de 50 minutes prend e
 
 Code sous licence [MIT](LICENSE). Les mix, leur audio et leurs droits appartiennent à leurs auteurs ; l'audio n'est jamais publié dans ces dépôts.
 
-Outils tiers utilisés (installés séparément, jamais redistribués ici) : Demucs (MIT), drumsep / mdxnet-infer, beat_this (MIT), PyTorch (BSD), librosa (ISC), numpy et scipy (BSD).
+Outils tiers utilisés (installés séparément, jamais redistribués ici) : Demucs (MIT), drumsep / mdxnet-infer, beat_this (MIT), PyTorch (BSD), librosa (ISC), numpy et scipy (BSD), ffmpeg (LGPL/GPL, installé via winget). Le skill `.claude/skills/motion-design` (MIT, LottieFiles) est inclus avec sa licence.
