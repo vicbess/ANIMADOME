@@ -115,3 +115,11 @@ Une phase déjà bien travaillée ne se refait pas : retouches précises seuleme
 
 ## Vérifier
 Dans la page (console ou outil navigateur) : `aniCheckPhase(11)` → erreurs, coût par image, effets et events actifs, `pulsationKicks` (> 1,3 = le dôme pulse sur les kicks), luminosité par tranche de 5 s. Juger ensuite à l'œil avec le son : la mesure ne remplace pas le regard de l'auteur.
+
+## Pièges Cinematic appris pendant la mise au point de l'interface
+- **Limite de cadence du rendu direct** (réglage « live ») : la tester **avant** `cineIdle(t)`. Sinon l'image sautée est déjà marquée « dessinée » et l'écran reste noir à l'arrêt.
+- **GéoLists et Cinematic s'excluent** : `cineSet(true)` désactive GéoLists, sinon `renderDome` prend la branche Géo et le canvas Cinematic reste noir (cas d'un rechargement avec les deux mémorisés).
+- **F11 / Échap en plein écran** : certains navigateurs sortent eux-mêmes du plein écran *et* envoient la touche à la page ; ignorer F11 pendant ~0,6 s après `fullscreenchange`, et faire d'Échap un simple retour à la fenêtre normale.
+- **Défauts mémorisés** : toute valeur enregistrée sans choix de l'auteur (défaut) doit être migrée en montant la version de `animadome_cine_v2` ; ne jamais écraser un choix explicite (ex. `animadome_cine_trackset` pour « Artiste et morceau »).
+- **Compteur FPS** : compter les images réellement affichées (cache ou rendu direct), pas les `requestAnimationFrame`.
+- **LEDs / barre** : sans effet visible en Cinematic (tubes continus avec dégradé) ; réglage masqué dans cette vue.

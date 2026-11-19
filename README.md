@@ -22,7 +22,7 @@ L'outil tourne dans le navigateur (HTML + JavaScript, rien à installer côté p
    ```
    Il vérifie Git et ta clé GitHub, **récupère les mix** dans `dome-preview/mixes`, règle l'identité utilisée pour tes publications et te dit où placer l'audio.
 4. **Ajouter l'audio** du mix avec le bouton **Select Audio files** (sous le sélecteur de mix) : **A** = le fichier à lire (obligatoire, copié à la bonne place dans le dossier du mix), **B** = des pistes séparées de bonne qualité à analyser (facultatif, même durée que A). Les fichiers audio ne sont jamais sur GitHub : les collaborateurs se les échangent directement. Tu peux aussi les déposer à la main à l'endroit indiqué par `setup.ps1`.
-5. Lancer `dome-preview/lancer-apercu.bat` (ou `powershell -ExecutionPolicy Bypass -File dome-preview/serve.ps1`) puis ouvrir <http://localhost:8765/show.html>. Garder la fenêtre du serveur ouverte.
+5. Lancer `RUN_ANIMADOME.bat` (à la racine du projet : démarre le serveur dans une fenêtre réduite puis ouvre la page ; l'icône `dome-preview/assets/animadome.ico` sert pour un raccourci sur le bureau) ou `dome-preview/lancer-apercu.bat` (ou `powershell -ExecutionPolicy Bypass -File dome-preview/serve.ps1`) puis ouvrir <http://localhost:8765/show.html>. Garder la fenêtre du serveur ouverte.
 
 ### Accès en écriture (pour publier)
 Lire et utiliser l'outil ne demande aucun compte. **Publier** (une version de l'outil ou des phases d'un mix) demande :

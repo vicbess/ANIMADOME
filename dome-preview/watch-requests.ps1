@@ -18,7 +18,7 @@ while ($true) {
       foreach ($l in [System.IO.File]::ReadAllLines($m.prompts, [System.Text.Encoding]::UTF8)) {
         if ($l.Trim() -eq '') { continue }
         try { $p = $l | ConvertFrom-Json; if (-not $doneIds.ContainsKey([string]$p.id)) { $pending += $p } } catch {} } }
-    if ($pending.Count -gt 0) { "PROMPTS_EN_ATTENTE (mix $($m.slug), dossier $($m.dir))"; $pending | ForEach-Object { "id=$($_.id) phase=[$($_.phaseStart)s] '$($_.phaseTitle)' t=$($_.t)s : $($_.text)" }; exit 0 }
+    if ($pending.Count -gt 0) { "PROMPTS_EN_ATTENTE (mix $($m.slug), dossier $($m.dir))"; $pending | ForEach-Object { "id=$($_.id) phase=[$($_.phaseStart)s] '$($_.phaseTitle)' t=$($_.t)s vue=[$($_.view)] : $($_.text)" }; exit 0 }
     if (Test-Path $m.txt) {
       $mt = (Get-Item $m.txt).LastWriteTimeUtc
       if ($base[$m.slug] -ne $mt) { $base[$m.slug] = $mt; $changedAt[$m.slug] = Get-Date }

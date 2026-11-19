@@ -47,6 +47,7 @@ Un badge jaune **IA** (classe `aiWarn`, `data-ai` sur le bouton) marque tout ce 
 powershell -ExecutionPolicy Bypass -File dome-preview\serve.ps1 -Port 8765     (serveur, à garder ouvert)
 powershell -ExecutionPolicy Bypass -File dome-preview\watch-requests.ps1        (veilleur de prompts, voir plus bas)
 ```
+Raccourci : `RUN_ANIMADOME.bat` (racine) lance le serveur et ouvre la page ; icône `dome-preview/assets/animadome.ico`.
 Page : <http://localhost:8765/show.html>. PowerShell **5.1** : pas de `&&`, pas d'opérateur ternaire. Les fichiers `.ps1` sont en UTF-8 **avec BOM** ; tout le reste en UTF-8 sans BOM.
 
 ## Où est quoi
@@ -67,7 +68,7 @@ Page : <http://localhost:8765/show.html>. PowerShell **5.1** : pas de `&&`, pas 
 La page contient une zone de prompt. Chaque prompt est écrit dans `mixes/<mix>/prompts.jsonl` (id, phase, instant, texte). `watch-requests.ps1` se termine quand un prompt est en attente ou quand le descriptif a été modifié puis laissé au calme 60 s : **lance-le en tâche de fond** pour être réveillé, et **relance-le après chaque traitement**.
 
 Pour un prompt :
-1. Lis-le (phase, instant `t`, texte). S'il est ambigu, pose la question plutôt que de deviner.
+1. Lis-le (phase, instant `t`, texte). Le champ `vue` (`view`) indique la vue affichée à la validation (2D, 3D, GéoLists, Cinematic, onglet) : simple contexte, le prompt n'agit pas forcément sur la fenêtre visible. S'il est ambigu, pose la question plutôt que de deviner.
 2. Applique-le : texte technique du descriptif, `fxmap.js`, et si besoin le code des effets dans `show.template.html`. Reste cohérent : en cas de contradiction, la consigne la plus récente de l'utilisateur gagne, et le texte du descriptif doit toujours décrire ce que fait l'animation.
 3. `build.ps1`, recharge la page, vérifie (mesure ou capture). Ne dis jamais « c'est fait » sans avoir vérifié.
 4. Ajoute l'id du prompt dans `prompts-done.json` (`{ "<id>": "résumé" }`).

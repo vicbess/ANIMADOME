@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.1.0 — 2026-11-19
+
+Mode Cinematic affiné et raccourci de lancement.
+- Cinematic : réglage « Images par seconde (live) » (10 à 60, défaut 20) séparé de l'enregistrement, désormais toujours à 60 FPS ; compteur de FPS sous la vidéo ; clic sur le dôme = lecture / pause ; F11 et Échap reviennent à la fenêtre normale sans changer de vue
+- Tiroirs du panneau Cinematic : « FX », « Effets fixes » (Lens Dirt, Vignettage, Grain, nouvelles Aberrations chromatiques cochées par défaut), « Effets du fond » par fond avec défauts propres (Braises volantes sur Volcan et lave, Lucioles flottantes sur Forêt et 20 000 lieues sous les mers, rien de coché en Automatique) ; Étincelles du dôme rangées dans le fond Volcan et lave ; fonds renommés (Space-Opéra, Hyperespace, Nébuleuses, Bancs animaux marins)
+- Fonds : Papier brûlé et Braises plus vivants sur Volcan, fond marin retouché, méduses qui pulsent sur le beat, Lens Dirt moins fort
+- « Artiste et morceau » : lit la liste enregistrée dans le mix, coché par défaut s'il y a une liste, texte dans le style du logo ; fenêtre renommée « Artistes et morceaux (chapitres de la playlist) » ; astuce Ctrl + Espace pour coller le timing
+- Interface : prompteur toujours visible (en bas dans GéoLists et Event Bank), avec une tirette pour l'agrandir ; menus déroulants au-dessus du contenu ; séparateur de la timeline plus discret et plus proche ; notes de version et aide du descriptif plus lisibles ; bouton d'analyse grisé sans outils
+- Nouveau : RUN_ANIMADOME.bat à la racine (lance le serveur et ouvre la page) et son icône ; README, CLAUDE.md et docs/moteur-effets.md mis à jour
+
 ## v2.0.0 — 2026-11-18
 
 Vue Cinematic, repères IA / outil et mode d'emploi plus clair.
