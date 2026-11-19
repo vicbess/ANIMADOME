@@ -188,6 +188,7 @@ public static class Srv {
         if (!step("push origin HEAD")) return "KO\n" + log;
         if (!step("tag -a v" + ver + " -F \"" + msg + "\"")) return "KO\n" + log;
         if (!step("push origin v" + ver)) return "KO\n" + log;
+        try { File.WriteAllText(Path.Combine(root, "release-notes-next.md"), ""); } catch { }   // les notes pré-remplies ont servi : on repart de zéro
         log.AppendLine("Version v" + ver + " publiée (branche " + br + ").");
         return "OK\n" + log;
       } finally { try { File.Delete(msg); } catch { } }
@@ -447,10 +448,17 @@ public static class Srv {
         _recOut = Path.Combine(dir, name + ".mp4");
         string aud = (q["audio"] ?? "").Replace('/', '\\'); string audPath = "";
         if (aud.Length > 0 && aud.IndexOf("..") < 0) audPath = Path.Combine(Path.Combine(Path.Combine(root, "mixes"), mix), aud);
+        string hqA = q["audiohq"];   // son de meilleure qualité (WAV, FLAC…) choisi dans l'outil : remplace le son du mix pour la vidéo
+        if (!string.IsNullOrEmpty(hqA)) {
+          string ehq = Path.GetExtension(hqA).ToLowerInvariant();
+          if (!File.Exists(hqA)) return "KO le fichier son choisi est introuvable : " + hqA;
+          if (Array.IndexOf(new string[] { ".wav", ".flac", ".aif", ".aiff", ".m4a", ".mp3", ".ogg", ".opus", ".wma" }, ehq) < 0) return "KO format de son non reconnu : " + ehq;
+          audPath = hqA;
+        }
         bool hasAud = audPath.Length > 0 && File.Exists(audPath);
         StringBuilder a = new StringBuilder();
         a.Append("-y -f image2pipe -framerate ").Append(fps.ToString(inv)).Append(" -c:v mjpeg -i - ");
-        if (hasAud) a.Append("-ss ").Append(from.ToString(inv)).Append(" -t ").Append(dur.ToString(inv)).Append(" -i \"").Append(audPath).Append("\" -map 0:v -map 1:a -c:a aac -b:a 192k -ar 48000");
+        if (hasAud) a.Append("-ss ").Append(from.ToString(inv)).Append(" -t ").Append(dur.ToString(inv)).Append(" -i \"").Append(audPath).Append("\" -map 0:v -map 1:a -c:a aac -b:a 320k -ar 48000");
         // réglages pour une lecture fluide partout (téléphone, WhatsApp, navigateur) : profil High niveau 4.1, débit plafonné (le grain fait exploser les pointes), images clés toutes les 2 s, cadence constante, couleurs BT.709 correctement étiquetées
         a.Append(" -vf \"scale=in_range=full:out_range=tv:out_color_matrix=bt709,format=yuv420p\" -c:v libx264 -preset slow -profile:v high -level 4.1 -crf 20 -maxrate 9M -bufsize 18M -g ").Append(((int)Math.Round(fps * 2)).ToString()).Append(" -bf 2 -colorspace bt709 -color_primaries bt709 -color_trc bt709 -r ").Append(fps.ToString(inv)).Append(" -fps_mode cfr -movflags +faststart ");
         if (hasAud) a.Append("-shortest ");
@@ -473,6 +481,22 @@ public static class Srv {
           string enc = Convert.ToBase64String(Encoding.Unicode.GetBytes(scr));
           var pp = new System.Diagnostics.ProcessStartInfo("powershell.exe", "-NoProfile -STA -ExecutionPolicy Bypass -EncodedCommand " + enc); pp.UseShellExecute = false; pp.RedirectStandardOutput = true; pp.CreateNoWindow = true;
           using (var pr = System.Diagnostics.Process.Start(pp)) { string o = pr.StandardOutput.ReadToEnd(); pr.WaitForExit(300000); return o.Trim(); }
+        } catch (Exception ex) { return "KO " + ex.Message; }
+      }
+      if (ap == "/api/rec-pick-audio") {   // boîte de dialogue Windows « choisir un fichier son » (le serveur tourne sur le même PC)
+        try {
+          string scrA = "Add-Type -AssemblyName System.Windows.Forms; $f = New-Object System.Windows.Forms.Form; $f.TopMost = $true; $d = New-Object System.Windows.Forms.OpenFileDialog; $d.Title = 'Son de meilleure qualite (WAV, FLAC...)'; $d.Filter = 'Son (*.wav;*.flac;*.aif;*.aiff;*.m4a;*.mp3;*.ogg;*.opus)|*.wav;*.flac;*.aif;*.aiff;*.m4a;*.mp3;*.ogg;*.opus|Tous les fichiers|*.*'; if ($d.ShowDialog($f) -eq 'OK') { [Console]::Out.Write($d.FileName) }";
+          string encA = Convert.ToBase64String(Encoding.Unicode.GetBytes(scrA));
+          var ppA = new System.Diagnostics.ProcessStartInfo("powershell.exe", "-NoProfile -STA -ExecutionPolicy Bypass -EncodedCommand " + encA); ppA.UseShellExecute = false; ppA.RedirectStandardOutput = true; ppA.CreateNoWindow = true;
+          using (var prA = System.Diagnostics.Process.Start(ppA)) { string oA = prA.StandardOutput.ReadToEnd(); prA.WaitForExit(300000); return oA.Trim(); }
+        } catch (Exception ex) { return "KO " + ex.Message; }
+      }
+      if (ap == "/api/rec-open") {   // ouvre le dossier d'export dans l'Explorateur Windows (dossier choisi par « Select output », sinon mixes/<mix>/exports)
+        try {
+          string mixO = CleanName(q["mix"], ""); if (mixO.Length == 0) return "KO mix manquant";
+          string dirO = Path.Combine(Path.Combine(Path.Combine(root, "mixes"), mixO), "exports"); string dqO = q["dir"];
+          if (!string.IsNullOrEmpty(dqO) && Directory.Exists(dqO)) dirO = dqO; else Directory.CreateDirectory(dirO);
+          System.Diagnostics.Process.Start("explorer.exe", "\"" + dirO + "\""); return "OK " + dirO;
         } catch (Exception ex) { return "KO " + ex.Message; }
       }
       if (ap == "/api/rec-text") {   // petit fichier texte (liste de chapitres) : dans le dossier du mix (where=mix) ou dans le dossier d'export

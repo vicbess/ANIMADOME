@@ -50,6 +50,8 @@ powershell -ExecutionPolicy Bypass -File dome-preview\watch-requests.ps1        
 Raccourci : `RUN_ANIMADOME.bat` (racine) lance le serveur et ouvre la page ; icône `dome-preview/assets/animadome.ico`.
 Page : <http://localhost:8765/show.html>. PowerShell **5.1** : pas de `&&`, pas d'opérateur ternaire. Les fichiers `.ps1` sont en UTF-8 **avec BOM** ; tout le reste en UTF-8 sans BOM.
 
+**Notes de version** : `dome-preview/release-notes-next.md` (local, ignoré par Git) contient les nouveautés de la prochaine version ; **ajoutes-y une ligne à chaque changement notable de l'outil**. La fenêtre « publish tool version » la pré-remplit (modifiable) et le serveur la vide après une publication réussie.
+
 ## Où est quoi
 | Fichier | Rôle |
 |---|---|
@@ -94,3 +96,4 @@ Les boutons « Éditer la description » et « Nettoyer l'anim de la phase » en
 - `show.template.html` est un gros fichier : modifie-le par remplacements exacts et vérifie qu'il contient encore `<!doctype html>` et `/*DOME_JSON*/` (`build.ps1` le contrôle).
 - Un fichier modifié par un script peut rester en CRLF ou LF : conserve celui du fichier.
 - Le veilleur se déclenche aussi sur tes propres modifications du descriptif : c'est normal.
+- `serve.ps1` : seules les routes dont le chemin commence par `/api/rec-` arrivent à `RecHandle` (enregistrement, choix de dossier ou de fichier son) ; une nouvelle route de ce groupe doit porter ce préfixe, sinon la page reçoit un 404 muet. Le code C# est compilé au lancement : **relancer le serveur** après toute modification de `serve.ps1`.

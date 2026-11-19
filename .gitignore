@@ -19,3 +19,6 @@ dome-preview/mixes.js
 _local/
 
 .ai-alive
+
+# notes de version en préparation (locales, vidées à la publication)
+dome-preview/release-notes-next.md

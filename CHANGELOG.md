@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.2.0 — 2026-11-19
+
+Cinematic plus complet, analyse du son en arrière-plan et veilles allégées.
+- Cinematic : « Réglages enregistrement » (images par seconde live 10 à 60, enregistrement toujours à 60 FPS, son AAC 320 kbps, « Select better audio quality » pour utiliser un WAV ou FLAC à la place du MP3), bouton 📁 pour ouvrir le dossier d'export, descriptif en infobulle de chaque effet de fond (ce qu'il fait et en fonction de quoi il varie), timeline réduite par défaut dans la vue, logo BIODÔME réaligné
+- Plein écran Cinematic (F11) : sélecteur de mix et barre de lecture, curseur et toute l'interface qui s'effacent après 4 s sans mouvement de souris
+- Fonds animés : Forêt, Géode (cristaux, réfraction, éclats de verre) et Glitch (électronique, cartes à puces), avec leurs effets de fond cochés par défaut ; « Automatique » démarre sans aucun effet coché
+- Timeline : la barre de séquences prend la couleur moyenne du dôme en fonction du temps (plus une couleur par séquence)
+- Select Audio files : l'analyse se fait en arrière-plan avec une barre de progression sur la timeline, le journal au clic et une fenêtre « Ton son est analysé ! » ; titre « C · Descriptif écrit »
+- Mode par défaut sans IA : un mix sans phase décrite montre une couleur uniforme qui parcourt la roue chromatique, avec une pulsation douce sur le rythme
+- Vue 3D : caméra « centre » dézoomée par défaut et verrouillée vers le bas à 100° du zénith
+- Interface : badges IA verts quand une IA est connectée, notes de version pré-remplies dans Publish, veilles en arrière-plan espacées (descriptif 12 s, GitHub 15 min, veilleur 5 s), timeline qui retrouve sa taille en quittant Cinematic
+
 ## v2.1.0 — 2026-11-19
 
 Mode Cinematic affiné et raccourci de lancement.

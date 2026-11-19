@@ -25,5 +25,5 @@ while ($true) {
       if ($changedAt[$m.slug] -and ((Get-Date) - $changedAt[$m.slug]).TotalSeconds -ge $SettleSec) { "DESCRIPTIF_MODIFIE (mix $($m.slug)) : $($m.txt) (calme depuis ${SettleSec}s)"; exit 0 }
     }
   }
-  Start-Sleep -Seconds 2
+  Start-Sleep -Seconds 5
 }
