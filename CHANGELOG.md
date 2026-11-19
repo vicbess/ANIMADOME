@@ -1,5 +1,20 @@
 # Changelog
 
+## v2.3.0 — 2026-11-19
+
+Cinematic repensé : nouveaux fonds, formes du dôme, barre de lecture aux couleurs du mix, menu des phases et liens GitHub.
+- Cinematic, fond Forêt : préparation 12 fois plus rapide et plus de reconstruction à chaque redimensionnement (l'onglet pouvait se figer).
+- Cinematic, fond Automatique : chaque fond lu utilise ses effets par défaut (le panneau ne montre plus de cases dans ce mode), au lieu de tout cocher ou tout décocher
+- Cinematic : nouveaux fonds animés Glacier (lac entouré de banquise bleu glacier qui se fend en rythme, aurore boréale, neige, flocons cristallins, givre, scintilles) et Jour venteux (météo du temps gris au beau temps selon la tonalité de la musique, nuages, air liquide, bourrasques, confettis).
+- Interface : plus de curseur en forme de main sur les boutons et la timeline (flèche partout) ; en Cinematic, les calques 2D / 3D sont masqués pour ne jamais apparaître derrière la vidéo quand la fenêtre est réduite
+- Cinematic, fond Automatique : couleurs → fonds revues (rose et violet → Géode, bleu clair → Jour venteux, bleu → Ruissellements, bleu foncé → Fond marin) ; « 20 000 lieues sous les mers » devient « Fond marin »
+- Cinematic : la timeline habituelle et les boutons de phases, de boucle et de stems disparaissent ; il reste une barre de lecture (lecture / pause, timer, volume) dont la piste reprend les couleurs du mix, identique en fenêtre normale et en plein écran
+- Interface : bloc timer et boutons de lecture plus compact (le timer passe au-dessus des boutons quand la colonne est étroite), prompteur qui n'est plus rogné dans les fenêtres basses (la liste des animations défile), plus de filet au-dessus de « Réglages enregistrement » en Cinematic
+- Menu d'une phase : « Update phase » (la fenêtre vérifie toute seule sur GitHub et dit si la phase est à jour) à la place de « updater phase » et « check for updates », nouveau « Go to phases Github » ; bouton « Go to Animadome Github » à droite de PUBLISH ; sur un mix sans phase décrite, le grand titre et le nom du mix de Cinematic sont aux couleurs de la roue chromatique
+- Cinematic, tiroir Nomenclature : option « Barre de lecture » (active par défaut) qui dessine tout en bas de la vidéo un trait fin aux couleurs du mix, avec la partie jouée lumineuse, une lueur à la position et de fines coupures aux débuts de morceaux ; elle est aussi dans les vidéos enregistrées
+- Cinematic : sélecteur « Forme du Dôme » (Arcs, Bulle, 3D sphere, Cristal, Torsion, Fleur) avec la case « Anguleux », au-dessus du tiroir FX Dôme ; « Constellation » devient une case de FX Dôme, avec une forme proposée pour chaque fond et un fondu entre deux formes.
+- Cinematic : tiroirs « FX Dome » et « FX globaux » (anciennement FX et Effets fixes) ; en mode Automatique, la forme du dôme suit le fond lu avec un fondu à chaque transition
+
 ## v2.2.0 — 2026-11-19
 
 Cinematic plus complet, analyse du son en arrière-plan et veilles allégées.
