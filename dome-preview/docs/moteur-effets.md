@@ -127,3 +127,13 @@ Dans la page (console ou outil navigateur) : `aniCheckPhase(11)` → erreurs, co
 - **Défauts mémorisés** : toute valeur enregistrée sans choix de l'auteur (défaut) doit être migrée en montant la version de `animadome_cine_v2` ; ne jamais écraser un choix explicite (ex. `animadome_cine_trackset` pour « Artiste et morceau »).
 - **Compteur FPS** : compter les images réellement affichées (cache ou rendu direct), pas les `requestAnimationFrame`.
 - **LEDs / barre** : sans effet visible en Cinematic (tubes continus avec dégradé) ; réglage masqué dans cette vue.
+
+## Coûts mesurés en vue Cinematic (passe d'optimisation du 2026-11-20)
+Mesure : 30 images rendues hors ligne en 1920 x 1080 (`CINE.fixed=[1920,1080]`, `cineForce`, `cineRenderOnly`), dôme à 42 LEDs par barre, dans le navigateur intégré (plus lent qu'un PC de bureau). Ordre de grandeur, ms par image : Géode 7,5 ; Glitch 11,8 ; Jour venteux 11,8 ; Forêt 12,1 ; Glacier 12,2 ; Automatique 12,6 ; Volcan 15,1 ; Fond marin 16,5 ; Space-Opéra 23,7 (forme « 3D sphere » par défaut : la géométrie des deux hémisphères est recalculée à chaque image, ≈ 6 ms, plus nébuleuses et étoiles ≈ 3 ms). Le fond coûte entre 0,5 ms (Glitch) et 6 ms (Fond marin) ; les traînées 1 à 2 ms ; le logo 0,5 à 1 ms ; la barre de lecture dessinée sur la vidéo 0,02 ms.
+Pièges et points à surveiller :
+- Mesurer avec `getImageData` ajoute 15 à 19 ms en 1080p : ne jamais le laisser dans une boucle de chronométrage.
+- `cnV` est échangé temporairement avec d'autres canvas pendant le cache de lecture et l'enregistrement : pour lire l'image affichée, utiliser `document.getElementById('cine')`.
+- Les fondus de forme du dôme et de « Constellation » reposent sur l'horloge réelle (`performance.now()`) : en enregistrement hors ligne (`cineForce`) on pose directement l'état final, sinon les premières secondes de la vidéo dépendaient de la vitesse du PC.
+- Le rendu n'est pas une fonction pure image par image : certains lissages (lueurs de glints, remplissage des barres du logo, teinte du logo) gardent un état entre deux images ; pour comparer deux rendus, rejouer la même suite d'instants.
+- Géométrie des formes : `cineShp.A / B / O` sont des tableaux réutilisés d'une image à l'autre (pas d'allocation) ; le cache des sommets `dome3DC` n'est jamais vidé, c'est voulu (géométrie constante).
+

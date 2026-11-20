@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.3.1 — 2026-11-20
+
+Optimisation et rangement.
+- Nettoyage de l'outil : README mis à jour (vue Cinematic, mode par défaut, analyse en arrière-plan, notes de version), script obsolète analyze-gut.ps1 retiré (remplacé par l'analyse des stems), anciennes mesures du mode Automatique purgées, variable inutilisée supprimée
+- Cinematic : enregistrement hors ligne rendu indépendant de la vitesse du PC pour les fondus de forme et de Constellation ; coûts par fond mesurés et notés dans la documentation (docs/moteur-effets.md)
+
 ## v2.3.0 — 2026-11-19
 
 Cinematic repensé : nouveaux fonds, formes du dôme, barre de lecture aux couleurs du mix, menu des phases et liens GitHub.
